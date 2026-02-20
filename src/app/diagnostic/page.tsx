@@ -6,33 +6,40 @@ import EmailCaptureCard from "./EmailCaptureCard";
 import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
 
+/* ---------------- TYPES ---------------- */
+
 type FitFocus = "driver_woods" | "irons" | "wedges" | "full_bag";
 
 type PlayFreq = "monthly" | "weekly" | "twice_weekly" | "three_plus" | "range_only";
+
 type Goal = "distance" | "accuracy" | "higher_launch" | "reduce_spin" | "feel";
+
 type Tempo = "smooth" | "neutral" | "quick" | "unsure";
 type Constraint = "none" | "elbow" | "shoulder_back" | "prefer_lighter";
 
+// Shared flight model
+type StartLine = "left" | "center" | "right" | "unsure";
+type Curve = "draw" | "straight" | "fade" | "unsure";
+
 // Driver-specific
 type KnowSpeed = "yes" | "no";
-type DriverMiss = "slice" | "hook" | "push" | "pull" | "both";
 type Flight = "low" | "mid" | "high";
 type DriverStrike = "heel" | "center" | "toe" | "all_over";
 type ShaftWeightNow = "dont_know" | "lt_55" | "55_65" | "65_75" | "75_plus";
 
 // Iron-specific
 type IronKnow = "yes" | "no";
-type IronStrike = "thin" | "fat" | "center" | "all_over" | "unsure";
-type IronMiss = "push" | "pull" | "short" | "long" | "both" | "unsure";
 type Fatigue = "none" | "some" | "aLot" | "unsure";
 type Peak = "low" | "mid" | "high";
+type IronFaceStrike = "heel" | "center" | "toe" | "mixed" | "unsure";
+type IronLowPoint = "ball_first" | "shallow" | "fat" | "thin" | "unsure";
 
 // Wedge-specific
 type WedgeUse = "mostly_full" | "mixed" | "mostly_greenside";
 type Turf = "digger" | "neutral" | "sweeper" | "unsure";
 type WedgeMiss = "fat" | "thin" | "both" | "unsure";
 type WedgeTraj = "lower" | "neutral" | "higher";
-type WedgeSpin = "more_check" | "balanced" | "more_release";
+type WedgeSpin = "more_check" | "balanced" | "more_release" | "unsure";
 type WedgeShaftPref = "match_irons" | "slightly_heavier" | "unknown";
 
 type Answers = {
@@ -40,14 +47,15 @@ type Answers = {
   fitFocus: FitFocus;
   handicapBand: 0 | 1 | 2 | 3 | 4;
   playFreq: PlayFreq;
-  goal: Goal;
+  goals: Goal[]; // max 2
   constraint: Constraint;
 
   // Driver/Woods
   knowDriverSpeed: KnowSpeed;
   driverSpeed?: number; // mph
   driverCarry?: number; // yards
-  driverMiss: DriverMiss;
+  driverStartLine: StartLine;
+  driverCurve: Curve;
   driverFlight: Flight;
   driverStrike: DriverStrike;
   driverTempo: Tempo;
@@ -57,9 +65,11 @@ type Answers = {
   knowIron: IronKnow;
   sevenIronSpeed?: number; // mph
   sevenIronCarry?: number; // yards
-  ironMiss: IronMiss;
+  ironStartLine: StartLine;
+  ironCurve: Curve;
   ironPeak: Peak;
-  ironStrike: IronStrike;
+  ironLowPoint: IronLowPoint;
+  ironFaceStrike: IronFaceStrike;
   ironFatigue: Fatigue;
   ironTempo: Tempo;
   ironShaftWeightNow: "dont_know" | "85_95" | "95_105" | "105_120" | "120_plus";
@@ -77,20 +87,23 @@ type Step =
   | "focus"
   | "handicap"
   | "play"
-  | "goal"
+  | "goals"
   | "constraints"
   // Driver/Woods steps
   | "driver_speed"
-  | "driver_miss"
+  | "driver_startline"
+  | "driver_curve"
   | "driver_flight"
   | "driver_strike"
   | "driver_tempo"
   | "driver_shaftnow"
   // Iron steps
   | "iron_speed"
-  | "iron_miss"
+  | "iron_startline"
+  | "iron_curve"
   | "iron_peak"
-  | "iron_strike"
+  | "iron_lowpoint"
+  | "iron_facestrike"
   | "iron_fatigue"
   | "iron_tempo"
   | "iron_shaftnow"
@@ -108,12 +121,13 @@ const DEFAULT_ANSWERS: Answers = {
 
   handicapBand: 2,
   playFreq: "weekly",
-  goal: "accuracy",
+  goals: ["accuracy"],
   constraint: "none",
 
   knowDriverSpeed: "no",
   driverCarry: 220,
-  driverMiss: "slice",
+  driverStartLine: "unsure",
+  driverCurve: "unsure",
   driverFlight: "mid",
   driverStrike: "all_over",
   driverTempo: "neutral",
@@ -121,9 +135,11 @@ const DEFAULT_ANSWERS: Answers = {
 
   knowIron: "no",
   sevenIronCarry: 145,
-  ironMiss: "unsure",
+  ironStartLine: "unsure",
+  ironCurve: "unsure",
   ironPeak: "mid",
-  ironStrike: "unsure",
+  ironLowPoint: "unsure",
+  ironFaceStrike: "unsure",
   ironFatigue: "unsure",
   ironTempo: "neutral",
   ironShaftWeightNow: "dont_know",
@@ -137,22 +153,25 @@ const DEFAULT_ANSWERS: Answers = {
 };
 
 function buildSteps(focus: FitFocus): Step[] {
-  const base: Step[] = ["focus", "handicap", "play", "goal", "constraints"];
+  const base: Step[] = ["focus", "handicap", "play", "goals", "constraints"];
 
   const driver: Step[] = [
     "driver_speed",
-    "driver_miss",
-    "driver_flight",
+    "driver_startline",
+    "driver_curve",
     "driver_strike",
+    "driver_flight",
     "driver_tempo",
     "driver_shaftnow",
   ];
 
   const irons: Step[] = [
     "iron_speed",
-    "iron_miss",
+    "iron_startline",
+    "iron_curve",
     "iron_peak",
-    "iron_strike",
+    "iron_lowpoint",
+    "iron_facestrike",
     "iron_fatigue",
     "iron_tempo",
     "iron_shaftnow",
@@ -177,7 +196,8 @@ function handicapLabel(b: Answers["handicapBand"]) {
   return ["0–5", "6–12", "13–20", "21–30", "31+"][b];
 }
 
-// ---- speed estimators ----
+/* ---------------- SPEED ESTIMATORS ---------------- */
+
 function carryToDriverSpeed(carry: number) {
   if (carry <= 180) return 85;
   if (carry <= 200) return 92;
@@ -232,74 +252,88 @@ function addTenGramsLabel(weightLabel: string): string {
   return `${lo + 10}–${hi + 10}g`;
 }
 
+/* ---------------- STEP META ---------------- */
+
 function stepMeta(step: Step) {
   const map: Record<Exclude<Step, "results">, { title: string; why: string }> = {
-    focus: {
-      title: "What are you fitting today?",
-      why: "We’ll ask only category-specific questions and generate separate profiles.",
-    },
-    handicap: {
-      title: "What’s your handicap range?",
-      why: "Helps calibrate how aggressive we should be with fit precision.",
-    },
-    play: {
-      title: "How often do you play?",
-      why: "Frequent players benefit from tighter fits; occasional players need more forgiveness.",
-    },
-    goal: {
-      title: "What’s your goal right now?",
-      why: "We bias stability vs launch vs feel based on your priority.",
-    },
-    constraints: {
-      title: "Any physical constraints?",
-      why: "We avoid recommendations likely to aggravate discomfort.",
-    },
+    focus: { title: "What are you fitting today?", why: "We’ll ask only category-specific questions and generate separate profiles." },
+    handicap: { title: "What’s your handicap range?", why: "Helps calibrate how aggressive we should be with fit precision." },
+    play: { title: "How often do you play?", why: "Frequent players benefit from tighter fits; occasional players need more forgiveness." },
+    goals: { title: "What’s your goal right now?", why: "Select up to 2 priorities. We’ll bias the fit accordingly." },
+    constraints: { title: "Any physical constraints?", why: "We bias away from builds likely to aggravate discomfort." },
 
     driver_speed: { title: "Driver speed", why: "Sets the baseline for driver/woods shaft weight + flex." },
-    driver_miss: { title: "Typical DRIVER miss", why: "Guides stability and face-control bias." },
-    driver_flight: { title: "Typical DRIVER ball flight", why: "Guides launch/spin directionally." },
+    driver_startline: { title: "Driver start line", why: "Start line is the cleanest signal for face control at impact." },
+    driver_curve: { title: "Driver curve", why: "Curve helps separate face vs path influence (and guides stability bias)." },
+    driver_flight: { title: "Typical DRIVER flight", why: "Guides launch/spin directionally." },
     driver_strike: { title: "DRIVER strike location", why: "Strike location influences forgiveness and spin." },
     driver_tempo: { title: "DRIVER transition feel", why: "Transition influences stability needs." },
-    driver_shaftnow: { title: "Current DRIVER shaft weight", why: "Anchors feel to what you’re used to." },
+    driver_shaftnow: { title: "Current DRIVER shaft weight", why: "Anchors recommendations to what you’re used to." },
 
-    iron_speed: {
-      title: "7-iron speed (or carry)",
-      why: "Irons need their own speed proxy—driver speed doesn’t translate cleanly.",
-    },
-    iron_miss: { title: "Typical IRON miss", why: "Iron miss pattern often differs from driver and affects fit." },
+    iron_speed: { title: "7-iron speed (or carry)", why: "Irons need their own speed proxy—driver speed doesn’t translate cleanly." },
+    iron_startline: { title: "Iron start line", why: "Start line reveals face control tendencies with irons." },
+    iron_curve: { title: "Iron curve", why: "Curve helps us understand your face-to-path pattern for iron stability bias." },
     iron_peak: { title: "Typical IRON peak height", why: "Peak height guides launch and profile direction." },
-    iron_strike: { title: "IRON strike pattern", why: "Thin/fat patterns strongly affect iron fit." },
+    iron_lowpoint: { title: "Iron low point control", why: "Low point is one of the biggest drivers of consistent contact and distance." },
+    iron_facestrike: { title: "Iron face strike location", why: "Heel/toe strike affects ball speed, start line, and consistency." },
     iron_fatigue: { title: "Fatigue with irons", why: "Total weight/material should respect fatigue." },
     iron_tempo: { title: "IRON transition feel", why: "Iron transition can differ from driver; treat separately." },
     iron_shaftnow: { title: "Current IRON shaft weight", why: "Anchors recommendations to your current feel." },
 
-    wedge_use: {
-      title: "How do you use your wedges most?",
-      why: "Determines whether we bias gapping for full shots vs versatility around the green.",
-    },
-    wedge_turf: {
-      title: "Turf interaction (digger vs sweeper)",
-      why: "Primary driver of bounce/sole direction and how the club enters/exits the turf.",
-    },
-    wedge_miss: {
-      title: "Typical wedge miss",
-      why: "Fat/thin patterns correlate with bounce/sole needs and strike stability.",
-    },
-    wedge_traj: {
-      title: "Preferred wedge trajectory",
-      why: "Helps bias loft/gapping direction and build feel for flight control.",
-    },
-    wedge_spin: {
-      title: "Preferred greenside rollout",
-      why: "Influences loft spacing and bounce/grind direction for your typical shot style.",
-    },
-    wedge_shaftpref: {
-      title: "Wedge shaft preference",
-      why: "Wedges often match irons, or go slightly heavier for control—this sets the bias.",
-    },
+    wedge_use: { title: "How do you use your wedges most?", why: "Determines whether we bias gapping for full shots vs greenside versatility." },
+    wedge_turf: { title: "Turf interaction (digger vs sweeper)", why: "Primary driver of bounce/sole direction and how the club enters/exits the turf." },
+    wedge_miss: { title: "Typical wedge miss", why: "Fat/thin patterns correlate with bounce/sole needs and strike stability." },
+    wedge_traj: { title: "Preferred wedge trajectory", why: "Helps bias loft/gapping direction and build feel for flight control." },
+    wedge_spin: { title: "Preferred greenside rollout", why: "Influences loft spacing and bounce/grind direction for your typical shot style." },
+    wedge_shaftpref: { title: "Wedge shaft preference", why: "Wedges often match irons, or go slightly heavier for control—this sets the bias." },
   };
 
   return map[step as Exclude<Step, "results">];
+}
+
+/* ---------------- GOAL BIAS ---------------- */
+
+type Bias = {
+  stability: number;
+  launch: number;
+  spin: number;
+  anchorToCurrent: number;
+  weightTolerance: number;
+};
+
+function computeGoalBias(goals: Goal[]): Bias {
+  const b: Bias = { stability: 0, launch: 0, spin: 0, anchorToCurrent: 0, weightTolerance: 0 };
+  for (const g of goals) {
+    if (g === "accuracy") b.stability += 2;
+    if (g === "reduce_spin") {
+      b.spin += 2;
+      b.stability += 1;
+    }
+    if (g === "higher_launch") b.launch += 2;
+    if (g === "distance") {
+      b.launch += 1;
+      b.weightTolerance += 1;
+    }
+    if (g === "feel") b.anchorToCurrent += 2;
+  }
+  return b;
+}
+
+/* ---------------- BALL FLIGHT CLASSIFIER ---------------- */
+
+function classifyFaceControl(start: StartLine, curve: Curve) {
+  if (start === "unsure" || curve === "unsure") return { label: "unknown", bias: "neutral" as const };
+
+  if (start === "right" && curve === "fade") return { label: "starts right + fades", bias: "reduceRight" as const };
+  if (start === "right" && curve === "straight") return { label: "starts right (no curve)", bias: "reduceRight" as const };
+
+  if (start === "left" && curve === "draw") return { label: "starts left + draws", bias: "reduceLeft" as const };
+  if (start === "left" && curve === "straight") return { label: "starts left (no curve)", bias: "reduceLeft" as const };
+
+  if (start === "center" && curve === "fade") return { label: "starts center + fades", bias: "stability" as const };
+  if (start === "center" && curve === "draw") return { label: "starts center + draws", bias: "stability" as const };
+
+  return { label: "neutral", bias: "neutral" as const };
 }
 
 /* ---------------- WEDGE RECOMMENDER (deterministic) ---------------- */
@@ -328,10 +362,7 @@ function pickGrindBias(bounce: "Low" | "Mid" | "High", use: WedgeUse): string {
     : "Mid-bounce versatile grind (balanced for full shots + chips)";
 }
 
-function pickGappingPlan(use: WedgeUse, traj: WedgeTraj, spin: WedgeSpin): {
-  planTitle: string;
-  bullets: string[];
-} {
+function pickGappingPlan(use: WedgeUse, traj: WedgeTraj, spin: WedgeSpin): { planTitle: string; bullets: string[] } {
   if (use === "mostly_full") {
     return {
       planTitle: "Full-shot focused gapping",
@@ -354,12 +385,8 @@ function pickGappingPlan(use: WedgeUse, traj: WedgeTraj, spin: WedgeSpin): {
       bullets: [
         "Typical plan: Gap → Sand → Lob (3-wedge structure for simplicity)",
         "Directional example: 52–56–60 (or 50–54–58 if you prefer lower launch)",
-        traj === "lower"
-          ? "Consider slightly stronger lofts to keep flight down"
-          : "Consider a higher-loft lob wedge option for soft landing",
-        spin === "more_release"
-          ? "Favor a mid-loft utility wedge you can bump-and-run"
-          : "Favor a lob wedge you can stop quickly",
+        traj === "lower" ? "Consider slightly stronger lofts to keep flight down" : "Consider a higher-loft lob wedge option for soft landing",
+        spin === "more_release" ? "Favor a mid-loft utility wedge you can bump-and-run" : "Favor a lob wedge you can stop quickly",
       ],
     };
   }
@@ -369,18 +396,14 @@ function pickGappingPlan(use: WedgeUse, traj: WedgeTraj, spin: WedgeSpin): {
     bullets: [
       "Typical plan: Gap → Sand → Lob (3 wedges), add one more gap wedge if you have room",
       "Directional example: 50–54–58 (balanced) or 52–56–60 (more loft coverage)",
-      traj === "lower"
-        ? "Leaning 50–54–58 tends to keep flight slightly down"
-        : "Leaning 52–56–60 gives more height options around the green",
-      spin === "more_check"
-        ? "Favor loft coverage on the bottom end (lob wedge utility)"
-        : "Favor consistent yardage gapping on the top end",
+      traj === "lower" ? "Leaning 50–54–58 tends to keep flight slightly down" : "Leaning 52–56–60 gives more height options around the green",
+      spin === "more_check" ? "Favor loft coverage on the bottom end (lob wedge utility)" : "Favor consistent yardage gapping on the top end",
     ],
   };
 }
 
 function recommendWedgesDeterministic(input: {
-  focusGoal: Goal;
+  focusGoals: Goal[];
   constraint: Constraint;
   sevenIronSpeedMph: number;
   ironWeightRangeLabel?: string;
@@ -397,9 +420,11 @@ function recommendWedgesDeterministic(input: {
 
   const baseWeight = input.ironWeightRangeLabel ?? baseWedgeWeightFromSevenIronSpeed(input.sevenIronSpeedMph);
 
+  const goalBias = computeGoalBias(input.focusGoals);
+
   const wantsHeavier =
     input.wedgeShaftPref === "slightly_heavier" ||
-    input.focusGoal === "accuracy" ||
+    goalBias.stability >= 2 ||
     input.wedgeUse === "mostly_full";
 
   const weightRange = wantsHeavier ? addTenGramsLabel(baseWeight) : baseWeight;
@@ -411,7 +436,7 @@ function recommendWedgesDeterministic(input: {
       ? "Stiff feel (directional)"
       : "Regular/Stiff border (directional)";
 
-  let score = 78;
+  let score = 80;
   if (input.wedgeTurf === "unsure") score -= 4;
   if (input.wedgeMiss === "unsure") score -= 4;
   if (input.wedgeShaftPref === "unknown") score -= 2;
@@ -419,9 +444,7 @@ function recommendWedgesDeterministic(input: {
   score = Math.max(55, Math.min(92, score));
 
   const buildNotes: string[] = [];
-  buildNotes.push(
-    wantsHeavier ? "Shaft: slightly heavier than irons for tempo + strike control." : "Shaft: match iron feel for consistency."
-  );
+  buildNotes.push(wantsHeavier ? "Shaft: slightly heavier than irons for tempo + strike control." : "Shaft: match iron feel for consistency.");
   if (input.constraint === "elbow" || input.constraint === "shoulder_back") {
     buildNotes.push("Comfort bias: avoid extreme swingweight/heavy builds that aggravate discomfort.");
   }
@@ -440,10 +463,130 @@ function recommendWedgesDeterministic(input: {
     },
     buildNotes,
     constraintNote:
-      input.constraint !== "none"
-        ? "Constraint noted: recommendations are biased away from overly heavy/harsh wedge builds."
-        : "",
+      input.constraint !== "none" ? "Constraint noted: recommendations are biased away from overly heavy/harsh wedge builds." : "",
   };
+}
+
+/* ---------------- CONFIDENCE ---------------- */
+
+function computeConfidence(a: Answers) {
+  let score = 92;
+
+  if (a.fitFocus === "driver_woods" || a.fitFocus === "full_bag") {
+    if (a.knowDriverSpeed === "no" && typeof a.driverCarry !== "number") score -= 8;
+    if (a.knowDriverSpeed === "yes" && typeof a.driverSpeed !== "number") score -= 8;
+    if (a.driverStartLine === "unsure") score -= 5;
+    if (a.driverCurve === "unsure") score -= 5;
+    if (a.driverShaftWeightNow === "dont_know") score -= 3;
+  }
+
+  if (a.fitFocus === "irons" || a.fitFocus === "wedges" || a.fitFocus === "full_bag") {
+    if (a.knowIron === "no" && typeof a.sevenIronCarry !== "number") score -= 8;
+    if (a.knowIron === "yes" && typeof a.sevenIronSpeed !== "number") score -= 8;
+    if (a.ironStartLine === "unsure") score -= 4;
+    if (a.ironCurve === "unsure") score -= 4;
+    if (a.ironLowPoint === "unsure") score -= 4;
+    if (a.ironFaceStrike === "unsure") score -= 3;
+    if (a.ironShaftWeightNow === "dont_know") score -= 3;
+  }
+
+  if (a.goals.length === 0) score -= 2;
+
+  return Math.max(55, Math.min(95, score));
+}
+
+/* ---------------- SAFE ENGINE WRAPPERS (prevents “missing recommendations”) ---------------- */
+
+type EngineRec = {
+  fitScore: number;
+  profile: {
+    weightRange: string;
+    flex: string;
+    torqueRange?: string;
+    launchBias?: string;
+    balanceBias?: string;
+    materialBias?: string;
+    headBias?: string;
+  };
+  adjustmentGuide?: string[];
+  constraintNote?: string;
+};
+
+function fallbackDriverRec(speedMph: number): EngineRec {
+  const weightRange =
+    speedMph >= 112 ? "70–80g" :
+    speedMph >= 102 ? "60–70g" :
+    speedMph >= 92 ? "55–65g" : "50–60g";
+
+  const flex =
+    speedMph >= 112 ? "X" :
+    speedMph >= 102 ? "Stiff" :
+    speedMph >= 92 ? "Stiff / Regular+" : "Regular";
+
+  return {
+    fitScore: 78,
+    profile: {
+      weightRange,
+      flex,
+      torqueRange: "3.0–4.5",
+      launchBias: "mid",
+      balanceBias: "neutral",
+    },
+    adjustmentGuide: [
+      "Test 2 shaft weights within the recommended band (±5g).",
+      "Validate start line + curve with 10 shots (don’t trust “feel” alone).",
+    ],
+    constraintNote: "",
+  };
+}
+
+function fallbackIronRec(sevenIronSpeed: number): EngineRec {
+  const weightRange =
+    sevenIronSpeed >= 92 ? "120–130g" :
+    sevenIronSpeed >= 85 ? "110–120g" :
+    sevenIronSpeed >= 78 ? "100–110g" : "90–100g";
+
+  const flex =
+    sevenIronSpeed >= 92 ? "X" :
+    sevenIronSpeed >= 85 ? "Stiff+" :
+    sevenIronSpeed >= 78 ? "Stiff" : "Regular / Stiff border";
+
+  return {
+    fitScore: 80,
+    profile: {
+      weightRange,
+      flex,
+      launchBias: "mid",
+      balanceBias: "neutral",
+      materialBias: "steel baseline",
+      headBias: "Neutral head bias",
+    },
+    constraintNote: "",
+  };
+}
+
+function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
+  try {
+    const rec = recommendDriverWoods(args);
+    if (rec && typeof rec === "object" && rec.profile?.weightRange && rec.profile?.flex) {
+      return rec as EngineRec;
+    }
+  } catch {
+    // ignore and fall back
+  }
+  return fallbackDriverRec(speedMph);
+}
+
+function safeRecommendIrons(args: any, sevenIronSpeed: number): EngineRec {
+  try {
+    const rec = recommendIrons(args);
+    if (rec && typeof rec === "object" && rec.profile?.weightRange && rec.profile?.flex) {
+      return rec as EngineRec;
+    }
+  } catch {
+    // ignore and fall back
+  }
+  return fallbackIronRec(sevenIronSpeed);
 }
 
 /* ---------------- RESULTS ---------------- */
@@ -454,13 +597,18 @@ function computeResults(a: Answers) {
   const driverSpeed = estimateDriverSpeed(a);
   const sevenIronSpeed = estimateSevenIronSpeed(a);
 
-  // Driver mapping
-  const driverPrimaryFix =
-    a.driverMiss === "slice" ? "slice" : a.driverMiss === "hook" ? "hook" : "dispersion";
+  const goalBias = computeGoalBias(a.goals);
+  const confidence = computeConfidence(a);
+
+  const driverFaceControl = classifyFaceControl(a.driverStartLine, a.driverCurve);
+  const ironFaceControl = classifyFaceControl(a.ironStartLine, a.ironCurve);
+
+  let driverPrimaryFix: "slice" | "hook" | "dispersion" = "dispersion";
+  if (driverFaceControl.bias === "reduceRight") driverPrimaryFix = "slice";
+  if (driverFaceControl.bias === "reduceLeft") driverPrimaryFix = "hook";
 
   const driverTempo =
     a.driverTempo === "smooth" ? "smooth" : a.driverTempo === "quick" ? "aggressive" : "moderate";
-
   const driverTransition =
     a.driverTempo === "smooth" ? "gradual" : a.driverTempo === "quick" ? "quick" : "quick";
 
@@ -476,26 +624,22 @@ function computeResults(a: Answers) {
   const driverLaunchFeel = a.driverFlight === "low" ? "low" : a.driverFlight === "high" ? "high" : "mid";
   const driverShaftNow = driverShaftBucketToNumber(a.driverShaftWeightNow);
 
-  // Iron mapping
   const ironTempo =
     a.ironTempo === "smooth" ? "smooth" : a.ironTempo === "quick" ? "aggressive" : "moderate";
-
   const ironTransition =
     a.ironTempo === "smooth" ? "gradual" : a.ironTempo === "quick" ? "quick" : "quick";
 
-  const ironStrike =
-    a.ironStrike === "thin"
-      ? "thin"
-      : a.ironStrike === "fat"
+  const ironStrikeForEngine =
+    a.ironLowPoint === "fat"
       ? "fat"
-      : a.ironStrike === "center"
+      : a.ironLowPoint === "thin"
+      ? "thin"
+      : a.ironFaceStrike === "center"
       ? "center"
       : "unknown";
 
-  const ironPeakFeel = a.ironPeak === "low" ? "low" : a.ironPeak === "high" ? "high" : "mid";
-
-  const ironPrimaryFix =
-    a.ironMiss === "short" || a.ironMiss === "long" ? "distanceLoss" : "dispersion";
+  const ironPrimaryFix: "distanceLoss" | "dispersion" =
+    a.ironLowPoint === "fat" || a.ironLowPoint === "thin" ? "distanceLoss" : "dispersion";
 
   const ironFatigue =
     a.ironFatigue === "none"
@@ -507,20 +651,24 @@ function computeResults(a: Answers) {
       : "unknown";
 
   const ironShaftNow = ironShaftBucketToNumber(a.ironShaftWeightNow);
+  const ironPeakFeel = a.ironPeak === "low" ? "low" : a.ironPeak === "high" ? "high" : "mid";
 
   const driverRec =
     focus === "driver_woods" || focus === "full_bag"
-      ? recommendDriverWoods({
-          clubType: "driverWoods",
-          primaryFix: driverPrimaryFix,
-          speedMph: driverSpeed,
-          tempo: driverTempo,
-          transition: driverTransition,
-          strike: driverStrike,
-          currentShaftWeightG: driverShaftNow,
-          currentFlex: "unknown",
-          launchFeel: driverLaunchFeel,
-        } as any)
+      ? safeRecommendDriverWoods(
+          {
+            clubType: "driverWoods",
+            primaryFix: driverPrimaryFix,
+            speedMph: driverSpeed,
+            tempo: driverTempo,
+            transition: driverTransition,
+            strike: driverStrike,
+            currentShaftWeightG: driverShaftNow,
+            currentFlex: "unknown",
+            launchFeel: driverLaunchFeel,
+          } as any,
+          driverSpeed
+        )
       : null;
 
   const woodsProfile = driverRec
@@ -528,31 +676,34 @@ function computeResults(a: Answers) {
         weightRange: addTenGramsLabel(driverRec.profile.weightRange),
         flex: driverRec.profile.flex,
         torqueRange: driverRec.profile.torqueRange ?? "—",
-        launchBias: driverRec.profile.launchBias,
-        balanceBias: driverRec.profile.balanceBias,
+        launchBias: driverRec.profile.launchBias ?? "mid",
+        balanceBias: driverRec.profile.balanceBias ?? "neutral",
       }
     : null;
 
   const ironRec =
     focus === "irons" || focus === "full_bag"
-      ? recommendIrons({
-          clubType: "irons",
-          primaryFix: ironPrimaryFix,
-          sixIronSpeedMph: sevenIronSpeed + 4,
-          tempo: ironTempo,
-          transition: ironTransition,
-          strike: ironStrike,
-          fatigue: ironFatigue,
-          currentShaftWeightG: ironShaftNow,
-          currentFlex: "unknown",
-          peakHeightFeel: ironPeakFeel,
-        } as any)
+      ? safeRecommendIrons(
+          {
+            clubType: "irons",
+            primaryFix: ironPrimaryFix,
+            sixIronSpeedMph: sevenIronSpeed + 4,
+            tempo: ironTempo,
+            transition: ironTransition,
+            strike: ironStrikeForEngine,
+            fatigue: ironFatigue,
+            currentShaftWeightG: ironShaftNow,
+            currentFlex: "unknown",
+            peakHeightFeel: ironPeakFeel,
+          } as any,
+          sevenIronSpeed
+        )
       : null;
 
   const wedgeRec =
     focus === "wedges" || focus === "full_bag"
       ? recommendWedgesDeterministic({
-          focusGoal: a.goal,
+          focusGoals: a.goals,
           constraint: a.constraint,
           sevenIronSpeedMph: sevenIronSpeed,
           ironWeightRangeLabel: ironRec?.profile?.weightRange,
@@ -565,6 +716,57 @@ function computeResults(a: Answers) {
         })
       : null;
 
+  const primaryLeverDriver =
+    goalBias.stability >= 2 || driverFaceControl.bias !== "neutral" ? "Stability (face control)" : "Weight (sequencing)";
+
+  const primaryLeverIrons =
+    a.ironLowPoint === "fat" || a.ironLowPoint === "thin"
+      ? "Contact (low point)"
+      : goalBias.stability >= 2
+      ? "Stability (start line)"
+      : "Weight (fatigue/timing)";
+
+  const cause: string[] = [];
+
+  if (driverRec) {
+    if (a.driverStartLine !== "unsure" && a.driverCurve !== "unsure") {
+      if (driverFaceControl.bias === "reduceRight") {
+        cause.push("Because your driver starts right and fades, we prioritize face-control stability to reduce right-side misses.");
+      } else if (driverFaceControl.bias === "reduceLeft") {
+        cause.push("Because your driver starts left (with left bias), we bias toward anti-left stability (tip-stable / lower torque directionally).");
+      } else {
+        cause.push("Because your driver pattern is relatively neutral, we keep the recommendation balanced and tune primarily for your speed + feel.");
+      }
+    } else {
+      cause.push("Because your driver flight pattern is marked as unsure, we bias neutral and recommend validating start line + curve on the range.");
+    }
+  }
+
+  if (ironRec) {
+    if (a.ironLowPoint === "fat") {
+      cause.push("Because your iron low point tends to be behind the ball (fat), we bias toward contact consistency and forgiveness before chasing profile extremes.");
+    } else if (a.ironLowPoint === "thin") {
+      cause.push("Because you tend to catch irons thin, we bias toward a build that supports consistent strike and avoids overly harsh/low-launch profiles.");
+    } else if (a.ironLowPoint === "ball_first") {
+      cause.push("Because you tend to strike ball-first, we can be more aggressive about stability/profile tuning without sacrificing contact.");
+    }
+
+    if (a.ironStartLine !== "unsure" && a.ironCurve !== "unsure") {
+      if (ironFaceControl.bias === "reduceRight") {
+        cause.push("Because your irons start right with fade bias, we prioritize stability to help square the face more consistently.");
+      } else if (ironFaceControl.bias === "reduceLeft") {
+        cause.push("Because your irons show left bias, we favor anti-left stability so the face doesn’t over-close.");
+      } else {
+        cause.push("Because your iron pattern is relatively neutral, we keep the build balanced and anchor to speed + strike tendencies.");
+      }
+    } else {
+      cause.push("Because iron start line/curve is marked unsure, we bias a stable baseline and recommend validating on the range.");
+    }
+  }
+
+  if (a.goals.includes("accuracy")) cause.push("Because accuracy is a selected goal, we keep you inside a stable weight band before tuning flex/profile.");
+  if (a.constraint !== "none") cause.push("Because a physical constraint is noted, we avoid overly heavy or harsh-feeling builds.");
+
   const why: string[] = [];
   why.push("Driver/Woods, irons, and wedges are evaluated separately (different jobs, different profiles).");
   if (driverRec) why.push(`Driver + Woods Fit Score: ${driverRec.fitScore}% (woods derived with +10g rule).`);
@@ -576,17 +778,24 @@ function computeResults(a: Answers) {
     focus,
     driverSpeedEstimate: Math.round(driverSpeed),
     sevenIronSpeedEstimate: Math.round(sevenIronSpeed),
+    confidence,
+
+    models: {
+      driver: { start: a.driverStartLine, curve: a.driverCurve, strike: a.driverStrike },
+      irons: { start: a.ironStartLine, curve: a.ironCurve, lowPoint: a.ironLowPoint, faceStrike: a.ironFaceStrike },
+    },
 
     driver: driverRec
       ? {
           fitScore: driverRec.fitScore as number,
+          primaryLever: primaryLeverDriver,
           shaft: {
             weight: driverRec.profile.weightRange,
             flex: driverRec.profile.flex,
-            profile: `Launch ${driverRec.profile.launchBias} • Torque ${driverRec.profile.torqueRange} • Balance ${driverRec.profile.balanceBias}`,
+            profile: `Launch ${driverRec.profile.launchBias ?? "mid"} • Torque ${driverRec.profile.torqueRange ?? "—"} • Balance ${driverRec.profile.balanceBias ?? "neutral"}`,
           },
           settings: (driverRec.adjustmentGuide ?? []) as string[],
-          note: driverRec.constraintNote as string,
+          note: driverRec.constraintNote ?? "",
         }
       : null,
 
@@ -605,13 +814,14 @@ function computeResults(a: Answers) {
     irons: ironRec
       ? {
           fitScore: ironRec.fitScore as number,
+          primaryLever: primaryLeverIrons,
           shaft: {
             weight: ironRec.profile.weightRange,
             flex: ironRec.profile.flex,
-            profile: `Launch ${ironRec.profile.launchBias} • Balance ${ironRec.profile.balanceBias} • Material ${ironRec.profile.materialBias ?? "—"}`,
+            profile: `Launch ${ironRec.profile.launchBias ?? "mid"} • Balance ${ironRec.profile.balanceBias ?? "neutral"} • Material ${ironRec.profile.materialBias ?? "—"}`,
           },
           headBias: ironRec.profile.headBias ?? "Neutral head bias",
-          note: ironRec.constraintNote as string,
+          note: ironRec.constraintNote ?? "",
         }
       : null,
 
@@ -630,9 +840,12 @@ function computeResults(a: Answers) {
         }
       : null,
 
+    cause,
     why,
   };
 }
+
+/* ---------------- MAIN COMPONENT ---------------- */
 
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
@@ -670,7 +883,19 @@ export default function DiagnosticWizard() {
         if (savedPayload) {
           try {
             const parsed = JSON.parse(savedPayload);
-            setA(parsed);
+
+            if (parsed && typeof parsed === "object") {
+              if (Array.isArray(parsed.goals)) {
+                // ok
+              } else if (typeof parsed.goal === "string") {
+                parsed.goals = [parsed.goal];
+              } else {
+                parsed.goals = ["accuracy"];
+              }
+              delete parsed.goal;
+            }
+
+            setA({ ...DEFAULT_ANSWERS, ...parsed });
           } catch {
             // ignore bad JSON
           }
@@ -698,6 +923,14 @@ export default function DiagnosticWizard() {
     setStepIndex((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(a));
+    } catch {
+      // ignore
+    }
+  }, [a]);
+
   const result = useMemo(() => computeResults(a), [a]);
   const progress = Math.round((stepIndex / (steps.length - 1)) * 100);
   const isFirst = stepIndex === 0;
@@ -713,6 +946,11 @@ export default function DiagnosticWizard() {
   function resetAll() {
     setA(DEFAULT_ANSWERS);
     setStepIndex(0);
+    try {
+      window.localStorage.removeItem("diagnostic_last_payload");
+    } catch {
+      // ignore
+    }
   }
 
   const meta = step !== "results" ? stepMeta(step) : null;
@@ -744,19 +982,21 @@ export default function DiagnosticWizard() {
               <h1 className="text-2xl font-semibold tracking-tight">{meta?.title}</h1>
               <p className="mt-2 text-sm text-slate-600">{meta?.why}</p>
 
-              <div className="mt-8">
+              <div className="mt-8 space-y-6">
+                {/* Shared */}
                 {step === "focus" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.fitFocus}
                     onChange={(v) => {
                       setA((p) => ({ ...p, fitFocus: v }));
                       setStepIndex(1);
                     }}
                     options={[
-                      ["driver_woods", "Driver + Woods"],
-                      ["irons", "Irons"],
-                      ["wedges", "Wedges"],
-                      ["full_bag", "Full bag"],
+                      { value: "driver_woods", label: "Driver + Woods" },
+                      { value: "irons", label: "Irons" },
+                      { value: "wedges", label: "Wedges" },
+                      { value: "full_bag", label: "Full bag" },
                     ]}
                   />
                 )}
@@ -783,49 +1023,57 @@ export default function DiagnosticWizard() {
 
                 {step === "play" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.playFreq}
                     onChange={(v) => setA((p) => ({ ...p, playFreq: v }))}
                     options={[
-                      ["monthly", "1–2x/month"],
-                      ["weekly", "1x/week"],
-                      ["twice_weekly", "2x/week"],
-                      ["three_plus", "3+ / week"],
-                      ["range_only", "Range only"],
+                      { value: "monthly", label: "1–2x/month" },
+                      { value: "weekly", label: "1x/week" },
+                      { value: "twice_weekly", label: "2x/week" },
+                      { value: "three_plus", label: "3+ / week" },
+                      { value: "range_only", label: "Range only" },
                     ]}
                   />
                 )}
 
-                {step === "goal" && (
-                  <ChoiceChips
-                    value={a.goal}
-                    onChange={(v) => setA((p) => ({ ...p, goal: v }))}
-                    options={[
-                      ["distance", "More distance"],
-                      ["accuracy", "More fairways"],
-                      ["higher_launch", "Higher launch"],
-                      ["reduce_spin", "Reduce spin"],
-                      ["feel", "Better feel"],
-                    ]}
-                  />
+                {step === "goals" && (
+                  <div className="space-y-3">
+                    <ChoiceChips
+                      mode="multi"
+                      maxSelections={2}
+                      value={a.goals}
+                      onChange={(v) => setA((p) => ({ ...p, goals: v }))}
+                      options={[
+                        { value: "distance", label: "More distance", help: "Bias for speed/launch efficiency." },
+                        { value: "accuracy", label: "More fairways", help: "Bias stability and face control." },
+                        { value: "higher_launch", label: "Higher launch", help: "Bias profile/launch directionally." },
+                        { value: "reduce_spin", label: "Reduce spin", help: "Bias tip stability directionally." },
+                        { value: "feel", label: "Better feel", help: "Bias toward your current weight/feel anchor." },
+                      ]}
+                    />
+                    <div className="text-xs text-slate-500">Select up to 2.</div>
+                  </div>
                 )}
 
                 {step === "constraints" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.constraint}
                     onChange={(v) => setA((p) => ({ ...p, constraint: v }))}
                     options={[
-                      ["none", "None"],
-                      ["elbow", "Elbow pain"],
-                      ["shoulder_back", "Shoulder/Back"],
-                      ["prefer_lighter", "Prefer lighter feel"],
+                      { value: "none", label: "None", help: "No constraint bias applied." },
+                      { value: "elbow", label: "Elbow pain", help: "Bias away from harsh / overly stiff-feeling builds." },
+                      { value: "shoulder_back", label: "Shoulder/Back", help: "Bias away from heavy or high-effort builds." },
+                      { value: "prefer_lighter", label: "Prefer lighter feel", help: "Bias weight bands slightly lighter where possible." },
                     ]}
                   />
                 )}
 
-                {/* Driver steps */}
+                {/* Driver/Woods */}
                 {step === "driver_speed" && (
                   <div className="space-y-5">
                     <ChoiceChips
+                      mode="single"
                       value={a.knowDriverSpeed}
                       onChange={(v) =>
                         setA((p) => ({
@@ -836,8 +1084,8 @@ export default function DiagnosticWizard() {
                         }))
                       }
                       options={[
-                        ["yes", "I know my speed"],
-                        ["no", "I don’t know"],
+                        { value: "yes", label: "I know my speed" },
+                        { value: "no", label: "I don’t know" },
                       ]}
                     />
 
@@ -872,76 +1120,110 @@ export default function DiagnosticWizard() {
                   </div>
                 )}
 
-                {step === "driver_miss" && (
-                  <ChoiceChips
-                    value={a.driverMiss}
-                    onChange={(v) => setA((p) => ({ ...p, driverMiss: v }))}
-                    options={[
-                      ["slice", "Slice"],
-                      ["hook", "Hook"],
-                      ["push", "Push"],
-                      ["pull", "Pull"],
-                      ["both", "Both sides"],
-                    ]}
-                  />
+                {step === "driver_startline" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.driverStartLine}
+                      onChange={(v) => setA((p) => ({ ...p, driverStartLine: v }))}
+                      options={[
+                        { value: "left", label: "Starts left", help: "Start line is mostly face direction at impact." },
+                        { value: "center", label: "Starts center", help: "Start line is mostly face direction at impact." },
+                        { value: "right", label: "Starts right", help: "Start line is mostly face direction at impact." },
+                        { value: "unsure", label: "Not sure", help: "No problem — we’ll bias neutral and lower confidence slightly." },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <BallFlightViz start={a.driverStartLine} curve={"straight"} />
+                    </MiniVizCard>
+                  </div>
+                )}
+
+                {step === "driver_curve" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.driverCurve}
+                      onChange={(v) => setA((p) => ({ ...p, driverCurve: v }))}
+                      options={[
+                        { value: "draw", label: "Draws (curves left)", help: "Curve helps separate face vs path influence." },
+                        { value: "straight", label: "Mostly straight", help: "Curve helps separate face vs path influence." },
+                        { value: "fade", label: "Fades (curves right)", help: "Curve helps separate face vs path influence." },
+                        { value: "unsure", label: "Not sure", help: "We’ll recommend a neutral baseline — validate this on the range." },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <BallFlightViz start={a.driverStartLine} curve={a.driverCurve} />
+                    </MiniVizCard>
+                  </div>
+                )}
+
+                {step === "driver_strike" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.driverStrike}
+                      onChange={(v) => setA((p) => ({ ...p, driverStrike: v }))}
+                      options={[
+                        { value: "heel", label: "Heel", help: "Heel/toe strike changes curvature and spin." },
+                        { value: "center", label: "Center", help: "Centered strike supports more aggressive tuning." },
+                        { value: "toe", label: "Toe", help: "Heel/toe strike changes curvature and spin." },
+                        { value: "all_over", label: "All over", help: "More variability → we bias forgiveness and stability." },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <FaceStrikeViz strike={a.driverStrike === "all_over" ? "mixed" : a.driverStrike} />
+                    </MiniVizCard>
+                  </div>
                 )}
 
                 {step === "driver_flight" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.driverFlight}
                     onChange={(v) => setA((p) => ({ ...p, driverFlight: v }))}
                     options={[
-                      ["low", "Low"],
-                      ["mid", "Mid"],
-                      ["high", "High"],
-                    ]}
-                  />
-                )}
-
-                {step === "driver_strike" && (
-                  <ChoiceChips
-                    value={a.driverStrike}
-                    onChange={(v) => setA((p) => ({ ...p, driverStrike: v }))}
-                    options={[
-                      ["heel", "Heel"],
-                      ["center", "Center"],
-                      ["toe", "Toe"],
-                      ["all_over", "All over"],
+                      { value: "low", label: "Low" },
+                      { value: "mid", label: "Mid" },
+                      { value: "high", label: "High" },
                     ]}
                   />
                 )}
 
                 {step === "driver_tempo" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.driverTempo}
                     onChange={(v) => setA((p) => ({ ...p, driverTempo: v }))}
                     options={[
-                      ["smooth", "Smooth"],
-                      ["neutral", "Medium"],
-                      ["quick", "Quick from the top"],
-                      ["unsure", "Not sure"],
+                      { value: "smooth", label: "Smooth", help: "Smooth transitions can use slightly softer profiles without losing control." },
+                      { value: "neutral", label: "Medium", help: "Neutral baseline." },
+                      { value: "quick", label: "Quick from the top", help: "Quick transitions usually need more stability to control face closure." },
+                      { value: "unsure", label: "Not sure", help: "We’ll bias moderate stability." },
                     ]}
                   />
                 )}
 
                 {step === "driver_shaftnow" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.driverShaftWeightNow}
                     onChange={(v) => setA((p) => ({ ...p, driverShaftWeightNow: v }))}
                     options={[
-                      ["dont_know", "Don’t know"],
-                      ["lt_55", "<55g"],
-                      ["55_65", "55–65g"],
-                      ["65_75", "65–75g"],
-                      ["75_plus", "75g+"],
+                      { value: "dont_know", label: "Don’t know" },
+                      { value: "lt_55", label: "<55g" },
+                      { value: "55_65", label: "55–65g" },
+                      { value: "65_75", label: "65–75g" },
+                      { value: "75_plus", label: "75g+" },
                     ]}
                   />
                 )}
 
-                {/* Iron steps */}
+                {/* Irons */}
                 {step === "iron_speed" && (
                   <div className="space-y-5">
                     <ChoiceChips
+                      mode="single"
                       value={a.knowIron}
                       onChange={(v) =>
                         setA((p) => ({
@@ -952,8 +1234,8 @@ export default function DiagnosticWizard() {
                         }))
                       }
                       options={[
-                        ["yes", "I know my 7-iron speed"],
-                        ["no", "I don’t know (use carry)"],
+                        { value: "yes", label: "I know my 7-iron speed" },
+                        { value: "no", label: "I don’t know (use carry)" },
                       ]}
                     />
 
@@ -988,158 +1270,218 @@ export default function DiagnosticWizard() {
                   </div>
                 )}
 
-                {step === "iron_miss" && (
-                  <ChoiceChips
-                    value={a.ironMiss}
-                    onChange={(v) => setA((p) => ({ ...p, ironMiss: v }))}
-                    options={[
-                      ["push", "Push / right"],
-                      ["pull", "Pull / left"],
-                      ["short", "Short / not reaching target"],
-                      ["long", "Long / flying too far"],
-                      ["both", "Both sides"],
-                      ["unsure", "Not sure"],
-                    ]}
-                  />
+                {step === "iron_startline" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.ironStartLine}
+                      onChange={(v) => setA((p) => ({ ...p, ironStartLine: v }))}
+                      options={[
+                        { value: "left", label: "Starts left", help: "Start line is mostly face direction at impact." },
+                        { value: "center", label: "Starts center", help: "Start line is mostly face direction at impact." },
+                        { value: "right", label: "Starts right", help: "Start line is mostly face direction at impact." },
+                        { value: "unsure", label: "Not sure", help: "We’ll bias neutral and lower confidence slightly." },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <BallFlightViz start={a.ironStartLine} curve={"straight"} />
+                    </MiniVizCard>
+                  </div>
+                )}
+
+                {step === "iron_curve" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.ironCurve}
+                      onChange={(v) => setA((p) => ({ ...p, ironCurve: v }))}
+                      options={[
+                        { value: "draw", label: "Draws (curves left)" },
+                        { value: "straight", label: "Mostly straight" },
+                        { value: "fade", label: "Fades (curves right)" },
+                        { value: "unsure", label: "Not sure" },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <BallFlightViz start={a.ironStartLine} curve={a.ironCurve} />
+                    </MiniVizCard>
+                  </div>
                 )}
 
                 {step === "iron_peak" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.ironPeak}
                     onChange={(v) => setA((p) => ({ ...p, ironPeak: v }))}
                     options={[
-                      ["low", "Low"],
-                      ["mid", "Mid"],
-                      ["high", "High"],
+                      { value: "low", label: "Low" },
+                      { value: "mid", label: "Mid" },
+                      { value: "high", label: "High" },
                     ]}
                   />
                 )}
 
-                {step === "iron_strike" && (
-                  <ChoiceChips
-                    value={a.ironStrike}
-                    onChange={(v) => setA((p) => ({ ...p, ironStrike: v }))}
-                    options={[
-                      ["thin", "Thin"],
-                      ["fat", "Fat"],
-                      ["center", "Center"],
-                      ["all_over", "All over"],
-                      ["unsure", "Not sure"],
-                    ]}
-                  />
+                {step === "iron_lowpoint" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.ironLowPoint}
+                      onChange={(v) => setA((p) => ({ ...p, ironLowPoint: v }))}
+                      options={[
+                        { value: "ball_first", label: "Ball-first (then turf)", help: "Ball-first contact supports more aggressive tuning." },
+                        { value: "shallow", label: "Shallow / sweepy", help: "Shallow contact often prefers balanced sequencing." },
+                        { value: "fat", label: "Fat (ground first)", help: "Low point behind the ball → prioritize contact consistency." },
+                        { value: "thin", label: "Thin (top / low on face)", help: "Thin often needs a build that supports consistent strike." },
+                        { value: "unsure", label: "Not sure", help: "We’ll bias neutral." },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <LowPointViz lowPoint={a.ironLowPoint} />
+                    </MiniVizCard>
+                  </div>
+                )}
+
+                {step === "iron_facestrike" && (
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.ironFaceStrike}
+                      onChange={(v) => setA((p) => ({ ...p, ironFaceStrike: v }))}
+                      options={[
+                        { value: "heel", label: "Heel", help: "Heel/toe strike changes start line and ball speed." },
+                        { value: "center", label: "Center", help: "Centered strike supports more aggressive tuning." },
+                        { value: "toe", label: "Toe", help: "Heel/toe strike changes start line and ball speed." },
+                        { value: "mixed", label: "Mixed", help: "More variability → bias forgiveness." },
+                        { value: "unsure", label: "Not sure", help: "We’ll keep head bias neutral." },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <FaceStrikeViz strike={a.ironFaceStrike} />
+                    </MiniVizCard>
+                  </div>
                 )}
 
                 {step === "iron_fatigue" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.ironFatigue}
                     onChange={(v) => setA((p) => ({ ...p, ironFatigue: v }))}
                     options={[
-                      ["none", "No fatigue"],
-                      ["some", "Some fatigue"],
-                      ["aLot", "A lot (arms/back/shoulders)"],
-                      ["unsure", "Not sure"],
+                      { value: "none", label: "No fatigue" },
+                      { value: "some", label: "Some fatigue" },
+                      { value: "aLot", label: "A lot (arms/back/shoulders)" },
+                      { value: "unsure", label: "Not sure" },
                     ]}
                   />
                 )}
 
                 {step === "iron_tempo" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.ironTempo}
                     onChange={(v) => setA((p) => ({ ...p, ironTempo: v }))}
                     options={[
-                      ["smooth", "Smooth"],
-                      ["neutral", "Medium"],
-                      ["quick", "Quick from the top"],
-                      ["unsure", "Not sure"],
+                      { value: "smooth", label: "Smooth", help: "Smooth transitions can use slightly softer profiles without losing control." },
+                      { value: "neutral", label: "Medium", help: "Neutral baseline." },
+                      { value: "quick", label: "Quick from the top", help: "Quick transitions often need more stability to keep start line consistent." },
+                      { value: "unsure", label: "Not sure", help: "We’ll bias moderate stability." },
                     ]}
                   />
                 )}
 
                 {step === "iron_shaftnow" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.ironShaftWeightNow}
                     onChange={(v) => setA((p) => ({ ...p, ironShaftWeightNow: v }))}
                     options={[
-                      ["dont_know", "Don’t know"],
-                      ["85_95", "85–95g"],
-                      ["95_105", "95–105g"],
-                      ["105_120", "105–120g"],
-                      ["120_plus", "120g+"],
+                      { value: "dont_know", label: "Don’t know" },
+                      { value: "85_95", label: "85–95g" },
+                      { value: "95_105", label: "95–105g" },
+                      { value: "105_120", label: "105–120g" },
+                      { value: "120_plus", label: "120g+" },
                     ]}
                   />
                 )}
 
-                {/* Wedge steps */}
+                {/* Wedges */}
                 {step === "wedge_use" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.wedgeUse}
                     onChange={(v) => setA((p) => ({ ...p, wedgeUse: v }))}
                     options={[
-                      ["mostly_full", "Mostly full shots (approach wedges)"],
-                      ["mixed", "Mixed (full + partial + chips)"],
-                      ["mostly_greenside", "Mostly around the green"],
+                      { value: "mostly_full", label: "Mostly full shots (approach wedges)" },
+                      { value: "mixed", label: "Mixed (full + partial + chips)" },
+                      { value: "mostly_greenside", label: "Mostly around the green" },
                     ]}
                   />
                 )}
 
                 {step === "wedge_turf" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.wedgeTurf}
                     onChange={(v) => setA((p) => ({ ...p, wedgeTurf: v }))}
                     options={[
-                      ["digger", "Digger (deep divots)"],
-                      ["neutral", "Neutral"],
-                      ["sweeper", "Sweeper (shallow)"],
-                      ["unsure", "Not sure"],
+                      { value: "digger", label: "Digger (deep divots)" },
+                      { value: "neutral", label: "Neutral" },
+                      { value: "sweeper", label: "Sweeper (shallow)" },
+                      { value: "unsure", label: "Not sure" },
                     ]}
                   />
                 )}
 
                 {step === "wedge_miss" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.wedgeMiss}
                     onChange={(v) => setA((p) => ({ ...p, wedgeMiss: v }))}
                     options={[
-                      ["fat", "Fat"],
-                      ["thin", "Thin"],
-                      ["both", "Both"],
-                      ["unsure", "Not sure"],
+                      { value: "fat", label: "Fat" },
+                      { value: "thin", label: "Thin" },
+                      { value: "both", label: "Both" },
+                      { value: "unsure", label: "Not sure" },
                     ]}
                   />
                 )}
 
                 {step === "wedge_traj" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.wedgeTrajectory}
                     onChange={(v) => setA((p) => ({ ...p, wedgeTrajectory: v }))}
                     options={[
-                      ["lower", "Lower flight"],
-                      ["neutral", "Neutral"],
-                      ["higher", "Higher flight"],
+                      { value: "lower", label: "Lower flight" },
+                      { value: "neutral", label: "Neutral" },
+                      { value: "higher", label: "Higher flight" },
                     ]}
                   />
                 )}
 
                 {step === "wedge_spin" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.wedgeSpin}
                     onChange={(v) => setA((p) => ({ ...p, wedgeSpin: v }))}
                     options={[
-                      ["more_check", "More check (stop faster)"],
-                      ["balanced", "Balanced"],
-                      ["more_release", "More release (rollout)"],
+                      { value: "more_check", label: "More check (stop faster)" },
+                      { value: "balanced", label: "Balanced" },
+                      { value: "more_release", label: "More release (rollout)" },
+                      { value: "unsure", label: "Not sure" },
                     ]}
                   />
                 )}
 
                 {step === "wedge_shaftpref" && (
                   <ChoiceChips
+                    mode="single"
                     value={a.wedgeShaftPref}
                     onChange={(v) => setA((p) => ({ ...p, wedgeShaftPref: v }))}
                     options={[
-                      ["match_irons", "Match irons"],
-                      ["slightly_heavier", "Slightly heavier for control"],
-                      ["unknown", "Not sure"],
+                      { value: "match_irons", label: "Match irons" },
+                      { value: "slightly_heavier", label: "Slightly heavier for control" },
+                      { value: "unknown", label: "Not sure" },
                     ]}
                   />
                 )}
@@ -1165,240 +1507,367 @@ export default function DiagnosticWizard() {
               </div>
             </>
           ) : (
-            <>
-              <h1 className="text-2xl font-semibold tracking-tight">Your fit summary</h1>
-
-              <div className="mt-3 space-y-1 text-sm text-slate-600">
-                {(result.focus === "driver_woods" || result.focus === "full_bag") && (
-                  <div>
-                    Estimated driver speed:{" "}
-                    <span className="font-medium text-slate-900">{result.driverSpeedEstimate} mph</span>
-                  </div>
-                )}
-                {(result.focus === "irons" || result.focus === "full_bag" || result.focus === "wedges") && (
-                  <div>
-                    Estimated 7-iron speed:{" "}
-                    <span className="font-medium text-slate-900">{result.sevenIronSpeedEstimate} mph</span>
-                  </div>
-                )}
-              </div>
-
-              {isVerified && (
-                <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                  <div className="text-sm font-semibold text-emerald-900">✅ Email verified</div>
-                  <div className="mt-1 text-sm text-emerald-800">Premium insights are now unlocked.</div>
-                </div>
-              )}
-
-              <div className="mt-8 grid gap-4">
-                {!isVerified && <EmailCaptureCard payload={a} />}
-
-                {(result.driver || result.woods) && (
-                  <Card title="Driver / Woods (separate profiles)">
-                    <div className="grid gap-4">
-                      {result.driver && (
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                          <div className="text-sm font-semibold text-slate-900">Driver</div>
-                          <div className="mt-3 space-y-2">
-                            <Line label="Fit Score" value={`${result.driver.fitScore}%`} />
-                            <Line label="Weight range" value={result.driver.shaft.weight} />
-                            <Line label="Flex" value={result.driver.shaft.flex} />
-                            <Line label="Profile bias" value={result.driver.shaft.profile} />
-                          </div>
-
-                          {result.driver.note && <p className="mt-3 text-xs text-slate-500">{result.driver.note}</p>}
-
-                          <div className="mt-4">
-                            <div className="text-sm font-semibold text-slate-900">Start here: settings guide</div>
-                            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                              {(result.driver.settings ?? []).map((s: string, i: number) => (
-                                <li key={i}>{s}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {result.woods && (
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                          <div className="text-sm font-semibold text-slate-900">Fairway Woods</div>
-                          <div className="mt-3 space-y-2">
-                            <Line label="Fit Score" value={`${result.woods.fitScore}%`} />
-                            <Line label="Weight range" value={result.woods.shaft.weight} />
-                            <Line label="Flex" value={result.woods.shaft.flex} />
-                            <Line label="Profile bias" value={result.woods.shaft.profile} />
-                          </div>
-                          <p className="mt-3 text-xs text-slate-500">{result.woods.note}</p>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                )}
-
-                {result.irons && (
-                  <Card title="Irons (separate profile)">
-                    <Line label="Fit Score" value={`${result.irons.fitScore}%`} />
-                    <Line label="Weight range" value={result.irons.shaft.weight} />
-                    <Line label="Flex" value={result.irons.shaft.flex} />
-                    <Line label="Profile bias" value={result.irons.shaft.profile} />
-                    <div className="pt-2">
-                      <Line label="Head bias" value={result.irons.headBias} />
-                    </div>
-                    {result.irons.note && <p className="pt-2 text-xs text-slate-500">{result.irons.note}</p>}
-                  </Card>
-                )}
-
-                {result.wedges && (
-                  <Card title="Wedges (separate profile)">
-                    <Line label="Fit Score" value={`${result.wedges.fitScore}%`} />
-                    <Line label="Weight range" value={result.wedges.shaft.weight} />
-                    <Line label="Flex feel" value={result.wedges.shaft.flex} />
-                    <Line label="Bounce / grind" value={result.wedges.shaft.profile} />
-
-                    <div className="pt-3">
-                      <div className="text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</div>
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                        {(result.wedges.gappingBullets ?? []).map((x: string, i: number) => (
-                          <li key={i}>{x}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="pt-3">
-                      <div className="text-sm font-semibold text-slate-900">Build notes</div>
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                        {(result.wedges.buildNotes ?? []).map((x: string, i: number) => (
-                          <li key={i}>{x}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {result.wedges.note && <p className="pt-2 text-xs text-slate-500">{result.wedges.note}</p>}
-                  </Card>
-                )}
-
-                <Card title="Why these recommendations">
-                  <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-                    {(result.why ?? []).map((w: string, i: number) => (
-                      <li key={i}>{w}</li>
-                    ))}
-                  </ul>
-                </Card>
-
-                {isVerified && (
-                  <Card title="How to interpret and apply your results (fitter-grade)">
-                    <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
-                      <li>
-                        <span className="font-medium text-slate-900">Treat weight as the primary constraint.</span>{" "}
-                        Weight is the biggest lever for sequencing, strike quality, and dispersion stability. Stay inside
-                        the band first. Only then tune flex/profile.
-                      </li>
-                      <li>
-                        <span className="font-medium text-slate-900">Flex labels are not standardized.</span>{" "}
-                        “Stiff/X” varies widely. What matters is delivered dynamic loft/closure under your transition. If
-                        you’re between bands, test both and compare strike + start-line control.
-                      </li>
-                      <li>
-                        <span className="font-medium text-slate-900">Use stability/torque direction to manage face closure.</span>{" "}
-                        If you fight left (hooks/pulls), favor lower torque + tip-stable profiles. If you fight right
-                        (slices/pushes), stability still matters—but don’t over-stiffen into an open-face delivery.
-                      </li>
-                      <li>
-                        <span className="font-medium text-slate-900">Profile (EI) is the “timing” lever.</span>{" "}
-                        Tip-stiff tends to lower launch/spin and reduce left bias; softer tips can help players who need
-                        help launching or who deliver too little dynamic loft. Match profile to your flight window and
-                        transition violence.
-                      </li>
-                      <li>
-                        <span className="font-medium text-slate-900">Validate with a controlled test protocol.</span>{" "}
-                        Test 2–3 shafts in the same head at the same length/swingweight. Hit 8–12 shots per build across
-                        multiple sessions. Judge <span className="font-medium">dispersion + strike</span> first, then
-                        launch/spin.
-                      </li>
-                      <li>
-                        <span className="font-medium text-slate-900">Keep swingweight/length changes deliberate.</span>{" "}
-                        Length and swingweight can override a shaft recommendation. If you change length, re-check
-                        strike pattern and start line before making conclusions about “shaft fit.”
-                      </li>
-                    </ul>
-
-                    <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-                      <div className="text-sm font-semibold text-slate-900">Buying path (fast + low risk)</div>
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                        <li>
-                          Pick <span className="font-medium">one head</span> you like (forgiveness/shape/launch) and test
-                          shafts inside your band.
-                        </li>
-                        <li>
-                          Prioritize builds that tighten{" "}
-                          <span className="font-medium">start line + curvature</span> before chasing max ball speed.
-                        </li>
-                        <li>
-                          If buying used, match <span className="font-medium">weight + profile family</span> first; flex
-                          is secondary.
-                        </li>
-                      </ul>
-                    </div>
-                  </Card>
-                )}
-              </div>
-
-              <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-                <button
-                  type="button"
-                  onClick={resetAll}
-                  className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-medium"
-                >
-                  Start over
-                </button>
-
-                <a
-                  href="/"
-                  className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
-                >
-                  Back to home
-                </a>
-              </div>
-            </>
+            <ResultsView a={a} result={result} isVerified={isVerified} onReset={resetAll} />
           )}
         </section>
+
+        <div className="mt-6 text-center text-xs text-slate-400">
+          Tip: you can refresh anytime — your answers are saved locally on your device.
+        </div>
       </div>
     </main>
   );
 }
 
-function ChoiceChips<T extends string>({
-  value,
-  onChange,
-  options,
+/* ---------------- RESULTS VIEW (FULL) ---------------- */
+
+function ResultsView({
+  a,
+  result,
+  isVerified,
+  onReset,
 }: {
+  a: Answers;
+  result: ReturnType<typeof computeResults>;
+  isVerified: boolean;
+  onReset: () => void;
+}) {
+  const showDriver = result.focus === "driver_woods" || result.focus === "full_bag";
+  const showIrons = result.focus === "irons" || result.focus === "full_bag";
+  const showWedges = result.focus === "wedges" || result.focus === "full_bag";
+
+  const modelStart = showIrons && !showDriver ? a.ironStartLine : a.driverStartLine;
+  const modelCurve = showIrons && !showDriver ? a.ironCurve : a.driverCurve;
+
+  return (
+    <>
+      <h1 className="text-2xl font-semibold tracking-tight">Your fit summary</h1>
+
+      <div className="mt-3 space-y-1 text-sm text-slate-600">
+        {showDriver && (
+          <div>
+            Estimated driver speed: <span className="font-medium text-slate-900">{result.driverSpeedEstimate} mph</span>
+          </div>
+        )}
+        {(showIrons || showWedges) && (
+          <div>
+            Estimated 7-iron speed:{" "}
+            <span className="font-medium text-slate-900">{result.sevenIronSpeedEstimate} mph</span>
+          </div>
+        )}
+      </div>
+
+      {isVerified && (
+        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+          <div className="text-sm font-semibold text-emerald-900">✅ Email verified</div>
+          <div className="mt-1 text-sm text-emerald-800">Premium insights are now unlocked.</div>
+        </div>
+      )}
+
+      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold text-slate-900">Confidence</div>
+          <div className="text-sm font-medium text-slate-900">{result.confidence}%</div>
+        </div>
+        <div className="mt-2 h-2 w-full rounded-full bg-white">
+          <div className="h-2 rounded-full bg-slate-900 transition-all" style={{ width: `${result.confidence}%` }} />
+        </div>
+        <div className="mt-2 text-xs text-slate-500">
+          Confidence drops when key inputs are marked “Not sure” or missing.
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-4">
+        {!isVerified && <EmailCaptureCard payload={a} />}
+
+        <Card title="Your ball flight model">
+          <div className="grid gap-3">
+            <div className="text-sm text-slate-600">
+              {showIrons && !showDriver ? "Irons" : "Driver"}:{" "}
+              <span className="font-medium text-slate-900">
+                {modelStart} / {modelCurve}
+              </span>
+            </div>
+            <BallFlightViz start={modelStart} curve={modelCurve} compact={false} />
+          </div>
+        </Card>
+
+        {(showIrons || showDriver) && (
+          <Card title="Your contact profile">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-sm font-semibold text-slate-900">Iron low point</div>
+                <div className="mt-1 text-xs text-slate-500">{a.ironLowPoint.replaceAll("_", " ")}</div>
+                <div className="mt-3">
+                  <LowPointViz lowPoint={a.ironLowPoint} />
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-sm font-semibold text-slate-900">Face strike</div>
+                <div className="mt-1 text-xs text-slate-500">{a.ironFaceStrike}</div>
+                <div className="mt-3">
+                  <FaceStrikeViz strike={a.ironFaceStrike} />
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+                {/* Recommendations */}
+        {showDriver && result.driver && (
+          <Card title="Driver recommendation">
+            <Line label="Fit score" value={`${result.driver.fitScore}%`} />
+            <Line label="Primary lever" value={result.driver.primaryLever} />
+            <Line label="Shaft weight" value={result.driver.shaft.weight} />
+            <Line label="Flex" value={result.driver.shaft.flex} />
+            <div className="text-sm text-slate-700">{result.driver.shaft.profile}</div>
+
+            {(result.driver.settings ?? []).length > 0 && (
+              <>
+                <div className="pt-3 text-sm font-semibold text-slate-900">Test settings</div>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                  {(result.driver.settings ?? []).map((x: string, i: number) => (
+                    <li key={i}>{x}</li>
+                  ))}
+                </ul>
+              </>
+            )}
+
+            {result.driver.note ? <p className="pt-2 text-xs text-slate-500">{result.driver.note}</p> : null}
+          </Card>
+        )}
+
+        {showDriver && result.woods && (
+          <Card title="Woods (3W/5W) baseline">
+            <Line label="Fit score" value={`${result.woods.fitScore}%`} />
+            <Line label="Shaft weight" value={result.woods.shaft.weight} />
+            <Line label="Flex" value={result.woods.shaft.flex} />
+            <div className="text-sm text-slate-700">{result.woods.shaft.profile}</div>
+            {result.woods.note ? <p className="pt-2 text-xs text-slate-500">{result.woods.note}</p> : null}
+          </Card>
+        )}
+
+        {showIrons && result.irons && (
+          <Card title="Iron recommendation">
+            <Line label="Fit score" value={`${result.irons.fitScore}%`} />
+            <Line label="Primary lever" value={result.irons.primaryLever} />
+            <Line label="Shaft weight" value={result.irons.shaft.weight} />
+            <Line label="Flex" value={result.irons.shaft.flex} />
+            <div className="text-sm text-slate-700">{result.irons.shaft.profile}</div>
+            <Line label="Head bias" value={result.irons.headBias} />
+            {result.irons.note ? <p className="pt-2 text-xs text-slate-500">{result.irons.note}</p> : null}
+          </Card>
+        )}
+
+        {showWedges && result.wedges && (
+          <Card title="Wedge recommendation">
+            <Line label="Fit score" value={`${result.wedges.fitScore}%`} />
+            <Line label="Shaft weight" value={result.wedges.shaft.weight} />
+            <Line label="Flex" value={result.wedges.shaft.flex} />
+            <div className="text-sm text-slate-700">{result.wedges.shaft.profile}</div>
+
+            <div className="pt-3 text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {(result.wedges.gappingBullets ?? []).map((x: string, i: number) => (
+                <li key={i}>{x}</li>
+              ))}
+            </ul>
+
+            <div className="pt-3 text-sm font-semibold text-slate-900">Build notes</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {(result.wedges.buildNotes ?? []).map((x: string, i: number) => (
+                <li key={i}>{x}</li>
+              ))}
+            </ul>
+
+            {result.wedges.note ? <p className="pt-2 text-xs text-slate-500">{result.wedges.note}</p> : null}
+          </Card>
+        )}
+
+        {/* Reasoning */}
+        {(result.cause ?? []).length > 0 && (
+          <Card title="What in your answers drove this fit">
+            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+              {(result.cause ?? []).map((c: string, i: number) => (
+                <li key={i}>{c}</li>
+              ))}
+            </ul>
+          </Card>
+        )}
+
+        <Card title="Why these recommendations">
+          <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+            {(result.why ?? []).map((w: string, i: number) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </Card>
+
+        <Card title="How to interpret and apply your results (fitter-grade)">
+          <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
+            <li>
+              <span className="font-medium text-slate-900">Treat weight as the primary constraint.</span>{" "}
+              Stay inside the band first. Only then tune flex/profile.
+            </li>
+            <li>
+              <span className="font-medium text-slate-900">Flex labels are not standardized.</span>{" "}
+              If you’re between bands, test both and compare strike + start-line control.
+            </li>
+            <li>
+              <span className="font-medium text-slate-900">Validate with a controlled test protocol.</span>{" "}
+              Test 2–3 shafts in the same head at the same length/swingweight.
+            </li>
+          </ul>
+        </Card>
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <button
+            type="button"
+            onClick={onReset}
+            className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-medium"
+          >
+            Start over
+          </button>
+
+          <a
+            href="/"
+            className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Back to home
+          </a>
+        </div>
+      </div>
+    </>
+  );
+}
+
+/* ---------------- UI: ChoiceChips (FIXED: no nested buttons) ---------------- */
+
+type ChipOption<T extends string> = { value: T; label: string; help?: string };
+
+function ChoiceChips<T extends string>(props: {
+  mode: "single";
   value: T;
   onChange: (v: T) => void;
-  options: [T, string][];
-}) {
+  options: ChipOption<T>[];
+}): React.ReactElement;
+function ChoiceChips<T extends string>(props: {
+  mode: "multi";
+  value: T[];
+  onChange: (v: T[]) => void;
+  maxSelections: number;
+  options: ChipOption<T>[];
+}): React.ReactElement;
+
+function ChoiceChips<T extends string>(
+  props:
+    | { mode: "single"; value: T; onChange: (v: T) => void; options: ChipOption<T>[] }
+    | { mode: "multi"; value: T[]; onChange: (v: T[]) => void; maxSelections: number; options: ChipOption<T>[] }
+) {
+  const [openHelp, setOpenHelp] = React.useState<T | null>(null);
+
+  React.useEffect(() => {
+    function onDocDown(e: MouseEvent) {
+      const t = e.target as HTMLElement | null;
+      if (!t) return setOpenHelp(null);
+      if (t.closest?.('[data-help-root="1"]')) return;
+      setOpenHelp(null);
+    }
+    document.addEventListener("mousedown", onDocDown);
+    return () => document.removeEventListener("mousedown", onDocDown);
+  }, []);
+
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      {options.map(([v, label]) => {
-        const active = v === value;
+    <div className="grid gap-3 sm:grid-cols-2" data-help-root="1">
+      {props.options.map((opt) => {
+        const active =
+          props.mode === "single" ? opt.value === props.value : (props.value as T[]).includes(opt.value);
+
+        const disabled =
+          props.mode === "multi" &&
+          !(props.value as T[]).includes(opt.value) &&
+          (props.value as T[]).length >= (props as any).maxSelections;
+
+        function handleChipClick() {
+          if (disabled) return;
+
+          if (props.mode === "single") {
+            props.onChange(opt.value as any);
+            return;
+          }
+          const current = props.value as T[];
+          const exists = current.includes(opt.value);
+
+          if (exists) {
+            props.onChange(current.filter((x) => x !== opt.value));
+            return;
+          }
+          if (current.length >= (props as any).maxSelections) return;
+          props.onChange([...current, opt.value]);
+        }
+
+        const showHelp = openHelp === opt.value;
+
         return (
-          <button
-            key={v}
-            type="button"
-            onClick={() => onChange(v)}
-            className={[
-              "rounded-2xl border px-4 py-4 text-left transition",
-              active
-                ? "border-slate-900 bg-slate-900 text-white"
-                : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
-            ].join(" ")}
-          >
-            <div className="text-sm font-medium">{label}</div>
-          </button>
+          <div key={opt.value} className="relative">
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={handleChipClick}
+              onKeyDown={(e) => {
+                if (disabled) return;
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handleChipClick();
+                }
+              }}
+              aria-pressed={active}
+              aria-disabled={disabled}
+              className={[
+                "relative w-full rounded-2xl border px-4 py-4 text-left transition select-none outline-none",
+                active
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50",
+                disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+              ].join(" ")}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="text-sm font-medium">{opt.label}</div>
+
+                {opt.help ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOpenHelp((prev) => (prev === opt.value ? null : opt.value));
+                    }}
+                    className={[
+                      "inline-flex h-6 w-6 items-center justify-center rounded-full border text-[11px]",
+                      active ? "border-white/40 text-white/90" : "border-slate-300 text-slate-600",
+                    ].join(" ")}
+                    aria-label="More info"
+                    aria-expanded={showHelp}
+                  >
+                    i
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {opt.help && showHelp ? (
+              <div className="absolute left-3 right-3 top-full z-10 mt-2 rounded-2xl border border-slate-200 bg-white p-3 text-xs text-slate-700 shadow-sm">
+                {opt.help}
+              </div>
+            ) : null}
+          </div>
         );
       })}
     </div>
   );
 }
+
+/* ---------------- UI helpers ---------------- */
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -1415,5 +1884,302 @@ function Line({ label, value }: { label: string; value: string }) {
       <div className="text-sm text-slate-600">{label}</div>
       <div className="text-sm font-medium text-slate-900 text-right">{value}</div>
     </div>
+  );
+}
+
+function MiniVizCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+      <div className="text-xs font-medium text-slate-600">Visual</div>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+/* ---------------- MICRO-VISUALS (SVG) ---------------- */
+
+/**
+ * BallFlightViz (FIXED to your yellow-highlight spec):
+ * ✅ Start point is LEFT/CENTER/RIGHT of target line (true start)
+ * ✅ End point ALWAYS lands on target line (center)
+ * ✅ Draw = curves LEFT toward target, Fade = curves RIGHT toward target
+ * ✅ NO moving ball circle (removes the stray/yellow dot issue)
+ * ✅ "start" label sits under the true start point
+ */
+function BallFlightViz({
+  start,
+  curve,
+  compact = true,
+}: {
+  start: StartLine;
+  curve: Curve;
+  compact?: boolean;
+}) {
+  const w = compact ? 260 : 520;
+  const h = compact ? 120 : 160;
+
+  const groundY = h * 0.78;
+  const targetX = w * 0.5;
+
+  // True start point is offset from the target line
+  const startOffset =
+    start === "left" ? -w * 0.18 : start === "right" ? w * 0.18 : 0;
+
+  const sx = targetX + startOffset;
+  const sy = groundY;
+
+  // End point ALWAYS on target line (your requirement)
+  const ex = targetX;
+  const ey = h * 0.20;
+
+  // Curve direction: draw = left, fade = right
+  const sign = curve === "draw" ? 1 : curve === "fade" ? -1 : 0;
+
+  // Bend amount: visible but not extreme (scaled for compact vs full)
+  const bend = sign * w * 0.22;
+
+  // We want the curve to "bulge" relative to the START and the mid-chord,
+  // while still ending exactly on the target line.
+  const midX = (sx + ex) / 2;
+
+  // Control points:
+  // c1: lets the ball leave from the true start point with slight bias
+  const c1x = sx + bend * 0.35;
+  const c1y = h * 0.62;
+
+  // c2: creates the visible curvature in the mid/late flight
+  const c2x = midX + bend;
+  const c2y = h * 0.28;
+
+  const path = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
+
+  // Start label under the true start point
+  const startLabelX = Math.max(w * 0.06, Math.min(sx - 14, w * 0.94));
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+      {/* ground */}
+      <line
+        x1={w * 0.1}
+        y1={groundY}
+        x2={w * 0.9}
+        y2={groundY}
+        stroke="rgb(226 232 240)"
+        strokeWidth="2"
+      />
+
+      {/* target line */}
+      <line
+        x1={targetX}
+        y1={groundY}
+        x2={targetX}
+        y2={h * 0.12}
+        stroke="rgb(203 213 225)"
+        strokeWidth="2"
+        strokeDasharray="6 6"
+      />
+
+      {/* flight path (animated draw) */}
+      <path
+        d={path}
+        fill="none"
+        stroke="rgb(15 23 42)"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray="900"
+        strokeDashoffset="900"
+      >
+        <animate
+          attributeName="stroke-dashoffset"
+          from="900"
+          to="0"
+          dur="0.9s"
+          fill="freeze"
+        />
+      </path>
+
+      {/* labels */}
+      <text x={startLabelX} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
+        start
+      </text>
+      <text x={targetX + 10} y={h * 0.16} fontSize="10" fill="rgb(100 116 139)">
+        target
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * FaceStrikeViz:
+ * - Heel/toe always show
+ * - Shaft/hosel reference on RIGHT (toe side)
+ */
+function FaceStrikeViz({
+  strike,
+}: {
+  strike: "heel" | "center" | "toe" | "mixed" | "unsure" | "all_over";
+}) {
+  const w = 260;
+  const h = 120;
+
+  const faceX = w * 0.22;
+  const faceY = h * 0.30;
+  const faceW = w * 0.56;
+  const faceH = h * 0.50;
+
+  const hoselX = faceX + faceW + 6;
+  const hoselY = faceY + faceH * 0.25;
+  const hoselW = 10;
+  const hoselH = faceH * 0.55;
+
+  const shaftX1 = hoselX + hoselW * 0.65;
+  const shaftY1 = hoselY + hoselH * 0.15;
+  const shaftX2 = shaftX1 + 22;
+  const shaftY2 = shaftY1 - 26;
+
+  const y = faceY + faceH * 0.55;
+  const heelX = faceX + faceW * 0.25;
+  const centerX = faceX + faceW * 0.50;
+  const toeX = faceX + faceW * 0.75;
+
+  const normalized = strike === "all_over" ? "mixed" : strike;
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+      <rect
+        x={faceX}
+        y={faceY}
+        width={faceW}
+        height={faceH}
+        rx="18"
+        fill="rgb(248 250 252)"
+        stroke="rgb(226 232 240)"
+        strokeWidth="2"
+      />
+
+      {Array.from({ length: 6 }).map((_, i) => (
+        <line
+          key={i}
+          x1={faceX + faceW * 0.06}
+          x2={faceX + faceW * 0.94}
+          y1={faceY + faceH * (0.18 + i * 0.12)}
+          y2={faceY + faceH * (0.18 + i * 0.12)}
+          stroke="rgb(226 232 240)"
+          strokeWidth="2"
+        />
+      ))}
+
+      <rect
+        x={hoselX}
+        y={hoselY}
+        width={hoselW}
+        height={hoselH}
+        rx="6"
+        fill="rgb(241 245 249)"
+        stroke="rgb(226 232 240)"
+        strokeWidth="2"
+      />
+      <line
+        x1={shaftX1}
+        y1={shaftY1}
+        x2={shaftX2}
+        y2={shaftY2}
+        stroke="rgb(226 232 240)"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+
+      {normalized === "mixed" && (
+        <>
+          <circle cx={heelX} cy={y} r={4} fill="rgb(148 163 184)" />
+          <circle cx={centerX} cy={y} r={5} fill="rgb(100 116 139)" />
+          <circle cx={toeX} cy={y} r={4} fill="rgb(148 163 184)" />
+        </>
+      )}
+
+      {normalized === "center" && <circle cx={centerX} cy={y} r={7} fill="rgb(15 23 42)" />}
+      {normalized === "heel" && <circle cx={heelX} cy={y} r={6} fill="rgb(148 163 184)" />}
+      {normalized === "toe" && <circle cx={toeX} cy={y} r={6} fill="rgb(148 163 184)" />}
+      {normalized === "unsure" && <circle cx={centerX} cy={y} r={5} fill="rgb(203 213 225)" />}
+
+      <text x={faceX} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
+        heel
+      </text>
+      <text x={faceX + faceW - 22} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
+        toe
+      </text>
+      <text x={hoselX - 2} y={faceY - 6} fontSize="10" fill="rgb(100 116 139)">
+        shaft
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * LowPointViz:
+ * - U-shaped divot (dips into ground)
+ */
+function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
+  const w = 260;
+  const h = 120;
+
+  const groundY = h * 0.72;
+  const ballX = w * 0.5;
+  const ballY = groundY - 10;
+
+  let divotX = ballX;
+  let divotKind: "before" | "after" | "shallow" | "none" = "none";
+
+  if (lowPoint === "fat") {
+    divotKind = "before";
+    divotX = ballX - 40;
+  } else if (lowPoint === "ball_first") {
+    divotKind = "after";
+    divotX = ballX + 32;
+  } else if (lowPoint === "shallow") {
+    divotKind = "shallow";
+    divotX = ballX + 18;
+  } else {
+    divotKind = "none";
+  }
+
+  const depth =
+    divotKind === "before" ? 14 : divotKind === "after" ? 16 : divotKind === "shallow" ? 8 : 0;
+
+  const divotPath =
+    divotKind === "none"
+      ? ""
+      : `M ${divotX - 22} ${groundY}
+         Q ${divotX} ${groundY + depth}
+         ${divotX + 22} ${groundY}`;
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+      <line x1={w * 0.1} y1={groundY} x2={w * 0.9} y2={groundY} stroke="rgb(226 232 240)" strokeWidth="3" />
+
+      <circle cx={ballX} cy={ballY} r={6} fill="rgb(15 23 42)" />
+
+      {divotPath ? (
+        <path
+          d={divotPath}
+          fill="none"
+          stroke="rgb(15 23 42)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray="200"
+          strokeDashoffset="200"
+        >
+          <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />
+        </path>
+      ) : (
+        <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
+          {lowPoint === "thin" ? "thin contact (no divot)" : "—"}
+        </text>
+      )}
+
+      <text x={w * 0.1} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
+        ground
+      </text>
+    </svg>
   );
 }
