@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const baseUrl = "https://dovegolf.fit";
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "WebSite",

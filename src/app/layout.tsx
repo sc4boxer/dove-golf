@@ -37,9 +37,7 @@ export const metadata: Metadata = {
   authors: [{ name: "Dove Golf" }],
   creator: "Dove Golf",
   publisher: "Dove Golf",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-  ),
+  metadataBase: new URL("https://dovegolf.fit"),
   alternates: {
     canonical: "/",
   },
@@ -59,7 +57,7 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
-    url: "/",
+    url: "https://dovegolf.fit",
   },
   twitter: {
     card: "summary_large_image",
