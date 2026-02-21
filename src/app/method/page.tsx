@@ -532,6 +532,12 @@ export default function MethodPage() {
                     Start Diagnostic →
                   </a>
                   <a
+                    href="https://dovegolf.fit/learn"
+                    className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    Learn more
+                  </a>
+                  <a
                     href="/"
                     className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
