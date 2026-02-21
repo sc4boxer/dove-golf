@@ -8,8 +8,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 function maskEmail(email: string) {
   const [localPart = "", domain = ""] = email.split("@");
   if (!localPart || !domain) return "[invalid-email]";
@@ -45,11 +43,31 @@ function sha256Hex(input: string) {
 
 export async function POST(req: Request) {
   try {
+    const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim();
+    const FROM_EMAIL =
+      process.env.RESEND_FROM_EMAIL?.trim() ??
+      "Dove Golf <noreply@dovegolf.fit>";
+
+    if (!RESEND_API_KEY) {
+      return NextResponse.json(
+        { ok: false, error: "Missing RESEND_API_KEY" },
+        { status: 500 }
+      );
+    }
+
+    if (FROM_EMAIL.toLowerCase().includes("resend.dev")) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "Invalid FROM domain (resend.dev). Use @dovegolf.fit",
+        },
+        { status: 500 }
+      );
+    }
+
     const missingEnvVars = [
       "SUPABASE_URL",
       "SUPABASE_SERVICE_ROLE_KEY",
-      "RESEND_API_KEY",
-      "RESEND_FROM",
     ].filter((key) => !process.env[key]);
 
     if (missingEnvVars.length > 0) {
@@ -90,10 +108,13 @@ export async function POST(req: Request) {
     logEmailEvent("lead_email_attempt", {
       email: maskEmail(email),
       verifyUrlHost: new URL(verifyUrl).host,
+      fromDomain: FROM_EMAIL.split("@")[1]?.replace(/>$/, "") ?? null,
     });
 
+    const resend = new Resend(RESEND_API_KEY);
+
     const resendResponse = await resend.emails.send({
-      from: process.env.RESEND_FROM!,
+      from: FROM_EMAIL,
       to: email,
       subject: "Verify your Golf Fit Summary",
       html: `
@@ -111,7 +132,11 @@ export async function POST(req: Request) {
 
     if (resendResponse.error) {
       return NextResponse.json(
-        { ok: false, error: resendResponse.error.message || "Email provider error." },
+        {
+          ok: false,
+          error: resendResponse.error.message || "Email provider error.",
+          code: resendResponse.error.name ?? "resend_error",
+        },
         { status: 502 }
       );
     }
@@ -136,10 +161,15 @@ export async function POST(req: Request) {
   } catch (e: any) {
     logEmailEvent("lead_email_exception", {
       error: e?.message ?? "Something went wrong.",
+      code: e?.code ?? e?.name ?? "unknown",
     });
 
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Something went wrong." },
+      {
+        ok: false,
+        error: e?.message ?? "Something went wrong.",
+        code: e?.code ?? e?.name ?? "unknown",
+      },
       { status: 500 }
     );
   }
