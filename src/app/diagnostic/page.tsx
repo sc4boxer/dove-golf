@@ -2236,6 +2236,10 @@ function EquipmentAlignmentShareCard({
 
   const causeItems = (result.cause ?? []).slice(0, 5);
   const causeCardHeight = Math.max(134, 74 + causeItems.length * 20);
+  const recommendationColumnWidth = 904 / Math.max(1, recommendationGroups.length);
+
+  const truncateForCard = (value: string, maxChars: number) =>
+    value.length > maxChars ? `${value.slice(0, maxChars - 1)}…` : value;
 
   return (
     <svg
@@ -2296,28 +2300,32 @@ function EquipmentAlignmentShareCard({
 
       <rect x="64" y="590" width="952" height="214" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
-      <foreignObject x="88" y="640" width="904" height="156">
-        <div className="h-full w-full text-slate-900">
-          <div className="grid gap-6 [grid-template-columns:repeat(3,minmax(0,1fr))]">
-            {recommendationGroups.map((group, i) => (
-              <div
-                key={group.title}
-                className={["min-w-0", i > 0 ? "border-l border-slate-200 pl-6" : ""].join(" ")}
-              >
-                <div className="pb-2 text-base font-semibold leading-tight text-slate-900">{group.title}</div>
-                <div className="space-y-1.5">
-                  {group.lines.slice(0, 6).map(([label, value]) => (
-                    <div key={`${group.title}-${label}`} className="flex items-start justify-between gap-3 text-[13px] leading-[1.25rem]">
-                      <span className="shrink-0 text-slate-500">{label}</span>
-                      <span className="min-w-0 flex-1 text-right font-medium whitespace-normal break-words text-slate-900">{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </foreignObject>
+      {recommendationGroups.map((group, i) => {
+        const columnX = 88 + i * recommendationColumnWidth;
+        const lineLabelX = columnX;
+        const lineValueX = columnX + recommendationColumnWidth - 12;
+        return (
+          <g key={group.title}>
+            {i > 0 && <line x1={columnX - 14} y1="648" x2={columnX - 14} y2="788" stroke="#e2e8f0" />}
+            <text x={columnX} y="664" fontSize="16" fontWeight="600" fill="#0f172a">
+              {group.title}
+            </text>
+            {group.lines.slice(0, 6).map(([label, value], lineIndex) => {
+              const rowY = 688 + lineIndex * 17;
+              return (
+                <g key={`${group.title}-${label}`}>
+                  <text x={lineLabelX} y={rowY} fontSize="12" fill="#64748b">
+                    {label}
+                  </text>
+                  <text x={lineValueX} y={rowY} fontSize="12" fill="#0f172a" fontWeight="500" textAnchor="end">
+                    {truncateForCard(value, 22)}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
 
       <rect x="64" y="820" width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="850" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
