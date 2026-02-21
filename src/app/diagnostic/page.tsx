@@ -1075,37 +1075,52 @@ export default function DiagnosticWizard() {
           }
         };
 
+        const resumeToken = url.searchParams.get("resumeToken");
         const savedPayload = window.localStorage.getItem("diagnostic_last_payload");
-        if (savedPayload) {
-          try {
-            const parsed = JSON.parse(savedPayload);
-            hydrateFromPayload(parsed);
-          } catch {
-            // ignore bad JSON
-          }
-        } else {
-          const resumeToken = url.searchParams.get("resumeToken");
-          if (resumeToken) {
-            fetch(`/api/lead/context?token=${encodeURIComponent(resumeToken)}`)
-              .then((res) => res.json().catch(() => ({ ok: false })))
-              .then((ctx) => {
-                if (ctx?.ok && ctx?.payload) {
-                  window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(ctx.payload));
-                  hydrateFromPayload(ctx.payload);
-                }
-              })
-              .catch(() => {
-                // ignore
-              })
-              .finally(() => {
-                setPendingJumpToResults(true);
-              });
-          } else {
-            setPendingJumpToResults(true);
-          }
-        }
 
-        if (savedPayload || !url.searchParams.get("resumeToken")) {
+        // Prefer the verified-link payload whenever a resume token exists.
+        // This avoids showing stale local results from an older diagnostic run.
+        if (resumeToken) {
+          fetch(`/api/lead/context?token=${encodeURIComponent(resumeToken)}`)
+            .then((res) => res.json().catch(() => ({ ok: false })))
+            .then((ctx) => {
+              if (ctx?.ok && ctx?.payload) {
+                window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(ctx.payload));
+                hydrateFromPayload(ctx.payload);
+                return;
+              }
+
+              if (savedPayload) {
+                try {
+                  const parsed = JSON.parse(savedPayload);
+                  hydrateFromPayload(parsed);
+                } catch {
+                  // ignore bad JSON
+                }
+              }
+            })
+            .catch(() => {
+              if (savedPayload) {
+                try {
+                  const parsed = JSON.parse(savedPayload);
+                  hydrateFromPayload(parsed);
+                } catch {
+                  // ignore bad JSON
+                }
+              }
+            })
+            .finally(() => {
+              setPendingJumpToResults(true);
+            });
+        } else {
+          if (savedPayload) {
+            try {
+              const parsed = JSON.parse(savedPayload);
+              hydrateFromPayload(parsed);
+            } catch {
+              // ignore bad JSON
+            }
+          }
           setPendingJumpToResults(true);
         }
 
