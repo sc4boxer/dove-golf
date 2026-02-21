@@ -1,14 +1,14 @@
 import type { Curve, StartLine } from "@/lib/learn/ballFlightPatterns";
 
 function getEndX(startLine: StartLine) {
-  if (startLine === "left") return 180;
-  if (startLine === "right") return 520;
+  if (startLine === "left") return 520;
+  if (startLine === "right") return 180;
   return 350;
 }
 
 function getControlShift(curve: Curve) {
-  if (curve === "draw") return -80;
-  if (curve === "fade") return 80;
+  if (curve === "draw") return 80;
+  if (curve === "fade") return -80;
   return 0;
 }
 

@@ -62,6 +62,34 @@ export function BallFlightLibraryExplorer() {
         <section className="mt-10 grid gap-6 lg:grid-cols-[1.25fr_1fr]">
           <div>
             <BallFlightLibraryViz startLine={selected.startLine} curve={selected.curve} />
+
+            <section className="mt-6">
+              <h3 className="text-lg font-semibold text-slate-900">Pattern Explorer</h3>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {PATTERN_ORDER.map((slug) => {
+                  const tile = BALL_FLIGHT_PATTERNS[slug];
+                  const active = slug === pattern;
+
+                  return (
+                    <button
+                      key={slug}
+                      type="button"
+                      onClick={() => setPattern(slug)}
+                      className={`rounded-2xl border p-4 text-left transition ${
+                        active
+                          ? "border-slate-900 bg-slate-900 text-white"
+                          : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
+                      }`}
+                    >
+                      <p className="text-sm font-semibold">{tile.title}</p>
+                      <p className={`mt-1 text-xs ${active ? "text-slate-200" : "text-slate-600"}`}>
+                        {tile.startLine} start · {tile.curve} curve
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
           </div>
 
           <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -175,34 +203,6 @@ export function BallFlightLibraryExplorer() {
               </Link>
             </div>
           </aside>
-        </section>
-
-        <section className="mt-10">
-          <h3 className="text-lg font-semibold text-slate-900">Pattern Explorer</h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {PATTERN_ORDER.map((slug) => {
-              const tile = BALL_FLIGHT_PATTERNS[slug];
-              const active = slug === pattern;
-
-              return (
-                <button
-                  key={slug}
-                  type="button"
-                  onClick={() => setPattern(slug)}
-                  className={`rounded-2xl border p-4 text-left transition ${
-                    active
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-900 hover:border-slate-300"
-                  }`}
-                >
-                  <p className="text-sm font-semibold">{tile.title}</p>
-                  <p className={`mt-1 text-xs ${active ? "text-slate-200" : "text-slate-600"}`}>
-                    {tile.startLine} start · {tile.curve} curve
-                  </p>
-                </button>
-              );
-            })}
-          </div>
         </section>
       </div>
     </main>
