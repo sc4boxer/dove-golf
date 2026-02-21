@@ -234,6 +234,42 @@ function computeAlignmentScore(result: ReturnType<typeof computeResults>) {
   return Math.round(scores.reduce((acc, n) => acc + n, 0) / scores.length);
 }
 
+function normalizeFitFocus(value: unknown): FitFocus {
+  if (value === "driver_woods" || value === "irons" || value === "wedges" || value === "full_bag") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "driver" || normalized === "driver+woods" || normalized === "driver_wood") {
+      return "driver_woods";
+    }
+    if (normalized === "full bag" || normalized === "fullbag" || normalized === "full-bag") {
+      return "full_bag";
+    }
+  }
+
+  return DEFAULT_ANSWERS.fitFocus;
+}
+
+function sanitizeStoredAnswers(rawPayload: unknown): Partial<Answers> {
+  if (!rawPayload || typeof rawPayload !== "object") return {};
+  const parsed = { ...(rawPayload as Record<string, unknown>) };
+
+  if (Array.isArray(parsed.goals)) {
+    // keep as-is
+  } else if (typeof parsed.goal === "string") {
+    parsed.goals = [parsed.goal];
+  } else {
+    parsed.goals = DEFAULT_ANSWERS.goals;
+  }
+
+  parsed.fitFocus = normalizeFitFocus(parsed.fitFocus);
+  delete parsed.goal;
+
+  return parsed as Partial<Answers>;
+}
+
 
 function buildInlineQrSvg(data: string, size: number) {
   const cells = 29;
@@ -1018,18 +1054,7 @@ export default function DiagnosticWizard() {
           try {
             const parsed = JSON.parse(savedPayload);
 
-            if (parsed && typeof parsed === "object") {
-              if (Array.isArray(parsed.goals)) {
-                // ok
-              } else if (typeof parsed.goal === "string") {
-                parsed.goals = [parsed.goal];
-              } else {
-                parsed.goals = ["accuracy"];
-              }
-              delete parsed.goal;
-            }
-
-            setA({ ...DEFAULT_ANSWERS, ...parsed });
+            setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(parsed) });
           } catch {
             // ignore bad JSON
           }
@@ -2129,7 +2154,6 @@ function ResultsView({
           result={result}
           certificateId={certificateId}
           completedLabel={completedLabel}
-          alignmentScore={alignmentScore}
           verificationUrl={verificationUrl}
           qrSvgMarkup={qrSvgMarkup}
           modelStart={modelStart}
@@ -2150,7 +2174,6 @@ function EquipmentAlignmentShareCard({
   result,
   certificateId,
   completedLabel,
-  alignmentScore,
   verificationUrl,
   qrSvgMarkup,
   modelStart,
@@ -2164,7 +2187,6 @@ function EquipmentAlignmentShareCard({
   result: ReturnType<typeof computeResults>;
   certificateId: string;
   completedLabel: string;
-  alignmentScore: number;
   verificationUrl: string;
   qrSvgMarkup: string;
   modelStart: StartLine;
@@ -2290,8 +2312,6 @@ function EquipmentAlignmentShareCard({
   const summaryCardHeight = Math.max(120, 74 + summaryBodyLineCount * 18 + Math.max(0, whyItems.length - 1) * 4);
   const summaryTitleY = summaryCardY + 30;
   const summaryLinesStartY = summaryCardY + 56;
-  const scoreValueY = summaryCardY + summaryCardHeight + 74;
-  const scoreLabelY = scoreValueY + 26;
 
   return (
     <svg
@@ -2423,9 +2443,6 @@ function EquipmentAlignmentShareCard({
           </text>
         );
       })}
-
-      <text x="540" y={scoreValueY} fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
-      <text x="540" y={scoreLabelY} fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
 
       <text x="64" y="1840" fontSize="12" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
