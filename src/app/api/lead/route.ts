@@ -83,9 +83,18 @@ export async function POST(req: Request) {
 
     const body = await req.json();
 
-    const name = String(body?.name ?? "").trim().slice(0, 80);
+    const firstName = String(body?.first_name ?? "").trim().slice(0, 80);
+    const lastName = String(body?.last_name ?? "").trim().slice(0, 80);
+    const name = `${firstName} ${lastName}`.trim();
     const email = String(body?.email ?? "").trim().toLowerCase().slice(0, 254);
     const payload = body?.payload ?? null;
+
+    if (!firstName || !lastName) {
+      return NextResponse.json(
+        { ok: false, error: "Please provide first and last name." },
+        { status: 400 }
+      );
+    }
 
     if (!/^\S+@\S+\.\S+$/.test(email)) {
       return NextResponse.json(
@@ -101,7 +110,7 @@ export async function POST(req: Request) {
       {
         name,
         email,
-        payload,
+        payload: { ...(payload && typeof payload === "object" ? payload : {}), contactProfile: { firstName, lastName, email } },
         token_hash,
       },
     ]);
@@ -124,6 +133,7 @@ export async function POST(req: Request) {
       subject: "Verify your Golf Fit Summary",
       html: `
         <h2>Verify your email</h2>
+        <p>Hi ${firstName},</p>
         <p>Click the link below to verify your results:</p>
         <a href="${verifyUrl}">${verifyUrl}</a>
       `,

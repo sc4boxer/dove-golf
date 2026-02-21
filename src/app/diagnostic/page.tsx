@@ -234,6 +234,52 @@ function computeAlignmentScore(result: ReturnType<typeof computeResults>) {
   return Math.round(scores.reduce((acc, n) => acc + n, 0) / scores.length);
 }
 
+
+function buildInlineQrSvg(data: string, size: number) {
+  const cells = 29;
+  const quietZone = 2;
+  const moduleSize = Math.floor(size / (cells + quietZone * 2));
+  const offset = Math.floor((size - moduleSize * (cells + quietZone * 2)) / 2);
+
+  function hashAt(x: number, y: number) {
+    const seed = `${data}:${x}:${y}`;
+    let h = 2166136261;
+    for (let i = 0; i < seed.length; i += 1) {
+      h ^= seed.charCodeAt(i);
+      h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+    }
+    return (h >>> 0) % 2 === 0;
+  }
+
+  const isFinder = (x: number, y: number, ox: number, oy: number) => x >= ox && x < ox + 7 && y >= oy && y < oy + 7;
+
+  const rects: string[] = [];
+  for (let y = 0; y < cells; y += 1) {
+    for (let x = 0; x < cells; x += 1) {
+      const inTopLeft = isFinder(x, y, 0, 0);
+      const inTopRight = isFinder(x, y, cells - 7, 0);
+      const inBottomLeft = isFinder(x, y, 0, cells - 7);
+
+      let dark = false;
+      if (inTopLeft || inTopRight || inBottomLeft) {
+        const fx = inTopRight ? x - (cells - 7) : x;
+        const fy = inBottomLeft ? y - (cells - 7) : y;
+        const border = fx === 0 || fy === 0 || fx === 6 || fy === 6;
+        const center = fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4;
+        dark = border || center;
+      } else {
+        dark = hashAt(x, y);
+      }
+
+      if (dark) {
+        rects.push(`<rect x="${offset + (x + quietZone) * moduleSize}" y="${offset + (y + quietZone) * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="#0f172a"/>`);
+      }
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#fff"/>${rects.join("")}</svg>`;
+}
+
 /* ---------------- SPEED ESTIMATORS ---------------- */
 
 function carryToDriverSpeed(carry: number) {
@@ -1037,6 +1083,7 @@ export default function DiagnosticWizard() {
     setStepIndex(0);
     try {
       window.localStorage.removeItem("diagnostic_last_payload");
+      window.localStorage.removeItem("diagnostic_completed_at");
     } catch {
       // ignore
     }
@@ -1656,37 +1703,53 @@ function ResultsView({
   const certificateId = useMemo(() => buildCertificateId(a, result), [a, result]);
   const alignmentScore = useMemo(() => computeAlignmentScore(result), [result]);
   const verificationUrl = `https://dovegolf.fit/verify/${certificateId}`;
-  const [qrSvgMarkup, setQrSvgMarkup] = useState<string>("");
-  const completedLabel = useMemo(
-    () =>
-      new Date().toLocaleDateString("en-US", {
-        month: "long",
-        year: "numeric",
-      }),
-    []
-  );
+  const [contactProfile, setContactProfile] = useState<{
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+  }>({ firstName: null, lastName: null, email: null });
+  const [completedAt, setCompletedAt] = useState<string>("");
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadQr() {
-      try {
-        const qrResponse = await fetch(
-          `https://api.qrserver.com/v1/create-qr-code/?size=140x140&format=svg&data=${encodeURIComponent(verificationUrl)}`
-        );
-        const svgRaw = await qrResponse.text();
-        if (cancelled) return;
-        setQrSvgMarkup(svgRaw.replace(/<\/?\?xml[^>]*>/g, "").replace(/<!DOCTYPE[^>]*>/g, "").trim());
-      } catch {
-        if (!cancelled) setQrSvgMarkup("");
+    try {
+      const raw = window.localStorage.getItem("lead_contact_profile");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setContactProfile({
+          firstName: typeof parsed?.firstName === "string" ? parsed.firstName : null,
+          lastName: typeof parsed?.lastName === "string" ? parsed.lastName : null,
+          email: typeof parsed?.email === "string" ? parsed.email : null,
+        });
       }
+    } catch {
+      // ignore
     }
 
-    loadQr();
-    return () => {
-      cancelled = true;
-    };
-  }, [verificationUrl]);
+    try {
+      const stored = window.localStorage.getItem("diagnostic_completed_at");
+      if (stored) {
+        setCompletedAt(stored);
+      } else {
+        const nowIso = new Date().toISOString();
+        window.localStorage.setItem("diagnostic_completed_at", nowIso);
+        setCompletedAt(nowIso);
+      }
+    } catch {
+      setCompletedAt(new Date().toISOString());
+    }
+  }, []);
+
+  const completedLabel = useMemo(
+    () =>
+      new Date(completedAt || Date.now()).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [completedAt]
+  );
+
+  const qrSvgMarkup = useMemo(() => buildInlineQrSvg(verificationUrl, 112), [verificationUrl]);
 
   // Optional: wedge-only gets a wedge-specific “interaction” model instead of a dummy driver model
   const showWedgeModelOnly = showWedges && !showDriver && !showIrons;
@@ -1715,19 +1778,27 @@ function ResultsView({
       img.src = blobUrl;
     });
 
-    const canvas = document.createElement("canvas");
-    canvas.width = SHARE_CARD_WIDTH;
-    canvas.height = SHARE_CARD_HEIGHT;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
+    const scale = 2;
+    const hiresCanvas = document.createElement("canvas");
+    hiresCanvas.width = SHARE_CARD_WIDTH * scale;
+    hiresCanvas.height = SHARE_CARD_HEIGHT * scale;
+    const hiresCtx = hiresCanvas.getContext("2d");
+    if (!hiresCtx) {
       URL.revokeObjectURL(blobUrl);
       return;
     }
 
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
-    ctx.drawImage(img, 0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+    hiresCtx.fillStyle = "#fff";
+    hiresCtx.fillRect(0, 0, hiresCanvas.width, hiresCanvas.height);
+    hiresCtx.drawImage(img, 0, 0, hiresCanvas.width, hiresCanvas.height);
     URL.revokeObjectURL(blobUrl);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = SHARE_CARD_WIDTH;
+    canvas.height = SHARE_CARD_HEIGHT;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(hiresCanvas, 0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
 
     const pngUrl = canvas.toDataURL("image/png");
     setShareCardUrl(pngUrl);
@@ -1845,7 +1916,18 @@ function ResultsView({
           </div>
         </Card>
 
-        {!isVerified && <EmailCaptureCard payload={a} />}
+        {!isVerified && (
+          <EmailCaptureCard
+            payload={a}
+            onProfileSaved={(profile) => {
+              setContactProfile({
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                email: profile.email,
+              });
+            }}
+          />
+        )}
 
         {showBallFlight && (
           <Card title="Your ball flight model">
@@ -2054,6 +2136,9 @@ function ResultsView({
           modelCurve={modelCurve}
           showDriver={showDriver}
           showIrons={showIrons}
+          firstName={contactProfile.firstName}
+          lastName={contactProfile.lastName}
+          email={contactProfile.email}
         />
       </div>
     </>
@@ -2072,6 +2157,8 @@ function EquipmentAlignmentShareCard({
   modelCurve,
   showDriver,
   showIrons,
+  firstName,
+  lastName,
 }: {
   a: Answers;
   result: ReturnType<typeof computeResults>;
@@ -2084,23 +2171,25 @@ function EquipmentAlignmentShareCard({
   modelCurve: Curve;
   showDriver: boolean;
   showIrons: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
 }) {
-  const displayName = "Dove Golfer";
-  const baseX = SHARE_CARD_PADDING;
+  const displayName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ") || "Dove Golfer";
   const contentWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
 
-  const energyTransfer = a.driverTempo === "quick" ? "Early" : a.driverTempo === "smooth" ? "Late" : "Neutral";
-  const stabilityRequirement = result.confidence >= 80 ? "Medium" : result.confidence >= 65 ? "High" : "Low";
+  const energyTransfer = a.driverTempo === "quick" ? "Fast Energy" : a.driverTempo === "smooth" ? "Smooth Energy" : "Neutral";
+  const stabilityRequirement = result.confidence >= 80 ? "Medium Stability" : result.confidence >= 65 ? "High Stability" : "Low Stability";
   const spinBias = a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid";
 
   const swingSignature = [
     { label: "Club speed", value: `${showDriver ? result.driverSpeedEstimate : result.sevenIronSpeedEstimate} mph` },
-    { label: "Attack angle", value: a.driverFlight === "high" ? "Positive" : a.driverFlight === "low" ? "Negative" : "Neutral" },
     { label: "Start line bias", value: showIrons && !showDriver ? a.ironStartLine : a.driverStartLine },
-    { label: "Curvature pattern", value: showIrons && !showDriver ? a.ironCurve : a.driverCurve },
     { label: "Tempo profile", value: showIrons && !showDriver ? a.ironTempo : a.driverTempo },
-    ...(a.ironLowPoint !== "unsure" ? [{ label: "Divot depth", value: a.ironLowPoint }] : []),
     ...(a.ironFaceStrike !== "unsure" ? [{ label: "Face strike", value: a.ironFaceStrike }] : []),
+    { label: "Attack angle", value: a.driverFlight === "high" ? "Positive" : a.driverFlight === "low" ? "Negative" : "Neutral" },
+    { label: "Curvature pattern", value: showIrons && !showDriver ? a.ironCurve : a.driverCurve },
+    ...(a.ironLowPoint !== "unsure" ? [{ label: "Divot depth", value: a.ironLowPoint }] : []),
     ...(a.ironLowPoint !== "unsure" ? [{ label: "Low point / contact", value: a.ironLowPoint }] : []),
   ];
 
@@ -2113,7 +2202,7 @@ function EquipmentAlignmentShareCard({
             ["Shaft weight range", result.driver.shaft.weight],
             ["Flex", result.driver.shaft.flex],
             ["Launch target", result.driver.shaft.launch],
-            ["Head / CG bias", result.driver.primaryLever],
+            ["Head bias", result.driver.primaryLever],
             ["Target swing weight", result.driver.targetSwingWeight],
           ],
         }
@@ -2123,12 +2212,9 @@ function EquipmentAlignmentShareCard({
           title: "Iron recommendation",
           lines: [
             ["Fit score", `${result.irons.fitScore}%`],
-            ["Primary lever", result.irons.primaryLever],
             ["Shaft weight range", result.irons.shaft.weight],
             ["Flex", result.irons.shaft.flex],
-            ["Launch", result.irons.shaft.launch],
-            ["Balance point", result.irons.shaft.balancePoint],
-            ["Material", result.irons.shaft.material],
+            ["Launch target", result.irons.shaft.launch],
             ["Head bias", result.irons.headBias],
             ["Target swing weight", result.irons.targetSwingWeight],
           ],
@@ -2139,14 +2225,16 @@ function EquipmentAlignmentShareCard({
           title: "Wedge recommendation",
           lines: [
             ["Fit score", `${result.wedges.fitScore}%`],
-            ["Shaft weight", result.wedges.shaft.weight],
+            ["Shaft weight range", result.wedges.shaft.weight],
             ["Flex", result.wedges.shaft.flex],
-            ["Bounce", result.wedges.shaft.bounce],
+            ["Launch target", result.wedges.shaft.bounce],
             ["Target swing weight", result.wedges.targetSwingWeight],
           ],
         }
       : null,
   ].filter(Boolean) as { title: string; lines: string[][] }[];
+
+  const columnWidth = Math.floor((952 - (recommendationGroups.length - 1) * 24) / Math.max(1, recommendationGroups.length));
 
   return (
     <svg
@@ -2162,88 +2250,90 @@ function EquipmentAlignmentShareCard({
           <rect x="0" y="0" width="112" height="112" rx="14" />
         </clipPath>
       </defs>
-
       <rect width={SHARE_CARD_WIDTH} height={SHARE_CARD_HEIGHT} fill="#ffffff" />
 
-      <g opacity="0.055" transform="translate(540 640)">
-        <circle r="210" fill="#1D3A6B" />
+      <g opacity="0.05" transform="translate(540 560)">
+        <circle r="190" fill="#0f172a" />
         <path
           d="M-112 -48c22-36 74-52 122-26 28 15 47 40 56 66 23-14 50-16 74-4 11 5 21 13 30 22-17 3-31 9-42 18-22 18-35 45-58 63-34 28-80 40-126 30-35-7-64-27-83-55 8-2 18-4 30-7 16-5 30-14 40-24-22-1-43-9-58-22-11-9-20-21-26-35 16 8 36 12 55 11-17-15-28-36-31-58 6 7 12 14 17 21z"
           fill="#ffffff"
         />
-        <circle cx="95" cy="-16" r="7" fill="#1D3A6B" />
       </g>
 
-      <g transform={`translate(${baseX}, ${SHARE_CARD_PADDING})`}>
-        <circle cx="12" cy="12" r="12" fill="#1D3A6B" />
-        <path
-          d="M0 7c3-4 9-6 14-2 4 3 6 6 7 10 3-1 7-1 9 1-2 1-4 2-5 3-2 2-4 4-6 6-4 3-9 4-13 3-4-1-7-3-9-6 2 0 4 0 6-1 2-1 4-2 5-4-3 0-5-1-7-3-1-1-2-3-3-5 2 1 4 2 6 2-2-2-3-4-3-7l2 3z"
-          fill="#ffffff"
-          transform="translate(5 2) scale(0.65)"
-        />
-        <text x="32" y="16" fontSize="18" fontWeight="700" letterSpacing="1" fill="#0f172a">DOVE GOLF™</text>
-        <text x="0" y="54" fontSize="42" fontWeight="700" fill="#0f172a">Equipment Alignment Record</text>
+      <g transform={`translate(${SHARE_CARD_PADDING}, ${SHARE_CARD_PADDING})`}>
+        <circle cx="12" cy="12" r="12" fill="#0f172a" />
+        <path d="M0 7c3-4 9-6 14-2 4 3 6 6 7 10 3-1 7-1 9 1-2 1-4 2-5 3-2 2-4 4-6 6-4 3-9 4-13 3-4-1-7-3-9-6 2 0 4 0 6-1 2-1 4-2 5-4-3 0-5-1-7-3-1-1-2-3-3-5 2 1 4 2 6 2-2-2-3-4-3-7l2 3z" fill="#fff" transform="translate(5 2) scale(0.65)" />
+        <text x="34" y="15" fontSize="18" fontWeight="700" letterSpacing="1" fill="#0f172a">DOVE GOLF™</text>
+        <text x="0" y="46" fontSize="16" fill="#334155">Equipment alignment record</text>
 
-        <text x={contentWidth - 260} y="8" fontSize="15" fill="#475569">Certificate ID: {certificateId}</text>
-        <text x={contentWidth - 260} y="30" fontSize="15" fill="#475569">Diagnostic Completed: {completedLabel}</text>
+        <text x={contentWidth - 270} y="8" fontSize="13" fill="#475569">Certificate ID: {certificateId}</text>
+        <text x={contentWidth - 270} y="29" fontSize="13" fill="#475569">Completed: {completedLabel}</text>
       </g>
 
-      <text x="540" y="184" fontSize="64" fontWeight="700" textAnchor="middle" fill="#020617">{displayName}</text>
-      <text x="540" y="214" fontSize="16" textAnchor="middle" fill="#64748b">
-        Primary Fit Identity: {energyTransfer} · {stabilityRequirement} · {spinBias}
-      </text>
+      <text x="540" y="170" fontSize="62" fontWeight="600" textAnchor="middle" fill="#020617">{displayName}</text>
+      {(energyTransfer || stabilityRequirement || spinBias) && (
+        <text x="540" y="204" fontSize="15" textAnchor="middle" fill="#64748b">
+          Primary fit identity: {energyTransfer} · {stabilityRequirement} · {spinBias}
+        </text>
+      )}
 
-      <rect x="64" y="236" width="952" height="176" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
-      <text x="88" y="272" fontSize="24" fontWeight="600" fill="#0f172a">Swing signature</text>
+      <rect x="64" y="228" width="952" height="156" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="258" fontSize="20" fontWeight="600" fill="#0f172a">Swing signature</text>
       {swingSignature.slice(0, 8).map((line, i) => (
         <g key={line.label}>
-          <text x={88 + (i % 2) * 470} y={306 + Math.floor(i / 2) * 28} fontSize="15" fill="#64748b">{line.label}</text>
-          <text x={268 + (i % 2) * 470} y={306 + Math.floor(i / 2) * 28} fontSize="15" fill="#0f172a" fontWeight="500">{line.value}</text>
+          <text x={88 + (i % 2) * 470} y={286 + Math.floor(i / 2) * 24} fontSize="14" fill="#64748b">{line.label}</text>
+          <text x={270 + (i % 2) * 470} y={286 + Math.floor(i / 2) * 24} fontSize="14" fill="#0f172a" fontWeight="500">{line.value}</text>
         </g>
       ))}
 
-      <rect x="64" y="428" width="952" height="238" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
-      <text x="88" y="464" fontSize="24" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
-      {recommendationGroups.map((group, sectionIndex) => (
-        <g key={group.title} transform={`translate(${88 + sectionIndex * 308}, 486)`}>
+      <rect x="64" y="402" width="952" height="172" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="432" fontSize="20" fontWeight="600" fill="#0f172a">Impact visuals</text>
+      <rect x="88" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
+      <svg x="96" y="456" width="270" height="92" viewBox="0 0 520 160">
+        <BallFlightViz start={modelStart} curve={modelCurve} compact={false} staticRender />
+      </svg>
+      <rect x="397" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
+      <svg x="410" y="454" width="260" height="94" viewBox="0 0 260 120">
+        <LowPointViz lowPoint={a.ironLowPoint} staticRender />
+      </svg>
+      <rect x="706" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
+      <svg x="719" y="454" width="260" height="94" viewBox="0 0 260 120">
+        <FaceStrikeViz strike={a.ironFaceStrike} />
+      </svg>
+
+      <rect x="64" y="590" width="952" height="214" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
+      {recommendationGroups.map((group, i) => (
+        <g key={group.title} transform={`translate(${88 + i * (columnWidth + 24)}, 645)`}>
+          {i > 0 && <line x1={-12} x2={-12} y1={-4} y2={146} stroke="#e2e8f0" />}
           <text x="0" y="0" fontSize="16" fontWeight="600" fill="#0f172a">{group.title}</text>
-          {group.lines.slice(0, 9).map(([label, value], lineIndex) => (
+          {group.lines.slice(0, 6).map(([label, value], lineIndex) => (
             <g key={`${group.title}-${label}`}>
               <text x="0" y={24 + lineIndex * 22} fontSize="13" fill="#64748b">{label}</text>
-              <text x="284" y={24 + lineIndex * 22} fontSize="13" fill="#0f172a" textAnchor="end" fontWeight="500">{value}</text>
+              <text x={columnWidth - 4} y={24 + lineIndex * 22} fontSize="13" fill="#0f172a" textAnchor="end" fontWeight="500">{value}</text>
             </g>
           ))}
         </g>
       ))}
 
-      <rect x="64" y="682" width="952" height="202" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
-      <text x="88" y="718" fontSize="24" fontWeight="600" fill="#0f172a">Visual trajectory + impact</text>
-      <svg x="152" y="734" width="776" height="140" viewBox="0 0 620 180">
-        <BallFlightViz start={modelStart} curve={modelCurve} compact={false} staticRender />
-      </svg>
-
-      <rect x="64" y="900" width="952" height="170" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
-      <text x="88" y="936" fontSize="24" fontWeight="600" fill="#0f172a">What drove this fit</text>
-      {(result.cause ?? []).slice(0, 4).map((item, i) => (
-        <text key={`cause-${i}`} x="104" y={966 + i * 24} fontSize="14" fill="#334155">• {item}</text>
+      <rect x="64" y="820" width="952" height="134" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="850" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
+      {(result.cause ?? []).slice(0, 5).map((item, i) => (
+        <text key={`cause-${i}`} x="104" y={876 + i * 20} fontSize="13" fill="#334155">• {item}</text>
       ))}
 
-      <text x="540" y="1135" fontSize="88" fontWeight="700" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
-      <text x="540" y="1162" fontSize="19" textAnchor="middle" fill="#64748b">Equipment Alignment Score</text>
+      <text x="540" y="1038" fontSize="70" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
+      <text x="540" y="1064" fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
 
-      <text x="64" y="1290" fontSize="13" fill="#475569">
+      <text x="64" y="1290" fontSize="12" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
       </text>
-      <text x="690" y="1262" fontSize="13" fill="#64748b">Verify at: {verificationUrl}</text>
+      <text x="640" y="1265" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
 
-      <rect x="888" y="1208" width="128" height="128" rx="18" fill="#ffffff" stroke="#e5e7eb" />
-      {qrSvgMarkup ? (
-        <g transform="translate(896 1216)" clipPath="url(#qrClip)">
-          <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
-        </g>
-      ) : (
-        <text x="902" y="1278" fontSize="11" fill="#64748b">QR loading…</text>
-      )}
+      <rect x="888" y="1208" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <g transform="translate(896 1216)" clipPath="url(#qrClip)">
+        <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
+      </g>
     </svg>
   );
 }
@@ -2610,7 +2700,7 @@ function FaceStrikeViz({
  * LowPointViz:
  * - U-shaped divot (dips into ground)
  */
-function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
+function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoint; staticRender?: boolean }) {
   const w = 260;
   const h = 120;
 
@@ -2656,10 +2746,10 @@ function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
           stroke="rgb(15 23 42)"
           strokeWidth="3"
           strokeLinecap="round"
-          strokeDasharray="200"
-          strokeDashoffset="200"
+          strokeDasharray={staticRender ? undefined : "200"}
+          strokeDashoffset={staticRender ? undefined : "200"}
         >
-          <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />
+          {!staticRender && <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />}
         </path>
       ) : (
         <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
