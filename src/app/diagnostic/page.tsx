@@ -2430,7 +2430,7 @@ function EquipmentAlignmentShareCard({
       <text x="64" y="1840" fontSize="12" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
       </text>
-      <text x="640" y="1815" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
+      <text x="640" y="1840" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
 
       <rect x="888" y="1758" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
       <g transform="translate(896 1766)" clipPath="url(#qrClip)">
