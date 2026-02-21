@@ -8,6 +8,7 @@ import { recommendIrons } from "@/lib/engine/irons";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1350;
+const SHARE_CARD_PADDING = 64;
 
 /* ---------------- TYPES ---------------- */
 
@@ -1655,6 +1656,7 @@ function ResultsView({
   const certificateId = useMemo(() => buildCertificateId(a, result), [a, result]);
   const alignmentScore = useMemo(() => computeAlignmentScore(result), [result]);
   const verificationUrl = `https://dovegolf.fit/verify/${certificateId}`;
+  const [qrSvgMarkup, setQrSvgMarkup] = useState<string>("");
   const completedLabel = useMemo(
     () =>
       new Date().toLocaleDateString("en-US", {
@@ -1664,18 +1666,43 @@ function ResultsView({
     []
   );
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadQr() {
+      try {
+        const qrResponse = await fetch(
+          `https://api.qrserver.com/v1/create-qr-code/?size=140x140&format=svg&data=${encodeURIComponent(verificationUrl)}`
+        );
+        const svgRaw = await qrResponse.text();
+        if (cancelled) return;
+        setQrSvgMarkup(svgRaw.replace(/<\/?\?xml[^>]*>/g, "").replace(/<!DOCTYPE[^>]*>/g, "").trim());
+      } catch {
+        if (!cancelled) setQrSvgMarkup("");
+      }
+    }
+
+    loadQr();
+    return () => {
+      cancelled = true;
+    };
+  }, [verificationUrl]);
+
   // Optional: wedge-only gets a wedge-specific “interaction” model instead of a dummy driver model
   const showWedgeModelOnly = showWedges && !showDriver && !showIrons;
 
   const generateShareCard = async () => {
     const node = document.getElementById("equipment-alignment-share-card");
     if (!node) return;
+    if (!qrSvgMarkup) return;
 
     try {
       await (document as any).fonts?.ready;
     } catch {
       // ignore
     }
+
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(true)));
 
     const svgText = new XMLSerializer().serializeToString(node as Node);
     const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
@@ -1718,7 +1745,7 @@ function ResultsView({
   };
 
   const copyCaption = async () => {
-    const caption = `Just completed my Dove Golf™ Equipment Alignment Record.\n\n${alignmentScore}% alignment.\nFit to your swing, not the hype.\n\n${verificationUrl}\n#DoveGolf #FitToYourSwing`;
+    const caption = `My Dove Golf™ Equipment Alignment Record is live.\n\nEquipment Alignment Score: ${alignmentScore}%\nVerify my certificate: ${verificationUrl}\n\n#DoveGolf #EquipmentAlignment #GolfFitting #FitToYourSwing`;
     await navigator.clipboard.writeText(caption);
     setCopyState("caption");
     window.setTimeout(() => setCopyState(null), 1500);
@@ -2022,6 +2049,7 @@ function ResultsView({
           completedLabel={completedLabel}
           alignmentScore={alignmentScore}
           verificationUrl={verificationUrl}
+          qrSvgMarkup={qrSvgMarkup}
           modelStart={modelStart}
           modelCurve={modelCurve}
           showDriver={showDriver}
@@ -2039,6 +2067,7 @@ function EquipmentAlignmentShareCard({
   completedLabel,
   alignmentScore,
   verificationUrl,
+  qrSvgMarkup,
   modelStart,
   modelCurve,
   showDriver,
@@ -2050,36 +2079,74 @@ function EquipmentAlignmentShareCard({
   completedLabel: string;
   alignmentScore: number;
   verificationUrl: string;
+  qrSvgMarkup: string;
   modelStart: StartLine;
   modelCurve: Curve;
   showDriver: boolean;
   showIrons: boolean;
 }) {
   const displayName = "Dove Golfer";
-  const lines = [
-    { label: "Club Speed", value: `${showDriver ? result.driverSpeedEstimate : result.sevenIronSpeedEstimate} mph` },
-    { label: "Attack Angle", value: a.driverFlight === "high" ? "Positive" : a.driverFlight === "low" ? "Negative" : "Neutral" },
-    { label: "Start Line Bias", value: showIrons && !showDriver ? a.ironStartLine : a.driverStartLine },
-    { label: "Curvature Pattern", value: showIrons && !showDriver ? a.ironCurve : a.driverCurve },
-    { label: "Tempo Profile", value: showIrons && !showDriver ? a.ironTempo : a.driverTempo },
-    ...(a.ironLowPoint !== "unsure" ? [{ label: "Divot Depth", value: a.ironLowPoint }] : []),
+  const baseX = SHARE_CARD_PADDING;
+  const contentWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+
+  const energyTransfer = a.driverTempo === "quick" ? "Early" : a.driverTempo === "smooth" ? "Late" : "Neutral";
+  const stabilityRequirement = result.confidence >= 80 ? "Medium" : result.confidence >= 65 ? "High" : "Low";
+  const spinBias = a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid";
+
+  const swingSignature = [
+    { label: "Club speed", value: `${showDriver ? result.driverSpeedEstimate : result.sevenIronSpeedEstimate} mph` },
+    { label: "Attack angle", value: a.driverFlight === "high" ? "Positive" : a.driverFlight === "low" ? "Negative" : "Neutral" },
+    { label: "Start line bias", value: showIrons && !showDriver ? a.ironStartLine : a.driverStartLine },
+    { label: "Curvature pattern", value: showIrons && !showDriver ? a.ironCurve : a.driverCurve },
+    { label: "Tempo profile", value: showIrons && !showDriver ? a.ironTempo : a.driverTempo },
+    ...(a.ironLowPoint !== "unsure" ? [{ label: "Divot depth", value: a.ironLowPoint }] : []),
+    ...(a.ironFaceStrike !== "unsure" ? [{ label: "Face strike", value: a.ironFaceStrike }] : []),
+    ...(a.ironLowPoint !== "unsure" ? [{ label: "Low point / contact", value: a.ironLowPoint }] : []),
   ];
 
-  const bio = [
-    { label: "Energy Transfer", value: a.driverTempo === "quick" ? "Early" : a.driverTempo === "smooth" ? "Late" : "Neutral" },
-    {
-      label: "Stability Requirement",
-      value: result.confidence >= 80 ? "Medium" : result.confidence >= 65 ? "High" : "Low",
-    },
-    {
-      label: "Spin Bias",
-      value: a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid",
-    },
-    {
-      label: "Strike Dispersion",
-      value: a.driverStrike === "all_over" ? "Neutral" : a.driverStrike === "toe" ? "Toe" : a.driverStrike === "heel" ? "Heel" : "Neutral",
-    },
-  ];
+  const recommendationGroups = [
+    showDriver && result.driver
+      ? {
+          title: "Driver recommendation",
+          lines: [
+            ["Fit score", `${result.driver.fitScore}%`],
+            ["Shaft weight range", result.driver.shaft.weight],
+            ["Flex", result.driver.shaft.flex],
+            ["Launch target", result.driver.shaft.launch],
+            ["Head / CG bias", result.driver.primaryLever],
+            ["Target swing weight", result.driver.targetSwingWeight],
+          ],
+        }
+      : null,
+    showIrons && result.irons
+      ? {
+          title: "Iron recommendation",
+          lines: [
+            ["Fit score", `${result.irons.fitScore}%`],
+            ["Primary lever", result.irons.primaryLever],
+            ["Shaft weight range", result.irons.shaft.weight],
+            ["Flex", result.irons.shaft.flex],
+            ["Launch", result.irons.shaft.launch],
+            ["Balance point", result.irons.shaft.balancePoint],
+            ["Material", result.irons.shaft.material],
+            ["Head bias", result.irons.headBias],
+            ["Target swing weight", result.irons.targetSwingWeight],
+          ],
+        }
+      : null,
+    result.wedges
+      ? {
+          title: "Wedge recommendation",
+          lines: [
+            ["Fit score", `${result.wedges.fitScore}%`],
+            ["Shaft weight", result.wedges.shaft.weight],
+            ["Flex", result.wedges.shaft.flex],
+            ["Bounce", result.wedges.shaft.bounce],
+            ["Target swing weight", result.wedges.targetSwingWeight],
+          ],
+        }
+      : null,
+  ].filter(Boolean) as { title: string; lines: string[][] }[];
 
   return (
     <svg
@@ -2088,75 +2155,95 @@ function EquipmentAlignmentShareCard({
       width={SHARE_CARD_WIDTH}
       height={SHARE_CARD_HEIGHT}
       viewBox={`0 0 ${SHARE_CARD_WIDTH} ${SHARE_CARD_HEIGHT}`}
+      style={{ fontFamily: "var(--font-geist-sans), Geist, Inter, ui-sans-serif, system-ui, sans-serif" }}
     >
-      <rect width={SHARE_CARD_WIDTH} height={SHARE_CARD_HEIGHT} fill="#fff" />
-      <text x="70" y="74" fontSize="20" letterSpacing="3" fill="#0f172a">DOVE GOLF™</text>
-      <text x="70" y="104" fontSize="26" fill="#0f172a">Equipment Alignment Record</text>
+      <defs>
+        <clipPath id="qrClip">
+          <rect x="0" y="0" width="112" height="112" rx="14" />
+        </clipPath>
+      </defs>
 
-      <text x="760" y="64" fontSize="16" fill="#334155">Certificate ID: {certificateId}</text>
-      <text x="760" y="88" fontSize="16" fill="#334155">Diagnostic Completed: {completedLabel}</text>
+      <rect width={SHARE_CARD_WIDTH} height={SHARE_CARD_HEIGHT} fill="#ffffff" />
 
-      <text x="540" y="180" fontSize="56" textAnchor="middle" fill="#020617">{displayName}</text>
+      <g opacity="0.055" transform="translate(540 640)">
+        <circle r="210" fill="#1D3A6B" />
+        <path
+          d="M-112 -48c22-36 74-52 122-26 28 15 47 40 56 66 23-14 50-16 74-4 11 5 21 13 30 22-17 3-31 9-42 18-22 18-35 45-58 63-34 28-80 40-126 30-35-7-64-27-83-55 8-2 18-4 30-7 16-5 30-14 40-24-22-1-43-9-58-22-11-9-20-21-26-35 16 8 36 12 55 11-17-15-28-36-31-58 6 7 12 14 17 21z"
+          fill="#ffffff"
+        />
+        <circle cx="95" cy="-16" r="7" fill="#1D3A6B" />
+      </g>
 
-      <line x1="70" y1="220" x2="1010" y2="220" stroke="#cbd5e1" />
-      <text x="70" y="252" fontSize="20" fill="#0f172a">SWING SIGNATURE</text>
-      {lines.map((line, i) => (
+      <g transform={`translate(${baseX}, ${SHARE_CARD_PADDING})`}>
+        <circle cx="12" cy="12" r="12" fill="#1D3A6B" />
+        <path
+          d="M0 7c3-4 9-6 14-2 4 3 6 6 7 10 3-1 7-1 9 1-2 1-4 2-5 3-2 2-4 4-6 6-4 3-9 4-13 3-4-1-7-3-9-6 2 0 4 0 6-1 2-1 4-2 5-4-3 0-5-1-7-3-1-1-2-3-3-5 2 1 4 2 6 2-2-2-3-4-3-7l2 3z"
+          fill="#ffffff"
+          transform="translate(5 2) scale(0.65)"
+        />
+        <text x="32" y="16" fontSize="18" fontWeight="700" letterSpacing="1" fill="#0f172a">DOVE GOLF™</text>
+        <text x="0" y="54" fontSize="42" fontWeight="700" fill="#0f172a">Equipment Alignment Record</text>
+
+        <text x={contentWidth - 260} y="8" fontSize="15" fill="#475569">Certificate ID: {certificateId}</text>
+        <text x={contentWidth - 260} y="30" fontSize="15" fill="#475569">Diagnostic Completed: {completedLabel}</text>
+      </g>
+
+      <text x="540" y="184" fontSize="64" fontWeight="700" textAnchor="middle" fill="#020617">{displayName}</text>
+      <text x="540" y="214" fontSize="16" textAnchor="middle" fill="#64748b">
+        Primary Fit Identity: {energyTransfer} · {stabilityRequirement} · {spinBias}
+      </text>
+
+      <rect x="64" y="236" width="952" height="176" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
+      <text x="88" y="272" fontSize="24" fontWeight="600" fill="#0f172a">Swing signature</text>
+      {swingSignature.slice(0, 8).map((line, i) => (
         <g key={line.label}>
-          <text x={70 + (i % 2) * 470} y={290 + Math.floor(i / 2) * 40} fontSize="16" fill="#64748b">
-            {line.label}
-          </text>
-          <text x={270 + (i % 2) * 470} y={290 + Math.floor(i / 2) * 40} fontSize="16" fill="#0f172a">
-            {line.value}
-          </text>
+          <text x={88 + (i % 2) * 470} y={306 + Math.floor(i / 2) * 28} fontSize="15" fill="#64748b">{line.label}</text>
+          <text x={268 + (i % 2) * 470} y={306 + Math.floor(i / 2) * 28} fontSize="15" fill="#0f172a" fontWeight="500">{line.value}</text>
         </g>
       ))}
 
-      <line x1="70" y1="430" x2="1010" y2="430" stroke="#cbd5e1" />
-      <text x="70" y="462" fontSize="20" fill="#0f172a">BIOMECHANICAL CLASSIFICATION</text>
-      {bio.map((line, i) => (
-        <g key={line.label}>
-          <text x={70 + (i % 2) * 470} y={500 + Math.floor(i / 2) * 36} fontSize="16" fill="#64748b">
-            {line.label}
-          </text>
-          <text x={300 + (i % 2) * 470} y={500 + Math.floor(i / 2) * 36} fontSize="16" fill="#0f172a">
-            {line.value}
-          </text>
+      <rect x="64" y="428" width="952" height="238" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
+      <text x="88" y="464" fontSize="24" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
+      {recommendationGroups.map((group, sectionIndex) => (
+        <g key={group.title} transform={`translate(${88 + sectionIndex * 308}, 486)`}>
+          <text x="0" y="0" fontSize="16" fontWeight="600" fill="#0f172a">{group.title}</text>
+          {group.lines.slice(0, 9).map(([label, value], lineIndex) => (
+            <g key={`${group.title}-${label}`}>
+              <text x="0" y={24 + lineIndex * 22} fontSize="13" fill="#64748b">{label}</text>
+              <text x="284" y={24 + lineIndex * 22} fontSize="13" fill="#0f172a" textAnchor="end" fontWeight="500">{value}</text>
+            </g>
+          ))}
         </g>
       ))}
 
-      <line x1="70" y1="590" x2="1010" y2="590" stroke="#cbd5e1" />
-      <text x="70" y="622" fontSize="20" fill="#0f172a">VISUAL TRAJECTORY + IMPACT</text>
-      <svg x="70" y="640" width="620" height="180" viewBox="0 0 620 180">
+      <rect x="64" y="682" width="952" height="202" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
+      <text x="88" y="718" fontSize="24" fontWeight="600" fill="#0f172a">Visual trajectory + impact</text>
+      <svg x="152" y="734" width="776" height="140" viewBox="0 0 620 180">
         <BallFlightViz start={modelStart} curve={modelCurve} compact={false} staticRender />
       </svg>
 
-      <text x="70" y="860" fontSize="20" fill="#0f172a">EQUIPMENT MAPPING</text>
-      <text x="70" y="892" fontSize="16" fill="#64748b">Driver Configuration</text>
-      <text x="70" y="916" fontSize="15" fill="#0f172a">• Shaft: {result.driver?.shaft.weight ?? "—"} · {result.driver?.shaft.torqueRange ?? "—"}</text>
-      <text x="70" y="938" fontSize="15" fill="#0f172a">• Head CG Bias: {result.driver?.primaryLever ?? "—"}</text>
-      <text x="70" y="960" fontSize="15" fill="#0f172a">• Launch Window: {result.driver?.shaft.launch ?? "—"}</text>
+      <rect x="64" y="900" width="952" height="170" rx="22" fill="#f8fafc" stroke="#e5e7eb" />
+      <text x="88" y="936" fontSize="24" fontWeight="600" fill="#0f172a">What drove this fit</text>
+      {(result.cause ?? []).slice(0, 4).map((item, i) => (
+        <text key={`cause-${i}`} x="104" y={966 + i * 24} fontSize="14" fill="#334155">• {item}</text>
+      ))}
 
-      <text x="560" y="892" fontSize="16" fill="#64748b">Iron Configuration</text>
-      <text x="560" y="916" fontSize="15" fill="#0f172a">• Shaft: {result.irons?.shaft.weight ?? "—"} · {result.irons?.shaft.launch ?? "—"}</text>
-      <text x="560" y="938" fontSize="15" fill="#0f172a">• Tip Profile: {result.irons?.shaft.balancePoint ?? "—"}</text>
-      <text x="560" y="960" fontSize="15" fill="#0f172a">• Launch Window: {result.irons?.shaft.launch ?? "—"}</text>
+      <text x="540" y="1135" fontSize="88" fontWeight="700" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
+      <text x="540" y="1162" fontSize="19" textAnchor="middle" fill="#64748b">Equipment Alignment Score</text>
 
-      <line x1="70" y1="990" x2="1010" y2="990" stroke="#cbd5e1" />
-      <text x="540" y="1040" fontSize="72" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
-      <text x="540" y="1068" fontSize="18" textAnchor="middle" fill="#64748b">Equipment Alignment Score</text>
-
-      <text x="70" y="1240" fontSize="14" fill="#475569">
+      <text x="64" y="1290" fontSize="13" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
       </text>
-      <text x="700" y="1210" fontSize="14" fill="#475569">Verify at:</text>
-      <text x="700" y="1232" fontSize="14" fill="#0f172a">{verificationUrl}</text>
-      <image
-        href={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(verificationUrl)}`}
-        x="880"
-        y="1160"
-        width="120"
-        height="120"
-      />
+      <text x="690" y="1262" fontSize="13" fill="#64748b">Verify at: {verificationUrl}</text>
+
+      <rect x="888" y="1208" width="128" height="128" rx="18" fill="#ffffff" stroke="#e5e7eb" />
+      {qrSvgMarkup ? (
+        <g transform="translate(896 1216)" clipPath="url(#qrClip)">
+          <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
+        </g>
+      ) : (
+        <text x="902" y="1278" fontSize="11" fill="#64748b">QR loading…</text>
+      )}
     </svg>
   );
 }
