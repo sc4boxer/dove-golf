@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     description: DEFAULT_DESCRIPTION,
   },
   icons: {
-    icon: "/favicon.ico",
+    icon: "/dove-icon.png",
   },
 };
 
