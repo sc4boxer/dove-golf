@@ -892,6 +892,9 @@ export default function DiagnosticWizard() {
   const step = steps[stepIndex] ?? "focus";
 
   const [isVerified, setIsVerified] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState<
+    "verified" | "already_verified" | "expired" | "invalid" | null
+  >(null);
   const [pendingJumpToResults, setPendingJumpToResults] = useState(false);
 
   useEffect(() => {
@@ -908,9 +911,19 @@ export default function DiagnosticWizard() {
       const url = new URL(window.location.href);
 
       const verified = url.searchParams.get("verified") === "1";
+      const verifyStatusParam = url.searchParams.get("verifyStatus");
       const wantsResults = url.searchParams.get("step") === "results";
 
-      if (verified) {
+      if (
+        verifyStatusParam === "verified" ||
+        verifyStatusParam === "already_verified" ||
+        verifyStatusParam === "expired" ||
+        verifyStatusParam === "invalid"
+      ) {
+        setVerifyStatus(verifyStatusParam);
+      }
+
+      if (verified || verifyStatusParam === "verified" || verifyStatusParam === "already_verified") {
         setIsVerified(true);
         window.localStorage.setItem("lead_verified", "1");
       }
@@ -942,6 +955,7 @@ export default function DiagnosticWizard() {
 
         url.searchParams.delete("step");
         url.searchParams.delete("verified");
+        url.searchParams.delete("verifyStatus");
         window.history.replaceState({}, "", url.toString());
       }
     } catch {
@@ -1554,7 +1568,13 @@ export default function DiagnosticWizard() {
               </div>
             </>
           ) : (
-            <ResultsView a={a} result={result} isVerified={isVerified} onReset={resetAll} />
+            <ResultsView
+              a={a}
+              result={result}
+              isVerified={isVerified}
+              verifyStatus={verifyStatus}
+              onReset={resetAll}
+            />
           )}
         </section>
 
@@ -1572,11 +1592,13 @@ function ResultsView({
   a,
   result,
   isVerified,
+  verifyStatus,
   onReset,
 }: {
   a: Answers;
   result: ReturnType<typeof computeResults>;
   isVerified: boolean;
+  verifyStatus: "verified" | "already_verified" | "expired" | "invalid" | null;
   onReset: () => void;
 }) {
   const showDriver = result.focus === "driver_woods" || result.focus === "full_bag";
@@ -1615,8 +1637,30 @@ function ResultsView({
 
       {isVerified && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="text-sm font-semibold text-emerald-900">✅ Email verified</div>
-          <div className="mt-1 text-sm text-emerald-800">Premium insights are now unlocked.</div>
+          <div className="text-sm font-semibold text-emerald-900">
+            {verifyStatus === "already_verified" ? "✅ Email already verified" : "✅ Email verified"}
+          </div>
+          <div className="mt-1 text-sm text-emerald-800">
+            {verifyStatus === "already_verified"
+              ? "This link was already used, and your premium insights remain unlocked."
+              : "Premium insights are now unlocked."}
+          </div>
+        </div>
+      )}
+
+      {!isVerified && verifyStatus === "expired" && (
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="text-sm font-semibold text-amber-900">⚠️ Verification link expired</div>
+          <div className="mt-1 text-sm text-amber-800">
+            Please request a new verification email and use the most recent link.
+          </div>
+        </div>
+      )}
+
+      {!isVerified && verifyStatus === "invalid" && (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+          <div className="text-sm font-semibold text-rose-900">⚠️ Invalid verification link</div>
+          <div className="mt-1 text-sm text-rose-800">Please request a new verification email.</div>
         </div>
       )}
 
