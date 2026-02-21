@@ -43,13 +43,17 @@ export default function EmailCaptureCard({ payload }: Props) {
         }),
       });
 
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(txt || "Failed to send verification email.");
+      const result = await res
+        .json()
+        .catch(() => ({ ok: false, error: "Invalid response from server." }));
+
+      if (!res.ok || !result?.ok) {
+        throw new Error(result?.error || "Failed to send verification email.");
       }
 
       setStatus("sent");
     } catch (err: any) {
+      console.error("Email verification submit failed", err);
       setStatus("error");
       setErrorMsg(err?.message || "Something went wrong. Please try again.");
     }
