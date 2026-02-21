@@ -2238,8 +2238,52 @@ function EquipmentAlignmentShareCard({
   const causeCardHeight = Math.max(134, 74 + causeItems.length * 20);
   const recommendationColumnWidth = 904 / Math.max(1, recommendationGroups.length);
 
-  const truncateForCard = (value: string, maxChars: number) =>
-    value.length > maxChars ? `${value.slice(0, maxChars - 1)}…` : value;
+  const wrapForCard = (value: string, maxChars: number) => {
+    if (!value) return [""];
+    const words = value.split(/\s+/);
+    const lines: string[] = [];
+    let current = "";
+
+    words.forEach((word) => {
+      if (!current) {
+        current = word;
+        return;
+      }
+
+      if (`${current} ${word}`.length <= maxChars) {
+        current = `${current} ${word}`;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    });
+
+    if (current) lines.push(current);
+    return lines;
+  };
+
+  const valueWrapChars = recommendationGroups.length >= 3 ? 16 : recommendationGroups.length === 2 ? 24 : 34;
+  const recommendationLineHeight = 13;
+  const recommendationRowMinHeight = 17;
+  const recommendationRows = recommendationGroups.map((group) =>
+    group.lines.slice(0, 6).map(([label, value]) => {
+      const wrappedValue = wrapForCard(value, valueWrapChars);
+      const rowHeight = Math.max(recommendationRowMinHeight, wrappedValue.length * recommendationLineHeight + 2);
+      return { label, wrappedValue, rowHeight };
+    })
+  );
+  const recommendationRowsHeight = Math.max(
+    0,
+    ...recommendationRows.map((rows) => rows.reduce((acc, row) => acc + row.rowHeight, 0))
+  );
+  const recommendationCardY = 590;
+  const recommendationRowsStartY = 688;
+  const recommendationCardHeight = Math.max(214, recommendationRowsStartY - recommendationCardY + recommendationRowsHeight + 20);
+  const causeCardY = recommendationCardY + recommendationCardHeight + 16;
+  const causeTitleY = causeCardY + 30;
+  const causeLinesStartY = causeCardY + 56;
+  const scoreValueY = causeCardY + causeCardHeight + 74;
+  const scoreLabelY = scoreValueY + 26;
 
   return (
     <svg
@@ -2298,27 +2342,41 @@ function EquipmentAlignmentShareCard({
         <FaceStrikeViz strike={a.ironFaceStrike} />
       </svg>
 
-      <rect x="64" y="590" width="952" height="214" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <rect x="64" y={recommendationCardY} width="952" height={recommendationCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
       {recommendationGroups.map((group, i) => {
         const columnX = 88 + i * recommendationColumnWidth;
         const lineLabelX = columnX;
         const lineValueX = columnX + recommendationColumnWidth - 12;
+        let rowY = recommendationRowsStartY;
         return (
           <g key={group.title}>
-            {i > 0 && <line x1={columnX - 14} y1="648" x2={columnX - 14} y2="788" stroke="#e2e8f0" />}
+            {i > 0 && (
+              <line
+                x1={columnX - 14}
+                y1="648"
+                x2={columnX - 14}
+                y2={recommendationCardY + recommendationCardHeight - 16}
+                stroke="#e2e8f0"
+              />
+            )}
             <text x={columnX} y="664" fontSize="16" fontWeight="600" fill="#0f172a">
               {group.title}
             </text>
-            {group.lines.slice(0, 6).map(([label, value], lineIndex) => {
-              const rowY = 688 + lineIndex * 17;
+            {recommendationRows[i]?.map((row) => {
+              const currentRowY = rowY;
+              rowY += row.rowHeight;
               return (
-                <g key={`${group.title}-${label}`}>
-                  <text x={lineLabelX} y={rowY} fontSize="12" fill="#64748b">
-                    {label}
+                <g key={`${group.title}-${row.label}`}>
+                  <text x={lineLabelX} y={currentRowY} fontSize="12" fill="#64748b">
+                    {row.label}
                   </text>
-                  <text x={lineValueX} y={rowY} fontSize="12" fill="#0f172a" fontWeight="500" textAnchor="end">
-                    {truncateForCard(value, 22)}
+                  <text x={lineValueX} y={currentRowY} fontSize="12" fill="#0f172a" fontWeight="500" textAnchor="end">
+                    {row.wrappedValue.map((valueLine, valueLineIndex) => (
+                      <tspan key={`${row.label}-${valueLineIndex}`} x={lineValueX} dy={valueLineIndex === 0 ? 0 : recommendationLineHeight}>
+                        {valueLine}
+                      </tspan>
+                    ))}
                   </text>
                 </g>
               );
@@ -2327,14 +2385,14 @@ function EquipmentAlignmentShareCard({
         );
       })}
 
-      <rect x="64" y="820" width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
-      <text x="88" y="850" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
+      <rect x="64" y={causeCardY} width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y={causeTitleY} fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
       {causeItems.map((item, i) => (
-        <text key={`cause-${i}`} x="104" y={876 + i * 20} fontSize="13" fill="#334155">• {item}</text>
+        <text key={`cause-${i}`} x="104" y={causeLinesStartY + i * 20} fontSize="13" fill="#334155">• {item}</text>
       ))}
 
-      <text x="540" y="1038" fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
-      <text x="540" y="1064" fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
+      <text x="540" y={scoreValueY} fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
+      <text x="540" y={scoreLabelY} fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
 
       <text x="64" y="1290" fontSize="12" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
