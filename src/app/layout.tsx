@@ -24,9 +24,10 @@ export const metadata: Metadata = {
   },
   description: DEFAULT_DESCRIPTION,
 
-  // Optional but recommended for SEO + sharing
   applicationName: SITE_NAME,
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+  ),
   alternates: {
     canonical: "/",
   },
@@ -42,9 +43,6 @@ export const metadata: Metadata = {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
-  icons: {
-    icon: "/dove-icon.png",
-  },
 };
 
 export default function RootLayout({
@@ -54,7 +52,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
         {children}
       </body>
     </html>
