@@ -59,7 +59,7 @@ export const BALL_FLIGHT_PATTERNS: Record<
   }
 > = {
   "pull-draw": {
-    title: "Pull Draw",
+    title: "Push Draw",
     startLine: "left",
     curve: "draw",
     definition: "Starts left of target and curves further left. Face is left of target, but path is right of face.",
@@ -90,7 +90,7 @@ export const BALL_FLIGHT_PATTERNS: Record<
     runDoveFitHref: DIAGNOSTIC_ROUTE,
   },
   "pull-straight": {
-    title: "Pull Straight",
+    title: "Push Straight",
     startLine: "left",
     curve: "straight",
     definition: "Starts left and flies straight. Face and path are both left of target and closely aligned.",
@@ -120,7 +120,7 @@ export const BALL_FLIGHT_PATTERNS: Record<
     runDoveFitHref: DIAGNOSTIC_ROUTE,
   },
   "pull-fade": {
-    title: "Pull Fade",
+    title: "Push Fade",
     startLine: "left",
     curve: "fade",
     definition: "Starts left and curves right. Face is left of target but path is even further left.",
@@ -221,7 +221,7 @@ export const BALL_FLIGHT_PATTERNS: Record<
     runDoveFitHref: DIAGNOSTIC_ROUTE,
   },
   "push-draw": {
-    title: "Push Draw",
+    title: "Pull Draw",
     startLine: "right",
     curve: "draw",
     definition: "Starts right and curves left toward target. Face is right of target; path is further right.",
@@ -246,7 +246,7 @@ export const BALL_FLIGHT_PATTERNS: Record<
     runDoveFitHref: DIAGNOSTIC_ROUTE,
   },
   "push-straight": {
-    title: "Push Straight",
+    title: "Pull Straight",
     startLine: "right",
     curve: "straight",
     definition: "Starts right and flies straight. Face and path are both right of target.",
@@ -268,7 +268,7 @@ export const BALL_FLIGHT_PATTERNS: Record<
     runDoveFitHref: DIAGNOSTIC_ROUTE,
   },
   "push-fade": {
-    title: "Push Fade",
+    title: "Pull Fade",
     startLine: "right",
     curve: "fade",
     definition: "Starts right and curves further right. Face is right of target; path is left of face.",
