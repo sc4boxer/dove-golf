@@ -675,11 +675,35 @@ function computeResults(a: Answers) {
     ? {
         weightRange: addTenGramsLabel(driverRec.profile.weightRange),
         flex: driverRec.profile.flex,
-        torqueRange: driverRec.profile.torqueRange ?? "—",
-        launchBias: driverRec.profile.launchBias ?? "mid",
-        balanceBias: driverRec.profile.balanceBias ?? "neutral",
+        torqueRange: driverRec.profile.torqueRange,
+        launchBias: driverRec.profile.launchBias,
+        balanceBias: driverRec.profile.balanceBias,
       }
     : null;
+
+  const swingWeightTargets =
+    a.constraint === "elbow" || a.constraint === "shoulder_back" || a.constraint === "prefer_lighter"
+      ? {
+          driver: "D1–D2",
+          woods: "D2–D3",
+          irons: "D1–D3",
+          wedges: "D3–D5",
+        }
+      : {
+          driver: "D2",
+          woods: "D3",
+          irons: "D2–D4",
+          wedges: "D4–D6",
+        };
+
+  const driverTipStability = (() => {
+    const launch = driverRec?.profile?.launchBias;
+    const torque = driverRec?.profile?.torqueRange;
+    if (!launch && !torque) return "—";
+    if (launch === "low" || /low/i.test(torque ?? "")) return "More tip-stable";
+    if (launch === "high" || /high/i.test(torque ?? "")) return "More active tip";
+    return "Neutral tip stability";
+  })();
 
   const ironRec =
     focus === "irons" || focus === "full_bag"
@@ -791,10 +815,14 @@ function computeResults(a: Answers) {
           fitScore: driverRec.fitScore as number,
           primaryLever: primaryLeverDriver,
           shaft: {
-            weight: driverRec.profile.weightRange,
-            flex: driverRec.profile.flex,
-            profile: `Launch ${driverRec.profile.launchBias ?? "mid"} • Torque ${driverRec.profile.torqueRange ?? "—"} • Balance ${driverRec.profile.balanceBias ?? "neutral"}`,
+            weight: driverRec.profile.weightRange ?? "—",
+            flex: driverRec.profile.flex ?? "—",
+            launch: driverRec.profile.launchBias ?? "—",
+            torqueRange: driverRec.profile.torqueRange ?? "—",
+            balancePoint: driverRec.profile.balanceBias ?? "—",
+            tipStability: driverTipStability,
           },
+          targetSwingWeight: swingWeightTargets.driver,
           settings: (driverRec.adjustmentGuide ?? []) as string[],
           note: driverRec.constraintNote ?? "",
         }
@@ -804,10 +832,13 @@ function computeResults(a: Answers) {
       ? {
           fitScore: Math.max(40, Math.min(95, (driverRec?.fitScore ?? 80) - 3)),
           shaft: {
-            weight: woodsProfile.weightRange,
-            flex: woodsProfile.flex,
-            profile: `Launch ${woodsProfile.launchBias} • Torque ${woodsProfile.torqueRange} • Balance ${woodsProfile.balanceBias}`,
+            weight: woodsProfile.weightRange ?? "—",
+            flex: woodsProfile.flex ?? "—",
+            launch: woodsProfile.launchBias ?? "—",
+            torqueRange: woodsProfile.torqueRange ?? "—",
+            balancePoint: woodsProfile.balanceBias ?? "—",
           },
+          targetSwingWeight: swingWeightTargets.woods,
           note: "Woods: baseline rule is ~+10g vs driver for control and consistent strike.",
         }
       : null,
@@ -817,10 +848,13 @@ function computeResults(a: Answers) {
           fitScore: ironRec.fitScore as number,
           primaryLever: primaryLeverIrons,
           shaft: {
-            weight: ironRec.profile.weightRange,
-            flex: ironRec.profile.flex,
-            profile: `Launch ${ironRec.profile.launchBias ?? "mid"} • Balance ${ironRec.profile.balanceBias ?? "neutral"} • Material ${ironRec.profile.materialBias ?? "—"}`,
+            weight: ironRec.profile.weightRange ?? "—",
+            flex: ironRec.profile.flex ?? "—",
+            launch: ironRec.profile.launchBias ?? "—",
+            balancePoint: ironRec.profile.balanceBias ?? "—",
+            material: ironRec.profile.materialBias ?? "—",
           },
+          targetSwingWeight: swingWeightTargets.irons,
           headBias: ironRec.profile.headBias ?? "Neutral head bias",
           note: ironRec.constraintNote ?? "",
         }
@@ -830,10 +864,12 @@ function computeResults(a: Answers) {
       ? {
           fitScore: wedgeRec.fitScore,
           shaft: {
-            weight: wedgeRec.profile.weightRange,
-            flex: wedgeRec.profile.flex,
-            profile: `Bounce ${wedgeRec.profile.bounce} • Grind ${wedgeRec.profile.grind}`,
+            weight: wedgeRec.profile.weightRange ?? "—",
+            flex: wedgeRec.profile.flex ?? "—",
+            bounce: wedgeRec.profile.bounce ?? "—",
+            grind: wedgeRec.profile.grind ?? "—",
           },
+          targetSwingWeight: swingWeightTargets.wedges,
           gappingTitle: wedgeRec.profile.gappingTitle,
           gappingBullets: wedgeRec.profile.gappingBullets,
           buildNotes: wedgeRec.buildNotes,
@@ -1664,7 +1700,11 @@ function ResultsView({
             <Line label="Primary lever" value={result.driver.primaryLever} />
             <Line label="Shaft weight" value={result.driver.shaft.weight} />
             <Line label="Flex" value={result.driver.shaft.flex} />
-            <div className="text-sm text-slate-700">{result.driver.shaft.profile}</div>
+            <Line label="Launch" value={result.driver.shaft.launch} />
+            <Line label="Torque range" value={result.driver.shaft.torqueRange} />
+            <Line label="Balance point" value={result.driver.shaft.balancePoint} />
+            <Line label="Tip stability" value={result.driver.shaft.tipStability} />
+            <Line label="Target swing weight" value={result.driver.targetSwingWeight} />
 
             {(result.driver.settings ?? []).length > 0 && (
               <>
@@ -1686,7 +1726,10 @@ function ResultsView({
             <Line label="Fit score" value={`${result.woods.fitScore}%`} />
             <Line label="Shaft weight" value={result.woods.shaft.weight} />
             <Line label="Flex" value={result.woods.shaft.flex} />
-            <div className="text-sm text-slate-700">{result.woods.shaft.profile}</div>
+            <Line label="Launch" value={result.woods.shaft.launch} />
+            <Line label="Torque range" value={result.woods.shaft.torqueRange} />
+            <Line label="Balance point" value={result.woods.shaft.balancePoint} />
+            <Line label="Target swing weight" value={result.woods.targetSwingWeight} />
             {result.woods.note ? <p className="pt-2 text-xs text-slate-500">{result.woods.note}</p> : null}
           </Card>
         )}
@@ -1697,8 +1740,11 @@ function ResultsView({
             <Line label="Primary lever" value={result.irons.primaryLever} />
             <Line label="Shaft weight" value={result.irons.shaft.weight} />
             <Line label="Flex" value={result.irons.shaft.flex} />
-            <div className="text-sm text-slate-700">{result.irons.shaft.profile}</div>
+            <Line label="Launch" value={result.irons.shaft.launch} />
+            <Line label="Balance point" value={result.irons.shaft.balancePoint} />
+            <Line label="Material" value={result.irons.shaft.material} />
             <Line label="Head bias" value={result.irons.headBias} />
+            <Line label="Target swing weight" value={result.irons.targetSwingWeight} />
             {result.irons.note ? <p className="pt-2 text-xs text-slate-500">{result.irons.note}</p> : null}
           </Card>
         )}
@@ -1708,7 +1754,9 @@ function ResultsView({
             <Line label="Fit score" value={`${result.wedges.fitScore}%`} />
             <Line label="Shaft weight" value={result.wedges.shaft.weight} />
             <Line label="Flex" value={result.wedges.shaft.flex} />
-            <div className="text-sm text-slate-700">{result.wedges.shaft.profile}</div>
+            <Line label="Bounce" value={result.wedges.shaft.bounce} />
+            <Line label="Grind" value={result.wedges.shaft.grind} />
+            <Line label="Target swing weight" value={result.wedges.targetSwingWeight} />
 
             <div className="pt-3 text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</div>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
