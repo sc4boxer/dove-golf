@@ -23,13 +23,36 @@ export const metadata: Metadata = {
     template: `%s | ${SITE_NAME}`,
   },
   description: DEFAULT_DESCRIPTION,
+  keywords: [
+    "golf club fitting",
+    "online golf fitting",
+    "golf shaft fitting",
+    "driver fitting",
+    "iron fitting",
+    "golf equipment diagnostic",
+    "Dove Golf",
+  ],
 
   applicationName: SITE_NAME,
+  authors: [{ name: "Dove Golf" }],
+  creator: "Dove Golf",
+  publisher: "Dove Golf",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   ),
   alternates: {
     canonical: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
   openGraph: {
     type: "website",
@@ -42,6 +65,9 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
 };
 
