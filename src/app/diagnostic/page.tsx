@@ -2234,28 +2234,8 @@ function EquipmentAlignmentShareCard({
       : null,
   ].filter(Boolean) as { title: string; lines: string[][] }[];
 
-  const columnWidth = Math.floor((952 - (recommendationGroups.length - 1) * 24) / Math.max(1, recommendationGroups.length));
   const causeItems = (result.cause ?? []).slice(0, 5);
   const causeCardHeight = Math.max(134, 74 + causeItems.length * 20);
-
-  const wrapValue = (value: string) => {
-    const words = value.split(" ");
-    const lines: string[] = [];
-    let current = "";
-
-    for (const word of words) {
-      const candidate = current ? `${current} ${word}` : word;
-      if (candidate.length <= 18) {
-        current = candidate;
-      } else {
-        if (current) lines.push(current);
-        current = word.length > 18 ? `${word.slice(0, 17)}…` : word;
-      }
-    }
-
-    if (current) lines.push(current);
-    return lines.slice(0, 2);
-  };
 
   return (
     <svg
@@ -2316,29 +2296,28 @@ function EquipmentAlignmentShareCard({
 
       <rect x="64" y="590" width="952" height="214" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
-      {recommendationGroups.map((group, i) => (
-        <g key={group.title} transform={`translate(${88 + i * (columnWidth + 24)}, 645)`}>
-          <clipPath id={`recommendationClip-${i}`}>
-            <rect x="0" y="-20" width={columnWidth} height="154" />
-          </clipPath>
-          {i > 0 && <line x1={-12} x2={-12} y1={-4} y2={146} stroke="#e2e8f0" />}
-          <g clipPath={`url(#recommendationClip-${i})`}>
-            <text x="0" y="0" fontSize="16" fontWeight="600" fill="#0f172a">{group.title}</text>
-            {group.lines.slice(0, 6).map(([label, value], lineIndex) => (
-              <g key={`${group.title}-${label}`}>
-                <text x="0" y={24 + lineIndex * 22} fontSize="13" fill="#64748b">{label}</text>
-                <text x={columnWidth - 4} y={24 + lineIndex * 22} fontSize="13" fill="#0f172a" textAnchor="end" fontWeight="500">
-                  {wrapValue(value).map((line, wrapIndex) => (
-                    <tspan key={`${group.title}-${label}-${wrapIndex}`} x={columnWidth - 4} dy={wrapIndex === 0 ? 0 : 12}>
-                      {line}
-                    </tspan>
+      <foreignObject x="88" y="640" width="904" height="156">
+        <div className="h-full w-full text-slate-900">
+          <div className="grid gap-6 [grid-template-columns:repeat(3,minmax(0,1fr))]">
+            {recommendationGroups.map((group, i) => (
+              <div
+                key={group.title}
+                className={["min-w-0", i > 0 ? "border-l border-slate-200 pl-6" : ""].join(" ")}
+              >
+                <div className="pb-2 text-base font-semibold leading-tight text-slate-900">{group.title}</div>
+                <div className="space-y-1.5">
+                  {group.lines.slice(0, 6).map(([label, value]) => (
+                    <div key={`${group.title}-${label}`} className="flex items-start justify-between gap-3 text-[13px] leading-[1.25rem]">
+                      <span className="shrink-0 text-slate-500">{label}</span>
+                      <span className="min-w-0 flex-1 text-right font-medium whitespace-normal break-words text-slate-900">{value}</span>
+                    </div>
                   ))}
-                </text>
-              </g>
+                </div>
+              </div>
             ))}
-          </g>
-        </g>
-      ))}
+          </div>
+        </div>
+      </foreignObject>
 
       <rect x="64" y="820" width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="850" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
