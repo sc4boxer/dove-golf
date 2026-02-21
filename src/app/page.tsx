@@ -9,19 +9,17 @@ export default function HomePage() {
           <span>Golf Equipment Diagnostic</span>
         </div>
 
-        {/* Headline block (kept wide so it visually aligns with the cards) */}
-        <h1 className="mt-6 text-5xl font-semibold tracking-tight leading-tight max-w-3xl">
-          Golf equipment isn’t
-          <br />
-          about “best.”
-          <br />
-          It’s about physics.
+        {/* Headline block (independent positioning) */}
+        <h1 className="mt-6 max-w-3xl text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.08] sm:leading-tight">
+          Independent fitting.
+          <span className="block">
+            Driven by <span className="font-bold">physics.</span>
+          </span>
         </h1>
 
-        <p className="mt-6 max-w-2xl text-lg text-slate-600">
+        <p className="mt-6 max-w-2xl text-lg text-slate-600 leading-relaxed">
           A deterministic diagnostic that fits your gear to how you actually swing.
-          <br />
-          No hype. No brand bias. Just logic.
+          <span className="block mt-2">No hype. No brand bias. Just logic.</span>
         </p>
 
         {/* Viz moved below copy, above buttons (mobile-friendly) */}
@@ -54,7 +52,8 @@ export default function HomePage() {
         </div>
 
         <div className="mt-14 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
-          For golfers who care about cause and effect — and want clear, data-driven reasoning behind equipment decisions.
+          For golfers who care about cause and effect — and want clear, data-driven reasoning behind
+          equipment decisions.
         </div>
       </div>
     </main>
@@ -236,7 +235,13 @@ function TrajectoryHeroViz() {
             />
           </text>
 
-          <text x={xMax - 62} y={originY + 26} fontSize="12" fill="rgb(100 116 139)" opacity="0">
+          <text
+            x={xMax - 62}
+            y={originY + 26}
+            fontSize="12"
+            fill="rgb(100 116 139)"
+            opacity="0"
+          >
             Distance
             <animate
               attributeName="opacity"
@@ -260,7 +265,14 @@ function TrajectoryHeroViz() {
           opacity="0"
           strokeDashoffset={dashLen}
         >
-          <animate attributeName="opacity" from="0" to="1" begin={`${tHighStart}s`} dur="0.01s" fill="freeze" />
+          <animate
+            attributeName="opacity"
+            from="0"
+            to="1"
+            begin={`${tHighStart}s`}
+            dur="0.01s"
+            fill="freeze"
+          />
           <animate
             attributeName="stroke-dashoffset"
             from={dashLen}
@@ -282,7 +294,14 @@ function TrajectoryHeroViz() {
           opacity="0"
           strokeDashoffset={dashLen}
         >
-          <animate attributeName="opacity" from="0" to="1" begin={`${tLowStart}s`} dur="0.01s" fill="freeze" />
+          <animate
+            attributeName="opacity"
+            from="0"
+            to="1"
+            begin={`${tLowStart}s`}
+            dur="0.01s"
+            fill="freeze"
+          />
           <animate
             attributeName="stroke-dashoffset"
             from={dashLen}
@@ -304,7 +323,14 @@ function TrajectoryHeroViz() {
           strokeDasharray={dashLen}
           strokeDashoffset={dashLen}
         >
-          <animate attributeName="opacity" from="0" to="1" begin={`${tOptStart}s`} dur="0.01s" fill="freeze" />
+          <animate
+            attributeName="opacity"
+            from="0"
+            to="1"
+            begin={`${tOptStart}s`}
+            dur="0.01s"
+            fill="freeze"
+          />
           <animate
             attributeName="stroke-dashoffset"
             from={dashLen}
