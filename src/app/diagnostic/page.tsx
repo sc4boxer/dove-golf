@@ -7,7 +7,7 @@ import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
 
 const SHARE_CARD_WIDTH = 1080;
-const SHARE_CARD_HEIGHT = 1350;
+const SHARE_CARD_HEIGHT = 1900;
 const SHARE_CARD_PADDING = 64;
 
 /* ---------------- TYPES ---------------- */
@@ -2234,9 +2234,8 @@ function EquipmentAlignmentShareCard({
       : null,
   ].filter(Boolean) as { title: string; lines: string[][] }[];
 
-  const causeItems = (result.cause ?? []).slice(0, 5);
-  const causeCardHeight = Math.max(134, 74 + causeItems.length * 20);
-  const recommendationColumnWidth = 904 / Math.max(1, recommendationGroups.length);
+  const causeItems = result.cause ?? [];
+  const whyItems = result.why ?? [];
 
   const wrapForCard = (value: string, maxChars: number) => {
     if (!value) return [""];
@@ -2262,27 +2261,36 @@ function EquipmentAlignmentShareCard({
     return lines;
   };
 
-  const valueWrapChars = recommendationGroups.length >= 3 ? 16 : recommendationGroups.length === 2 ? 24 : 34;
-  const recommendationLineHeight = 13;
-  const recommendationRowMinHeight = 17;
-  const recommendationRows = recommendationGroups.map((group) =>
-    group.lines.slice(0, 6).map(([label, value]) => {
-      const wrappedValue = wrapForCard(value, valueWrapChars);
-      const rowHeight = Math.max(recommendationRowMinHeight, wrappedValue.length * recommendationLineHeight + 2);
-      return { label, wrappedValue, rowHeight };
-    })
-  );
-  const recommendationRowsHeight = Math.max(
-    0,
-    ...recommendationRows.map((rows) => rows.reduce((acc, row) => acc + row.rowHeight, 0))
-  );
+  const recommendationLineHeight = 15;
+  const recommendationRows = recommendationGroups.map((group) => {
+    const rows = group.lines.map(([label, value]) => {
+      const wrappedLabel = wrapForCard(label, 26);
+      const wrappedValue = wrapForCard(value, 70);
+      const rowLineCount = Math.max(wrappedLabel.length, wrappedValue.length);
+      const rowHeight = rowLineCount * recommendationLineHeight + 8;
+      return { label, value, wrappedLabel, wrappedValue, rowLineCount, rowHeight };
+    });
+    const bodyHeight = rows.reduce((acc, row) => acc + row.rowHeight, 0);
+    const cardHeight = 58 + bodyHeight + 18;
+    return { ...group, rows, cardHeight };
+  });
+
   const recommendationCardY = 590;
-  const recommendationRowsStartY = 688;
-  const recommendationCardHeight = Math.max(214, recommendationRowsStartY - recommendationCardY + recommendationRowsHeight + 20);
+  const recommendationCardHeight =
+    56 + recommendationRows.reduce((acc, group) => acc + group.cardHeight + 10, 0) + 10;
   const causeCardY = recommendationCardY + recommendationCardHeight + 16;
+  const causeWrappedItems = causeItems.map((item) => wrapForCard(item, 110));
+  const causeBodyLineCount = causeWrappedItems.reduce((acc, lines) => acc + lines.length, 0);
+  const causeCardHeight = Math.max(134, 74 + causeBodyLineCount * 18 + Math.max(0, causeItems.length - 1) * 4);
   const causeTitleY = causeCardY + 30;
   const causeLinesStartY = causeCardY + 56;
-  const scoreValueY = causeCardY + causeCardHeight + 74;
+  const summaryCardY = causeCardY + causeCardHeight + 16;
+  const summaryWrappedItems = whyItems.map((item) => wrapForCard(item, 110));
+  const summaryBodyLineCount = summaryWrappedItems.reduce((acc, lines) => acc + lines.length, 0);
+  const summaryCardHeight = Math.max(120, 74 + summaryBodyLineCount * 18 + Math.max(0, whyItems.length - 1) * 4);
+  const summaryTitleY = summaryCardY + 30;
+  const summaryLinesStartY = summaryCardY + 56;
+  const scoreValueY = summaryCardY + summaryCardHeight + 74;
   const scoreLabelY = scoreValueY + 26;
 
   return (
@@ -2344,36 +2352,29 @@ function EquipmentAlignmentShareCard({
 
       <rect x="64" y={recommendationCardY} width="952" height={recommendationCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
-      {recommendationGroups.map((group, i) => {
-        const columnX = 88 + i * recommendationColumnWidth;
-        const lineLabelX = columnX;
-        const lineValueX = columnX + recommendationColumnWidth - 12;
-        let rowY = recommendationRowsStartY;
+      {recommendationRows.map((group, i) => {
+        const groupY = 640 + recommendationRows.slice(0, i).reduce((acc, rowGroup) => acc + rowGroup.cardHeight + 10, 0);
         return (
           <g key={group.title}>
-            {i > 0 && (
-              <line
-                x1={columnX - 14}
-                y1="648"
-                x2={columnX - 14}
-                y2={recommendationCardY + recommendationCardHeight - 16}
-                stroke="#e2e8f0"
-              />
-            )}
-            <text x={columnX} y="664" fontSize="16" fontWeight="600" fill="#0f172a">
+            <rect x="88" y={groupY} width="904" height={group.cardHeight} rx="12" fill="#ffffff" stroke="#e2e8f0" />
+            <text x="108" y={groupY + 28} fontSize="16" fontWeight="600" fill="#0f172a">
               {group.title}
             </text>
-            {recommendationRows[i]?.map((row) => {
-              const currentRowY = rowY;
-              rowY += row.rowHeight;
+            <line x1="108" y1={groupY + 38} x2="972" y2={groupY + 38} stroke="#e2e8f0" />
+            {group.rows.map((row, rowIndex) => {
+              const rowY = groupY + 58 + group.rows.slice(0, rowIndex).reduce((acc, currentRow) => acc + currentRow.rowHeight, 0);
               return (
                 <g key={`${group.title}-${row.label}`}>
-                  <text x={lineLabelX} y={currentRowY} fontSize="12" fill="#64748b">
-                    {row.label}
+                  <text x="108" y={rowY} fontSize="12" fill="#64748b">
+                    {row.wrappedLabel.map((labelLine, labelLineIndex) => (
+                      <tspan key={`${row.label}-label-${labelLineIndex}`} x="108" dy={labelLineIndex === 0 ? 0 : recommendationLineHeight}>
+                        {labelLine}
+                      </tspan>
+                    ))}
                   </text>
-                  <text x={lineValueX} y={currentRowY} fontSize="12" fill="#0f172a" fontWeight="500" textAnchor="end">
+                  <text x="360" y={rowY} fontSize="12" fill="#0f172a" fontWeight="500">
                     {row.wrappedValue.map((valueLine, valueLineIndex) => (
-                      <tspan key={`${row.label}-${valueLineIndex}`} x={lineValueX} dy={valueLineIndex === 0 ? 0 : recommendationLineHeight}>
+                      <tspan key={`${row.label}-value-${valueLineIndex}`} x="360" dy={valueLineIndex === 0 ? 0 : recommendationLineHeight}>
                         {valueLine}
                       </tspan>
                     ))}
@@ -2387,20 +2388,52 @@ function EquipmentAlignmentShareCard({
 
       <rect x="64" y={causeCardY} width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y={causeTitleY} fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
-      {causeItems.map((item, i) => (
-        <text key={`cause-${i}`} x="104" y={causeLinesStartY + i * 20} fontSize="13" fill="#334155">• {item}</text>
-      ))}
+      {causeWrappedItems.map((itemLines, i) => {
+        const lineStartY =
+          causeLinesStartY +
+          causeWrappedItems
+            .slice(0, i)
+            .reduce((acc, lines) => acc + lines.length * 18 + 4, 0);
+        return (
+          <text key={`cause-${i}`} x="104" y={lineStartY} fontSize="13" fill="#334155">
+            {itemLines.map((itemLine, lineIndex) => (
+              <tspan key={`cause-${i}-${lineIndex}`} x={lineIndex === 0 ? 104 : 122} dy={lineIndex === 0 ? 0 : 18}>
+                {lineIndex === 0 ? `• ${itemLine}` : itemLine}
+              </tspan>
+            ))}
+          </text>
+        );
+      })}
+
+      <rect x="64" y={summaryCardY} width="952" height={summaryCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y={summaryTitleY} fontSize="20" fontWeight="600" fill="#0f172a">Summary diagnostic</text>
+      {summaryWrappedItems.map((itemLines, i) => {
+        const lineStartY =
+          summaryLinesStartY +
+          summaryWrappedItems
+            .slice(0, i)
+            .reduce((acc, lines) => acc + lines.length * 18 + 4, 0);
+        return (
+          <text key={`summary-${i}`} x="104" y={lineStartY} fontSize="13" fill="#334155">
+            {itemLines.map((itemLine, lineIndex) => (
+              <tspan key={`summary-${i}-${lineIndex}`} x={lineIndex === 0 ? 104 : 122} dy={lineIndex === 0 ? 0 : 18}>
+                {lineIndex === 0 ? `• ${itemLine}` : itemLine}
+              </tspan>
+            ))}
+          </text>
+        );
+      })}
 
       <text x="540" y={scoreValueY} fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
       <text x="540" y={scoreLabelY} fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
 
-      <text x="64" y="1290" fontSize="12" fill="#475569">
+      <text x="64" y="1840" fontSize="12" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
       </text>
-      <text x="640" y="1265" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
+      <text x="640" y="1815" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
 
-      <rect x="888" y="1208" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
-      <g transform="translate(896 1216)" clipPath="url(#qrClip)">
+      <rect x="888" y="1758" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <g transform="translate(896 1766)" clipPath="url(#qrClip)">
         <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
       </g>
     </svg>
