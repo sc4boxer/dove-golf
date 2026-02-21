@@ -7,7 +7,7 @@ import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
 
 const SHARE_CARD_WIDTH = 1080;
-const SHARE_CARD_HEIGHT = 1350;
+const SHARE_CARD_HEIGHT = 1480;
 const SHARE_CARD_PADDING = 64;
 
 /* ---------------- TYPES ---------------- */
@@ -2193,54 +2193,51 @@ function EquipmentAlignmentShareCard({
     ...(a.ironLowPoint !== "unsure" ? [{ label: "Low point / contact", value: a.ironLowPoint }] : []),
   ];
 
-  const recommendationGroups = [
-    showDriver && result.driver
-      ? {
-          title: "Driver recommendation",
-          lines: [
-            ["Fit score", `${result.driver.fitScore}%`],
-            ["Shaft weight range", result.driver.shaft.weight],
-            ["Flex", result.driver.shaft.flex],
-            ["Launch target", result.driver.shaft.launch],
-            ["Head bias", result.driver.primaryLever],
-            ["Target swing weight", result.driver.targetSwingWeight],
-          ],
-        }
-      : null,
-    showIrons && result.irons
-      ? {
-          title: "Iron recommendation",
-          lines: [
-            ["Fit score", `${result.irons.fitScore}%`],
-            ["Shaft weight range", result.irons.shaft.weight],
-            ["Flex", result.irons.shaft.flex],
-            ["Launch target", result.irons.shaft.launch],
-            ["Head bias", result.irons.headBias],
-            ["Target swing weight", result.irons.targetSwingWeight],
-          ],
-        }
-      : null,
-    result.wedges
-      ? {
-          title: "Wedge recommendation",
-          lines: [
-            ["Fit score", `${result.wedges.fitScore}%`],
-            ["Shaft weight range", result.wedges.shaft.weight],
-            ["Flex", result.wedges.shaft.flex],
-            ["Launch target", result.wedges.shaft.bounce],
-            ["Target swing weight", result.wedges.targetSwingWeight],
-          ],
-        }
-      : null,
-  ].filter(Boolean) as { title: string; lines: string[][] }[];
+  const recommendationGroups: { title: string; lines: string[][] }[] = [];
+
+  if (showDriver && result.driver) {
+    recommendationGroups.push({
+      title: "Driver recommendation",
+      lines: [
+        ["Fit score", `${result.driver.fitScore}%`],
+        ["Shaft weight range", result.driver.shaft.weight],
+        ["Flex", result.driver.shaft.flex],
+        ["Launch target", result.driver.shaft.launch],
+        ["Head bias", result.driver.primaryLever],
+        ["Target swing weight", result.driver.targetSwingWeight],
+      ],
+    });
+  }
+
+  if (showIrons && result.irons) {
+    recommendationGroups.push({
+      title: "Iron recommendation",
+      lines: [
+        ["Fit score", `${result.irons.fitScore}%`],
+        ["Shaft weight range", result.irons.shaft.weight],
+        ["Flex", result.irons.shaft.flex],
+        ["Launch target", result.irons.shaft.launch],
+        ["Head bias", result.irons.headBias],
+        ["Target swing weight", result.irons.targetSwingWeight],
+      ],
+    });
+  }
+
+  if (result.wedges) {
+    recommendationGroups.push({
+      title: "Wedge recommendation",
+      lines: [
+        ["Fit score", `${result.wedges.fitScore}%`],
+        ["Shaft weight range", result.wedges.shaft.weight],
+        ["Flex", result.wedges.shaft.flex],
+        ["Launch target", result.wedges.shaft.bounce],
+        ["Target swing weight", result.wedges.targetSwingWeight],
+      ],
+    });
+  }
 
   const causeItems = (result.cause ?? []).slice(0, 5);
   const causeCardHeight = Math.max(134, 74 + causeItems.length * 20);
-  const recommendationColumnWidth = 904 / Math.max(1, recommendationGroups.length);
-
-  const truncateForCard = (value: string, maxChars: number) =>
-    value.length > maxChars ? `${value.slice(0, maxChars - 1)}…` : value;
-
   return (
     <svg
       id="equipment-alignment-share-card"
@@ -2298,51 +2295,42 @@ function EquipmentAlignmentShareCard({
         <FaceStrikeViz strike={a.ironFaceStrike} />
       </svg>
 
-      <rect x="64" y="590" width="952" height="214" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <rect x="64" y="590" width="952" height="344" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
-      {recommendationGroups.map((group, i) => {
-        const columnX = 88 + i * recommendationColumnWidth;
-        const lineLabelX = columnX;
-        const lineValueX = columnX + recommendationColumnWidth - 12;
-        return (
-          <g key={group.title}>
-            {i > 0 && <line x1={columnX - 14} y1="648" x2={columnX - 14} y2="788" stroke="#e2e8f0" />}
-            <text x={columnX} y="664" fontSize="16" fontWeight="600" fill="#0f172a">
-              {group.title}
-            </text>
-            {group.lines.slice(0, 6).map(([label, value], lineIndex) => {
-              const rowY = 688 + lineIndex * 17;
-              return (
-                <g key={`${group.title}-${label}`}>
-                  <text x={lineLabelX} y={rowY} fontSize="12" fill="#64748b">
-                    {label}
-                  </text>
-                  <text x={lineValueX} y={rowY} fontSize="12" fill="#0f172a" fontWeight="500" textAnchor="end">
-                    {truncateForCard(value, 22)}
-                  </text>
-                </g>
-              );
-            })}
-          </g>
-        );
-      })}
+      <foreignObject x="88" y="640" width="904" height="278">
+        <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-col gap-4">
+          {recommendationGroups.map((group) => (
+            <div key={group.title} className="rounded-xl border border-slate-200 bg-white p-4">
+              <p className="text-base font-semibold text-slate-900">{group.title}</p>
+              <div className="mt-3 space-y-2">
+                {group.lines.slice(0, 6).map(([label, value]) => (
+                  <div key={`${group.title}-${label}`} className="flex items-start justify-between gap-3 text-[13px]">
+                    <span className="text-slate-500">{label}</span>
+                    <span className="min-w-0 whitespace-normal break-words text-right font-medium text-slate-900">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </foreignObject>
 
-      <rect x="64" y="820" width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
-      <text x="88" y="850" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
+      <rect x="64" y="950" width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="980" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
       {causeItems.map((item, i) => (
-        <text key={`cause-${i}`} x="104" y={876 + i * 20} fontSize="13" fill="#334155">• {item}</text>
+        <text key={`cause-${i}`} x="104" y={1006 + i * 20} fontSize="13" fill="#334155">• {item}</text>
       ))}
 
-      <text x="540" y="1038" fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
-      <text x="540" y="1064" fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
+      <text x="540" y="1168" fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
+      <text x="540" y="1194" fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
 
-      <text x="64" y="1290" fontSize="12" fill="#475569">
+      <text x="64" y="1420" fontSize="12" fill="#475569">
         Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
       </text>
-      <text x="640" y="1265" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
+      <text x="640" y="1395" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
 
-      <rect x="888" y="1208" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
-      <g transform="translate(896 1216)" clipPath="url(#qrClip)">
+      <rect x="888" y="1338" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <g transform="translate(896 1346)" clipPath="url(#qrClip)">
         <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
       </g>
     </svg>
