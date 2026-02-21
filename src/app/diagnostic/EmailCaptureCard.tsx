@@ -47,7 +47,7 @@ export default function EmailCaptureCard({ payload }: Props) {
         .json()
         .catch(() => ({ ok: false, error: "Invalid response from server." }));
 
-      if (!res.ok || !result?.ok) {
+      if (!(res.ok && result?.ok === true)) {
         throw new Error(result?.error || "Failed to send verification email.");
       }
 
