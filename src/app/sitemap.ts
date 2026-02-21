@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const baseUrl = "https://dovegolf.fit";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = ["", "/diagnostic", "/method", "/about"];
