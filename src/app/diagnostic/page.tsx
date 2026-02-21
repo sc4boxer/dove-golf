@@ -270,6 +270,23 @@ function sanitizeStoredAnswers(rawPayload: unknown): Partial<Answers> {
   return parsed as Partial<Answers>;
 }
 
+function extractContactProfile(rawPayload: unknown): { firstName: string | null; lastName: string | null; email: string | null } {
+  if (!rawPayload || typeof rawPayload !== "object") {
+    return { firstName: null, lastName: null, email: null };
+  }
+
+  const payload = rawPayload as Record<string, unknown>;
+  const contact = payload.contactProfile && typeof payload.contactProfile === "object"
+    ? (payload.contactProfile as Record<string, unknown>)
+    : payload;
+
+  return {
+    firstName: typeof contact.firstName === "string" ? contact.firstName : null,
+    lastName: typeof contact.lastName === "string" ? contact.lastName : null,
+    email: typeof contact.email === "string" ? contact.email : null,
+  };
+}
+
 
 function buildInlineQrSvg(data: string, size: number) {
   const cells = 29;
@@ -1049,22 +1066,53 @@ export default function DiagnosticWizard() {
       }
 
       if (verified || wantsResults) {
+        const hydrateFromPayload = (payload: unknown) => {
+          setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(payload) });
+
+          const contact = extractContactProfile(payload);
+          if (contact.firstName && contact.lastName && contact.email) {
+            window.localStorage.setItem("lead_contact_profile", JSON.stringify(contact));
+          }
+        };
+
         const savedPayload = window.localStorage.getItem("diagnostic_last_payload");
         if (savedPayload) {
           try {
             const parsed = JSON.parse(savedPayload);
-
-            setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(parsed) });
+            hydrateFromPayload(parsed);
           } catch {
             // ignore bad JSON
           }
+        } else {
+          const resumeToken = url.searchParams.get("resumeToken");
+          if (resumeToken) {
+            fetch(`/api/lead/context?token=${encodeURIComponent(resumeToken)}`)
+              .then((res) => res.json().catch(() => ({ ok: false })))
+              .then((ctx) => {
+                if (ctx?.ok && ctx?.payload) {
+                  window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(ctx.payload));
+                  hydrateFromPayload(ctx.payload);
+                }
+              })
+              .catch(() => {
+                // ignore
+              })
+              .finally(() => {
+                setPendingJumpToResults(true);
+              });
+          } else {
+            setPendingJumpToResults(true);
+          }
         }
 
-        setPendingJumpToResults(true);
+        if (savedPayload || !url.searchParams.get("resumeToken")) {
+          setPendingJumpToResults(true);
+        }
 
         url.searchParams.delete("step");
         url.searchParams.delete("verified");
         url.searchParams.delete("verifyStatus");
+        url.searchParams.delete("resumeToken");
         window.history.replaceState({}, "", url.toString());
       }
     } catch {
@@ -1745,6 +1793,13 @@ function ResultsView({
           lastName: typeof parsed?.lastName === "string" ? parsed.lastName : null,
           email: typeof parsed?.email === "string" ? parsed.email : null,
         });
+      } else {
+        const payloadRaw = window.localStorage.getItem("diagnostic_last_payload");
+        if (payloadRaw) {
+          const parsedPayload = JSON.parse(payloadRaw);
+          const fallbackProfile = extractContactProfile(parsedPayload);
+          setContactProfile(fallbackProfile);
+        }
       }
     } catch {
       // ignore
