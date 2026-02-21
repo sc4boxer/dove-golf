@@ -15,6 +15,12 @@ type ArticleCard = {
 
 const physicsFundamentals: ArticleCard[] = [
   {
+    title: "Ball Flight Library",
+    href: "/learn/ball-flight",
+    summary:
+      "Explore 9 start-line and curvature patterns with probable mechanisms, what to test first, and confidence scoring.",
+  },
+  {
     title: "Start Line vs Curve",
     href: "/learn/start-line-vs-curve",
     summary:
