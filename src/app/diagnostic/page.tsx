@@ -568,7 +568,7 @@ function fallbackIronRec(sevenIronSpeed: number): EngineRec {
 function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
   try {
     const rec = recommendDriverWoods(args);
-    if (rec && typeof rec === "object" && rec.profile?.weightRange && rec.profile?.flex) {
+    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
       return rec as EngineRec;
     }
   } catch {
@@ -580,7 +580,7 @@ function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
 function safeRecommendIrons(args: any, sevenIronSpeed: number): EngineRec {
   try {
     const rec = recommendIrons(args);
-    if (rec && typeof rec === "object" && rec.profile?.weightRange && rec.profile?.flex) {
+    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
       return rec as EngineRec;
     }
   } catch {
@@ -783,6 +783,7 @@ function computeResults(a: Answers) {
     models: {
       driver: { start: a.driverStartLine, curve: a.driverCurve, strike: a.driverStrike },
       irons: { start: a.ironStartLine, curve: a.ironCurve, lowPoint: a.ironLowPoint, faceStrike: a.ironFaceStrike },
+      wedges: { turf: a.wedgeTurf, miss: a.wedgeMiss },
     },
 
     driver: driverRec
@@ -1419,31 +1420,41 @@ export default function DiagnosticWizard() {
                 )}
 
                 {step === "wedge_turf" && (
-                  <ChoiceChips
-                    mode="single"
-                    value={a.wedgeTurf}
-                    onChange={(v) => setA((p) => ({ ...p, wedgeTurf: v }))}
-                    options={[
-                      { value: "digger", label: "Digger (deep divots)" },
-                      { value: "neutral", label: "Neutral" },
-                      { value: "sweeper", label: "Sweeper (shallow)" },
-                      { value: "unsure", label: "Not sure" },
-                    ]}
-                  />
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.wedgeTurf}
+                      onChange={(v) => setA((p) => ({ ...p, wedgeTurf: v }))}
+                      options={[
+                        { value: "digger", label: "Digger (deep divots)" },
+                        { value: "neutral", label: "Neutral" },
+                        { value: "sweeper", label: "Sweeper (shallow)" },
+                        { value: "unsure", label: "Not sure" },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <WedgeTurfViz turf={a.wedgeTurf} />
+                    </MiniVizCard>
+                  </div>
                 )}
 
                 {step === "wedge_miss" && (
-                  <ChoiceChips
-                    mode="single"
-                    value={a.wedgeMiss}
-                    onChange={(v) => setA((p) => ({ ...p, wedgeMiss: v }))}
-                    options={[
-                      { value: "fat", label: "Fat" },
-                      { value: "thin", label: "Thin" },
-                      { value: "both", label: "Both" },
-                      { value: "unsure", label: "Not sure" },
-                    ]}
-                  />
+                  <div className="space-y-4">
+                    <ChoiceChips
+                      mode="single"
+                      value={a.wedgeMiss}
+                      onChange={(v) => setA((p) => ({ ...p, wedgeMiss: v }))}
+                      options={[
+                        { value: "fat", label: "Fat" },
+                        { value: "thin", label: "Thin" },
+                        { value: "both", label: "Both" },
+                        { value: "unsure", label: "Not sure" },
+                      ]}
+                    />
+                    <MiniVizCard>
+                      <WedgeMissViz miss={a.wedgeMiss} />
+                    </MiniVizCard>
+                  </div>
                 )}
 
                 {step === "wedge_traj" && (
@@ -1536,8 +1547,17 @@ function ResultsView({
   const showIrons = result.focus === "irons" || result.focus === "full_bag";
   const showWedges = result.focus === "wedges" || result.focus === "full_bag";
 
+  // ✅ FIX #1: only show ball flight model when driver or irons are part of the workflow
+  const showBallFlight = showDriver || showIrons;
+
+  // ✅ FIX #2: only show irons contact profile when irons are part of the workflow
+  const showIronContactProfile = showIrons;
+
   const modelStart = showIrons && !showDriver ? a.ironStartLine : a.driverStartLine;
   const modelCurve = showIrons && !showDriver ? a.ironCurve : a.driverCurve;
+
+  // Optional: wedge-only gets a wedge-specific “interaction” model instead of a dummy driver model
+  const showWedgeModelOnly = showWedges && !showDriver && !showIrons;
 
   return (
     <>
@@ -1580,19 +1600,42 @@ function ResultsView({
       <div className="mt-8 grid gap-4">
         {!isVerified && <EmailCaptureCard payload={a} />}
 
-        <Card title="Your ball flight model">
-          <div className="grid gap-3">
-            <div className="text-sm text-slate-600">
-              {showIrons && !showDriver ? "Irons" : "Driver"}:{" "}
-              <span className="font-medium text-slate-900">
-                {modelStart} / {modelCurve}
-              </span>
+        {showBallFlight && (
+          <Card title="Your ball flight model">
+            <div className="grid gap-3">
+              <div className="text-sm text-slate-600">
+                {showIrons && !showDriver ? "Irons" : "Driver"}:{" "}
+                <span className="font-medium text-slate-900">
+                  {modelStart} / {modelCurve}
+                </span>
+              </div>
+              <BallFlightViz start={modelStart} curve={modelCurve} compact={false} />
             </div>
-            <BallFlightViz start={modelStart} curve={modelCurve} compact={false} />
-          </div>
-        </Card>
+          </Card>
+        )}
 
-        {(showIrons || showDriver) && (
+        {showWedgeModelOnly && (
+          <Card title="Your wedge interaction model">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-sm font-semibold text-slate-900">Turf interaction</div>
+                <div className="mt-1 text-xs text-slate-500">{a.wedgeTurf}</div>
+                <div className="mt-3">
+                  <WedgeTurfViz turf={a.wedgeTurf} />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="text-sm font-semibold text-slate-900">Typical miss</div>
+                <div className="mt-1 text-xs text-slate-500">{a.wedgeMiss}</div>
+                <div className="mt-3">
+                  <WedgeMissViz miss={a.wedgeMiss} />
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {showIronContactProfile && (
           <Card title="Your contact profile">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -1614,7 +1657,7 @@ function ResultsView({
           </Card>
         )}
 
-                {/* Recommendations */}
+        {/* Recommendations */}
         {showDriver && result.driver && (
           <Card title="Driver recommendation">
             <Line label="Fit score" value={`${result.driver.fitScore}%`} />
@@ -1720,6 +1763,7 @@ function ResultsView({
             </li>
           </ul>
         </Card>
+
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
           <button
             type="button"
@@ -1935,30 +1979,21 @@ function BallFlightViz({
   // Curve direction: draw = left, fade = right
   const sign = curve === "draw" ? 1 : curve === "fade" ? -1 : 0;
 
-  // Bend amount: visible but not extreme (scaled for compact vs full)
   const bend = sign * w * 0.22;
-
-  // We want the curve to "bulge" relative to the START and the mid-chord,
-  // while still ending exactly on the target line.
   const midX = (sx + ex) / 2;
 
-  // Control points:
-  // c1: lets the ball leave from the true start point with slight bias
   const c1x = sx + bend * 0.35;
   const c1y = h * 0.62;
 
-  // c2: creates the visible curvature in the mid/late flight
   const c2x = midX + bend;
   const c2y = h * 0.28;
 
   const path = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
 
-  // Start label under the true start point
   const startLabelX = Math.max(w * 0.06, Math.min(sx - 14, w * 0.94));
 
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-      {/* ground */}
       <line
         x1={w * 0.1}
         y1={groundY}
@@ -1968,7 +2003,6 @@ function BallFlightViz({
         strokeWidth="2"
       />
 
-      {/* target line */}
       <line
         x1={targetX}
         y1={groundY}
@@ -1979,7 +2013,6 @@ function BallFlightViz({
         strokeDasharray="6 6"
       />
 
-      {/* flight path (animated draw) */}
       <path
         d={path}
         fill="none"
@@ -1989,16 +2022,9 @@ function BallFlightViz({
         strokeDasharray="900"
         strokeDashoffset="900"
       >
-        <animate
-          attributeName="stroke-dashoffset"
-          from="900"
-          to="0"
-          dur="0.9s"
-          fill="freeze"
-        />
+        <animate attributeName="stroke-dashoffset" from="900" to="0" dur="0.9s" fill="freeze" />
       </path>
 
-      {/* labels */}
       <text x={startLabelX} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
         start
       </text>
@@ -2156,7 +2182,6 @@ function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
   return (
     <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
       <line x1={w * 0.1} y1={groundY} x2={w * 0.9} y2={groundY} stroke="rgb(226 232 240)" strokeWidth="3" />
-
       <circle cx={ballX} cy={ballY} r={6} fill="rgb(15 23 42)" />
 
       {divotPath ? (
@@ -2174,6 +2199,156 @@ function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
       ) : (
         <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
           {lowPoint === "thin" ? "thin contact (no divot)" : "—"}
+        </text>
+      )}
+
+      <text x={w * 0.1} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
+        ground
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * WedgeTurfViz:
+ * - Same “style language” as LowPointViz, but tailored to wedges.
+ * - Digger: deeper entry + longer “trench”
+ * - Sweeper: very shallow brush
+ * - Neutral: moderate divot
+ */
+function WedgeTurfViz({ turf }: { turf: Turf }) {
+  const w = 260;
+  const h = 120;
+
+  const groundY = h * 0.72;
+  const impactX = w * 0.52;
+
+  const kind =
+    turf === "digger" ? "digger" : turf === "sweeper" ? "sweeper" : turf === "neutral" ? "neutral" : "unsure";
+
+  const depth = kind === "digger" ? 18 : kind === "neutral" ? 12 : kind === "sweeper" ? 6 : 0;
+  const length = kind === "digger" ? 70 : kind === "neutral" ? 52 : kind === "sweeper" ? 40 : 0;
+
+  const startX = impactX - length * 0.55;
+  const endX = impactX + length * 0.45;
+
+  const path =
+    kind === "unsure"
+      ? ""
+      : `M ${startX} ${groundY}
+         Q ${impactX} ${groundY + depth}
+         ${endX} ${groundY}`;
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+      <line x1={w * 0.1} y1={groundY} x2={w * 0.9} y2={groundY} stroke="rgb(226 232 240)" strokeWidth="3" />
+
+      {/* reference “impact” tick */}
+      <line
+        x1={impactX}
+        y1={groundY - 18}
+        x2={impactX}
+        y2={groundY - 2}
+        stroke="rgb(203 213 225)"
+        strokeWidth="2"
+        strokeDasharray="4 5"
+      />
+
+      {path ? (
+        <path
+          d={path}
+          fill="none"
+          stroke="rgb(15 23 42)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray="220"
+          strokeDashoffset="220"
+        >
+          <animate attributeName="stroke-dashoffset" from="220" to="0" dur="0.55s" fill="freeze" />
+        </path>
+      ) : (
+        <text x={w * 0.38} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
+          —
+        </text>
+      )}
+
+      <text x={w * 0.1} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
+        ground
+      </text>
+      <text x={impactX - 18} y={h * 0.20} fontSize="10" fill="rgb(100 116 139)">
+        entry
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * WedgeMissViz:
+ * - Fat: low point before ball (chunk)
+ * - Thin: no-divot / skim + “thin” label
+ * - Both: show both markers lightly
+ */
+function WedgeMissViz({ miss }: { miss: WedgeMiss }) {
+  const w = 260;
+  const h = 120;
+
+  const groundY = h * 0.72;
+  const ballX = w * 0.52;
+  const ballY = groundY - 10;
+
+  const showFat = miss === "fat" || miss === "both";
+  const showThin = miss === "thin" || miss === "both";
+
+  const fatX = ballX - 34;
+  const fatDepth = 14;
+
+  const fatPath = `M ${fatX - 18} ${groundY} Q ${fatX} ${groundY + fatDepth} ${fatX + 18} ${groundY}`;
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+      <line x1={w * 0.1} y1={groundY} x2={w * 0.9} y2={groundY} stroke="rgb(226 232 240)" strokeWidth="3" />
+      <circle cx={ballX} cy={ballY} r={6} fill="rgb(15 23 42)" />
+
+      {showFat && (
+        <path
+          d={fatPath}
+          fill="none"
+          stroke={miss === "both" ? "rgb(148 163 184)" : "rgb(15 23 42)"}
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray="200"
+          strokeDashoffset="200"
+        >
+          <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.5s" fill="freeze" />
+        </path>
+      )}
+
+      {showThin && (
+        <>
+          <line
+            x1={ballX - 18}
+            y1={groundY - 1}
+            x2={ballX + 26}
+            y2={groundY - 6}
+            stroke={miss === "both" ? "rgb(148 163 184)" : "rgb(15 23 42)"}
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray="140"
+            strokeDashoffset="140"
+          >
+            <animate attributeName="stroke-dashoffset" from="140" to="0" dur="0.45s" fill="freeze" />
+          </line>
+          {miss === "thin" && (
+            <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
+              thin contact
+            </text>
+          )}
+        </>
+      )}
+
+      {miss === "unsure" && (
+        <text x={w * 0.38} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
+          —
         </text>
       )}
 
