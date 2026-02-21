@@ -4,9 +4,12 @@ import React, { useMemo, useState } from "react";
 
 type Props = {
   payload: any; // diagnostic answers object (driver/irons/full bag)
+  onProfileSaved?: (profile: { firstName: string; lastName: string; email: string }) => void;
 };
 
-export default function EmailCaptureCard({ payload }: Props) {
+export default function EmailCaptureCard({ payload, onProfileSaved }: Props) {
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -17,9 +20,17 @@ export default function EmailCaptureCard({ payload }: Props) {
     return v.length >= 5 && v.includes("@") && v.includes(".");
   }, [email]);
 
+  const hasValidName = useMemo(() => firstName.trim().length > 0 && lastName.trim().length > 0, [firstName, lastName]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrorMsg(null);
+
+    if (!hasValidName) {
+      setStatus("error");
+      setErrorMsg("Please enter your first and last name.");
+      return;
+    }
 
     if (!isValidEmail) {
       setStatus("error");
@@ -34,11 +45,21 @@ export default function EmailCaptureCard({ payload }: Props) {
       // Persist the exact run payload so the verify redirect restores the correct summary.
       window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(payload));
 
+      const profile = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim().toLowerCase(),
+      };
+
+      window.localStorage.setItem("lead_contact_profile", JSON.stringify(profile));
+
       const res = await fetch("/api/lead", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: email.trim(),
+          first_name: profile.firstName,
+          last_name: profile.lastName,
+          email: profile.email,
           payload,
         }),
       });
@@ -52,6 +73,7 @@ export default function EmailCaptureCard({ payload }: Props) {
       }
 
       setStatus("sent");
+      onProfileSaved?.(profile);
     } catch (err: any) {
       console.error("Email verification submit failed", err);
       setStatus("error");
@@ -76,7 +98,25 @@ export default function EmailCaptureCard({ payload }: Props) {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="mt-4">
-          <label className="block text-sm font-medium text-slate-700">Email</label>
+          <label className="block text-sm font-medium text-slate-700">First name</label>
+          <input
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First name"
+            autoComplete="given-name"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400"
+          />
+
+          <label className="mt-3 block text-sm font-medium text-slate-700">Last name</label>
+          <input
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            placeholder="Last name"
+            autoComplete="family-name"
+            className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-slate-400"
+          />
+
+          <label className="mt-3 block text-sm font-medium text-slate-700">Email</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -92,7 +132,7 @@ export default function EmailCaptureCard({ payload }: Props) {
 
           <button
             type="submit"
-            disabled={!isValidEmail || status === "sending"}
+            disabled={!isValidEmail || !hasValidName || status === "sending"}
             className="mt-4 w-full rounded-2xl bg-slate-900 px-6 py-3 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {status === "sending" ? "Sending…" : "Send verification email"}
