@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 
 export const metadata: Metadata = {
   title: "Learn",
@@ -59,8 +60,12 @@ export default function LearnPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-14">
-        <header className="max-w-3xl">
-          <p className="text-sm font-medium text-slate-500">Learn</p>
+        <div className="flex items-center justify-between">
+          <HomeLinkPill />
+          <span className="text-sm font-medium text-slate-500">Learn</span>
+        </div>
+
+        <header className="mt-5 max-w-3xl">
           <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Technical fitting education</h1>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
             Engineering-first articles on ball flight, shaft dynamics, and fitting decisions that can be validated on

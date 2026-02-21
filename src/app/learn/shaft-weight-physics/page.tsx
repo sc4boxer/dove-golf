@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 
 export const metadata: Metadata = {
   title: "Shaft Weight Physics for Better Dispersion",
@@ -11,7 +12,9 @@ export default function ShaftWeightPhysicsPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-14">
-        <a href="/learn" className="text-sm font-medium text-slate-500 hover:text-slate-700">
+        <HomeLinkPill />
+
+        <a href="/learn" className="mt-4 inline-block text-sm font-medium text-slate-500 hover:text-slate-700">
           ← Back to Learn
         </a>
 

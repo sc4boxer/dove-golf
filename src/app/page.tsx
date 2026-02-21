@@ -60,7 +60,7 @@ export default function HomePage() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           <Link href="/diagnostic" className="rounded-2xl border border-slate-900 bg-slate-900 px-6 py-5 text-white shadow-sm transition hover:bg-slate-800">
-            <p className="text-base font-semibold">Run DovFitTM</p>
+            <p className="text-base font-semibold">Run DoveGolf<sup className="text-[0.65em] align-super">TM</sup></p>
             <p className="mt-1 text-sm text-slate-200">2 minutes. A physics-aware fitting diagnosis — free.</p>
           </Link>
 

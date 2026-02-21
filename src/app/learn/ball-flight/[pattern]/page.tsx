@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BallFlightLibraryViz } from "@/components/learn/BallFlightLibraryViz";
@@ -37,7 +38,9 @@ export default async function PatternPage({ params }: PatternPageProps) {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-5xl px-6 py-14">
-        <p className="text-sm font-medium text-slate-500">Ball Flight Library</p>
+        <HomeLinkPill />
+
+        <p className="mt-5 text-sm font-medium text-slate-500">Ball Flight Library</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight">{entry.title}</h1>
         <p className="mt-4 text-sm text-slate-600">{entry.definition}</p>
 
