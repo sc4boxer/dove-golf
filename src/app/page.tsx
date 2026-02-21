@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -57,28 +58,27 @@ export default function HomePage() {
           <TrajectoryHeroViz />
         </div>
 
-        {/* 3-button CTA row */}
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <a
-            href="/diagnostic"
-            className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-8 py-4 text-white font-medium shadow-sm hover:bg-slate-800 transition"
-          >
-            Start Free Diagnostic
-          </a>
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <Link href="/diagnostic" className="rounded-2xl border border-slate-900 bg-slate-900 px-6 py-5 text-white shadow-sm transition hover:bg-slate-800">
+            <p className="text-base font-semibold">Run DovFitTM</p>
+            <p className="mt-1 text-sm text-slate-200">2 minutes. A physics-aware fitting diagnosis — free.</p>
+          </Link>
 
-          <a
+          <Link
+            href="/learn/ball-flight"
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-slate-900 shadow-sm transition hover:border-slate-300"
+          >
+            <p className="text-base font-semibold">Ball Flight Library</p>
+            <p className="mt-1 text-sm text-slate-600">Start line + curve → probable causes → what to test.</p>
+          </Link>
+
+          <Link
             href="/method"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-8 py-4 font-medium text-slate-900 hover:bg-slate-50 transition"
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
-            How it works
-          </a>
-
-          <a
-            href="/about"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-8 py-4 font-medium text-slate-900 hover:bg-slate-50 transition"
-          >
-            About Dove Golf
-          </a>
+            <p className="text-base font-semibold">How it works</p>
+            <p className="mt-1 text-sm text-slate-600">See the deterministic fitting logic before you run the workflow.</p>
+          </Link>
         </div>
 
         <div className="mt-14 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
