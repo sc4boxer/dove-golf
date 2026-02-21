@@ -2235,6 +2235,27 @@ function EquipmentAlignmentShareCard({
   ].filter(Boolean) as { title: string; lines: string[][] }[];
 
   const columnWidth = Math.floor((952 - (recommendationGroups.length - 1) * 24) / Math.max(1, recommendationGroups.length));
+  const causeItems = (result.cause ?? []).slice(0, 5);
+  const causeCardHeight = Math.max(134, 74 + causeItems.length * 20);
+
+  const wrapValue = (value: string) => {
+    const words = value.split(" ");
+    const lines: string[] = [];
+    let current = "";
+
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word;
+      if (candidate.length <= 18) {
+        current = candidate;
+      } else {
+        if (current) lines.push(current);
+        current = word.length > 18 ? `${word.slice(0, 17)}…` : word;
+      }
+    }
+
+    if (current) lines.push(current);
+    return lines.slice(0, 2);
+  };
 
   return (
     <svg
@@ -2252,22 +2273,14 @@ function EquipmentAlignmentShareCard({
       </defs>
       <rect width={SHARE_CARD_WIDTH} height={SHARE_CARD_HEIGHT} fill="#ffffff" />
 
-      <g opacity="0.05" transform="translate(540 560)">
-        <circle r="190" fill="#0f172a" />
-        <path
-          d="M-112 -48c22-36 74-52 122-26 28 15 47 40 56 66 23-14 50-16 74-4 11 5 21 13 30 22-17 3-31 9-42 18-22 18-35 45-58 63-34 28-80 40-126 30-35-7-64-27-83-55 8-2 18-4 30-7 16-5 30-14 40-24-22-1-43-9-58-22-11-9-20-21-26-35 16 8 36 12 55 11-17-15-28-36-31-58 6 7 12 14 17 21z"
-          fill="#ffffff"
-        />
-      </g>
-
       <g transform={`translate(${SHARE_CARD_PADDING}, ${SHARE_CARD_PADDING})`}>
         <circle cx="12" cy="12" r="12" fill="#0f172a" />
         <path d="M0 7c3-4 9-6 14-2 4 3 6 6 7 10 3-1 7-1 9 1-2 1-4 2-5 3-2 2-4 4-6 6-4 3-9 4-13 3-4-1-7-3-9-6 2 0 4 0 6-1 2-1 4-2 5-4-3 0-5-1-7-3-1-1-2-3-3-5 2 1 4 2 6 2-2-2-3-4-3-7l2 3z" fill="#fff" transform="translate(5 2) scale(0.65)" />
         <text x="34" y="15" fontSize="18" fontWeight="700" letterSpacing="1" fill="#0f172a">DOVE GOLF™</text>
         <text x="0" y="46" fontSize="16" fill="#334155">Equipment alignment record</text>
 
-        <text x={contentWidth - 270} y="8" fontSize="13" fill="#475569">Certificate ID: {certificateId}</text>
-        <text x={contentWidth - 270} y="29" fontSize="13" fill="#475569">Completed: {completedLabel}</text>
+        <text x={contentWidth} y="8" fontSize="13" fill="#475569" textAnchor="end">Certificate ID: {certificateId}</text>
+        <text x={contentWidth} y="29" fontSize="13" fill="#475569" textAnchor="end">Completed: {completedLabel}</text>
       </g>
 
       <text x="540" y="170" fontSize="62" fontWeight="600" textAnchor="middle" fill="#020617">{displayName}</text>
@@ -2305,24 +2318,35 @@ function EquipmentAlignmentShareCard({
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
       {recommendationGroups.map((group, i) => (
         <g key={group.title} transform={`translate(${88 + i * (columnWidth + 24)}, 645)`}>
+          <clipPath id={`recommendationClip-${i}`}>
+            <rect x="0" y="-20" width={columnWidth} height="154" />
+          </clipPath>
           {i > 0 && <line x1={-12} x2={-12} y1={-4} y2={146} stroke="#e2e8f0" />}
-          <text x="0" y="0" fontSize="16" fontWeight="600" fill="#0f172a">{group.title}</text>
-          {group.lines.slice(0, 6).map(([label, value], lineIndex) => (
-            <g key={`${group.title}-${label}`}>
-              <text x="0" y={24 + lineIndex * 22} fontSize="13" fill="#64748b">{label}</text>
-              <text x={columnWidth - 4} y={24 + lineIndex * 22} fontSize="13" fill="#0f172a" textAnchor="end" fontWeight="500">{value}</text>
-            </g>
-          ))}
+          <g clipPath={`url(#recommendationClip-${i})`}>
+            <text x="0" y="0" fontSize="16" fontWeight="600" fill="#0f172a">{group.title}</text>
+            {group.lines.slice(0, 6).map(([label, value], lineIndex) => (
+              <g key={`${group.title}-${label}`}>
+                <text x="0" y={24 + lineIndex * 22} fontSize="13" fill="#64748b">{label}</text>
+                <text x={columnWidth - 4} y={24 + lineIndex * 22} fontSize="13" fill="#0f172a" textAnchor="end" fontWeight="500">
+                  {wrapValue(value).map((line, wrapIndex) => (
+                    <tspan key={`${group.title}-${label}-${wrapIndex}`} x={columnWidth - 4} dy={wrapIndex === 0 ? 0 : 12}>
+                      {line}
+                    </tspan>
+                  ))}
+                </text>
+              </g>
+            ))}
+          </g>
         </g>
       ))}
 
-      <rect x="64" y="820" width="952" height="134" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <rect x="64" y="820" width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="850" fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
-      {(result.cause ?? []).slice(0, 5).map((item, i) => (
+      {causeItems.map((item, i) => (
         <text key={`cause-${i}`} x="104" y={876 + i * 20} fontSize="13" fill="#334155">• {item}</text>
       ))}
 
-      <text x="540" y="1038" fontSize="70" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
+      <text x="540" y="1038" fontSize="56" fontWeight="600" textAnchor="middle" fill="#020617">{alignmentScore}%</text>
       <text x="540" y="1064" fontSize="18" textAnchor="middle" fill="#64748b">Equipment alignment score</text>
 
       <text x="64" y="1290" fontSize="12" fill="#475569">
