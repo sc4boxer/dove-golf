@@ -1,6 +1,7 @@
 // src/app/method/page.tsx
 import React from "react";
 import type { Metadata } from "next";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 
 export const metadata: Metadata = {
   title: "Method",
@@ -28,12 +29,7 @@ export default function MethodPage() {
         <div className="relative mx-auto max-w-7xl px-6 py-12">
           {/* Top bar */}
           <div className="flex items-center justify-between">
-            <a
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 shadow-[0_1px_0_rgba(0,0,0,0.02)] hover:text-slate-900"
-              href="/"
-            >
-              <span aria-hidden="true">←</span> Home
-            </a>
+            <HomeLinkPill />
             <span className="text-xs font-medium text-slate-500">How it works</span>
           </div>
 

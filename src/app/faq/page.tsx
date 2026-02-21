@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
@@ -193,7 +194,9 @@ export default function FaqPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-14">
-        <header className="max-w-3xl">
+        <HomeLinkPill />
+
+        <header className="mt-5 max-w-3xl">
           <p className="text-sm font-medium text-slate-500">FAQ</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">
             Golf Fitting FAQ: Technical Answers for Serious Amateurs

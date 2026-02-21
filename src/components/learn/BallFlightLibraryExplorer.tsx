@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 import { useMemo, useState } from "react";
 import { BallFlightLibraryViz } from "@/components/learn/BallFlightLibraryViz";
 import {
@@ -50,8 +51,12 @@ export function BallFlightLibraryExplorer() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-7xl px-6 py-14">
-        <header className="max-w-3xl">
-          <p className="text-sm font-medium text-slate-500">Learn</p>
+        <div className="flex items-center justify-between">
+          <HomeLinkPill />
+          <span className="text-sm font-medium text-slate-500">Learn</span>
+        </div>
+
+        <header className="mt-5 max-w-3xl">
           <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Ball Flight Library</h1>
           <p className="mt-4 text-base leading-relaxed text-slate-600">Ball flight is geometry: face, path, strike.</p>
           <p className="mt-2 text-sm text-slate-500">
