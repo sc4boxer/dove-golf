@@ -1,6 +1,36 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Online Golf Club Fitting & Equipment Diagnostic",
+  description:
+    "Get data-driven golf club fitting recommendations for drivers, irons, and wedges with Dove Golf's online diagnostic.",
+  alternates: {
+    canonical: "/",
+  },
+};
+
 export default function HomePage() {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Dove Golf",
+    url: baseUrl,
+    description:
+      "A deterministic, physics-aware golf fitting engine that converts real swing tendencies into testable equipment decisions.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${baseUrl}/diagnostic`,
+      "query-input": "required name=golf fitting",
+    },
+  };
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <div className="mx-auto max-w-3xl px-6 py-24">
         {/* Micro-brand line */}
         <div className="flex items-center gap-3 text-xs font-medium tracking-wide text-slate-500">

@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "Learn about Dove Golf's mission to deliver brand-neutral, data-driven golf fitting recommendations.",
+  alternates: {
+    canonical: "/about",
+  },
+};
+
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">

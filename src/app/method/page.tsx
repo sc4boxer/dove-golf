@@ -3,9 +3,12 @@ import React from "react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Method — Dove Golf",
+  title: "Method",
   description:
     "How DoveFit™ Engine works: a deterministic, physics-aware fitting model that converts swing tendencies into a testable shaft + build blueprint.",
+  alternates: {
+    canonical: "/method",
+  },
 };
 
 export default function MethodPage() {
