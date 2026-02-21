@@ -41,6 +41,11 @@ function sha256Hex(input: string) {
   return crypto.createHash("sha256").update(input).digest("hex");
 }
 
+function generateVerificationToken() {
+  // URL-safe token (hex chars only) to avoid '+' '/' '=' issues in email clients.
+  return crypto.randomBytes(32).toString("hex");
+}
+
 export async function POST(req: Request) {
   try {
     const RESEND_API_KEY = process.env.RESEND_API_KEY?.trim();
@@ -89,7 +94,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const token = crypto.randomBytes(32).toString("hex");
+    const token = generateVerificationToken();
     const token_hash = sha256Hex(token);
 
     const { error } = await supabase.from("leads").insert([
