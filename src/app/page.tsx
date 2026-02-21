@@ -69,7 +69,7 @@ export default function HomePage() {
             className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
             <p className="text-base font-semibold">Ball Flight Library</p>
-            <p className="mt-1 text-sm text-slate-600">Start line + curve → probable causes → what to test.</p>
+            <p className="mt-1 text-sm text-slate-600">Curve → probable causes → what to test.</p>
           </Link>
 
           <Link
@@ -77,7 +77,7 @@ export default function HomePage() {
             className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
             <p className="text-base font-semibold">How it works</p>
-            <p className="mt-1 text-sm text-slate-600">See the deterministic fitting logic before you run the workflow.</p>
+            <p className="mt-1 text-sm text-slate-600">See the fitting logic before you run the workflow.</p>
           </Link>
         </div>
 
