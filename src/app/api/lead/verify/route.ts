@@ -24,13 +24,17 @@ function getBaseUrl(req: Request) {
   return `${reqUrl.protocol}//${reqUrl.host}`;
 }
 
-function buildRedirectUrl(req: Request, status: string) {
+function buildRedirectUrl(req: Request, status: string, token?: string) {
   const redirectUrl = new URL("/diagnostic", getBaseUrl(req));
   redirectUrl.searchParams.set("step", "results");
   redirectUrl.searchParams.set("verifyStatus", status);
 
   if (status === "verified" || status === "already_verified") {
     redirectUrl.searchParams.set("verified", "1");
+  }
+
+  if (token) {
+    redirectUrl.searchParams.set("resumeToken", token);
   }
 
   return redirectUrl;
@@ -119,7 +123,7 @@ export async function GET(req: Request) {
     }
 
     if (tokenRow.verified_at) {
-      return NextResponse.redirect(buildRedirectUrl(req, "already_verified"));
+      return NextResponse.redirect(buildRedirectUrl(req, "already_verified", token));
     }
 
     const { data: updatedRow, error: updateError } = await supabase
@@ -138,15 +142,15 @@ export async function GET(req: Request) {
     }
 
     if (!updatedRow) {
-      return NextResponse.redirect(buildRedirectUrl(req, "already_verified"));
+      return NextResponse.redirect(buildRedirectUrl(req, "already_verified", token));
     }
 
-    const redirectUrl = buildRedirectUrl(req, "verified");
+    const redirectUrl = buildRedirectUrl(req, "verified", token);
 
     return NextResponse.redirect(redirectUrl);
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { ok: false, error: e?.message ?? "Something went wrong" },
+      { ok: false, error: e instanceof Error ? e.message : "Something went wrong" },
       { status: 500 }
     );
   }
