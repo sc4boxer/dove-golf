@@ -15,8 +15,8 @@ function getControlShift(curve: Curve) {
 export function BallFlightLibraryViz({ startLine, curve }: { startLine: StartLine; curve: Curve }) {
   const startX = 350;
   const startY = 300;
-  const centerY = 170;
   const targetX = 350;
+  const targetMarkerY = 30;
   const endX = getEndX(startLine);
   const endY = 50;
   const controlY = 130;
@@ -28,9 +28,8 @@ export function BallFlightLibraryViz({ startLine, curve }: { startLine: StartLin
     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <svg viewBox="0 0 700 340" className="h-auto w-full" role="img" aria-label="Ball flight visualization">
         <line x1="40" y1="300" x2="660" y2="300" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="40" y1={centerY} x2="660" y2={centerY} stroke="rgb(226 232 240)" strokeWidth="2" />
         <line x1="350" y1="40" x2="350" y2="300" stroke="rgb(226 232 240)" strokeDasharray="6 6" strokeWidth="2" />
-        <text x="327" y={centerY - 10} className="fill-slate-500 text-[12px]">Target line</text>
+        <text x="329" y="16" className="fill-slate-500 text-[12px]">Target</text>
         <text x="328" y="323" className="fill-slate-500 text-[12px]">Player strike</text>
 
         <path
@@ -44,7 +43,7 @@ export function BallFlightLibraryViz({ startLine, curve }: { startLine: StartLin
         />
 
         <circle cx={endX} cy={endY} r="7" fill="rgb(15 23 42)" />
-        <circle cx={targetX} cy={centerY} r="4" fill="rgb(148 163 184)" />
+        <circle cx={targetX} cy={targetMarkerY} r="4" fill="rgb(148 163 184)" />
         <circle cx={startX} cy={startY} r="5" fill="rgb(100 116 139)" />
       </svg>
     </div>
