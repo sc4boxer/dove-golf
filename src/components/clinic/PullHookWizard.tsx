@@ -25,7 +25,7 @@ const steps = [
   {
     key: "setupPattern",
     label: "Setup quick check",
-    options: ["square", "aimLeft", "ballBack", "closedStance", "unsure"],
+    options: ["square", "aimLeft", "closedStance", "unsure"],
   },
 ] as const;
 
