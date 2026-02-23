@@ -76,21 +76,31 @@ function StepPreview({ step, selected }: StepPreviewProps) {
   }
 
   if (step.key === "curveSeverity") {
-    const bend =
-      current === "none" ? 0 : current === "slight" ? -24 : current === "moderate" ? -46 : current === "severe" ? -78 : -10;
+    const targetX = 72;
+    const profiles = {
+      none: { c1x: 116, c1y: 126, c2x: 122, c2y: 84, endX: 126, endY: 40 },
+      slight: { c1x: 114, c1y: 128, c2x: 103, c2y: 82, endX: 90, endY: 40 },
+      moderate: { c1x: 112, c1y: 132, c2x: 92, c2y: 84, endX: 76, endY: 44 },
+      severe: { c1x: 110, c1y: 136, c2x: 78, c2y: 90, endX: 58, endY: 50 },
+      unsure: { c1x: 114, c1y: 128, c2x: 103, c2y: 82, endX: 90, endY: 40 },
+    } as const;
+    const shape = profiles[current as keyof typeof profiles] ?? profiles.unsure;
+
     return (
       <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Curve severity preview">
         <line x1="40" y1="160" x2="280" y2="160" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="240" y1="25" x2="240" y2="160" stroke="rgb(226 232 240)" strokeDasharray="5 5" strokeWidth="2" />
+        <line x1={targetX} y1="24" x2={targetX} y2="160" stroke="rgb(203 213 225)" strokeDasharray="5 5" strokeWidth="2" />
+        <circle cx={targetX} cy="22" r="8" fill="rgb(234 179 8)" />
+        <text x="84" y="26" className="fill-slate-500 text-[10px]">Target line</text>
         <path
-          d={`M 70 155 C 130 115, ${185 + bend} 70, ${240 + bend} 30`}
+          d={`M 72 155 C ${shape.c1x} ${shape.c1y}, ${shape.c2x} ${shape.c2y}, ${shape.endX} ${shape.endY}`}
           fill="none"
           stroke="rgb(15 23 42)"
           strokeWidth="5"
           strokeLinecap="round"
           className="[stroke-dasharray:320] [stroke-dashoffset:320] animate-[dash_0.7s_ease-out_forwards]"
         />
-        <circle cx={240 + bend} cy={30} r="6" fill="rgb(15 23 42)" />
+        <circle cx={shape.endX} cy={shape.endY} r="6" fill="rgb(15 23 42)" />
       </svg>
     );
   }
@@ -122,18 +132,29 @@ function StepPreview({ step, selected }: StepPreviewProps) {
 
   if (step.key === "missPattern") {
     const oneWay = current === "oneWay";
+    const trajectories = oneWay
+      ? [
+          "M 86 152 C 104 126, 118 88, 120 36",
+          "M 84 152 C 112 128, 146 92, 178 64",
+          "M 86 152 C 126 132, 172 106, 222 94",
+        ]
+      : [
+          "M 86 152 C 104 126, 118 88, 120 36",
+          "M 86 152 C 126 132, 172 106, 222 94",
+          "M 86 152 C 140 132, 194 96, 246 36",
+        ];
+
     return (
       <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Miss pattern preview">
         <line x1="40" y1="160" x2="280" y2="160" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="160" y1="34" x2="160" y2="160" stroke="rgb(226 232 240)" strokeDasharray="5 4" strokeWidth="2" />
-        {[0, 1, 2, 3].map((i) => {
-          const x = 62 + i * 52;
-          const swing = oneWay ? -24 : i % 2 === 0 ? -28 : 28;
-          const opacity = current === "unsure" ? 0.45 : 0.8 + i * 0.05;
+        <line x1="86" y1="24" x2="86" y2="160" stroke="rgb(203 213 225)" strokeDasharray="5 4" strokeWidth="2" />
+        <circle cx="86" cy="22" r="8" fill="rgb(234 179 8)" />
+        {trajectories.map((shape, i) => {
+          const opacity = current === "unsure" ? 0.45 : 0.95 - i * 0.15;
           return (
             <path
-              key={x}
-              d={`M ${x} 150 C ${x + 14} 112, ${x + 26 + swing} 80, ${x + 34 + swing} 34`}
+              key={shape}
+              d={shape}
               fill="none"
               stroke="rgb(15 23 42)"
               strokeWidth="4"
@@ -142,7 +163,7 @@ function StepPreview({ step, selected }: StepPreviewProps) {
             />
           );
         })}
-        <text x="48" y="24" className="fill-slate-500 text-[11px]">{oneWay ? "One-way miss shape" : "Two-way dispersion"}</text>
+        <text x="100" y="24" className="fill-slate-500 text-[11px]">{oneWay ? "One-way miss shape" : "Two-way miss shape"}</text>
       </svg>
     );
   }
@@ -168,17 +189,21 @@ function StepPreview({ step, selected }: StepPreviewProps) {
     );
   }
 
-  const pace = current === "smooth" ? 0.5 : current === "quick" ? 1.25 : 0.9;
+  const accent = current === "smooth" ? "rgb(34 197 94)" : current === "quick" ? "rgb(239 68 68)" : "rgb(59 130 246)";
+  const spread = current === "smooth" ? 18 : current === "quick" ? 40 : 28;
+
   return (
     <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Tempo release preview">
       <rect x="24" y="24" width="272" height="132" rx="14" fill="rgb(248 250 252)" stroke="rgb(226 232 240)" />
       <line x1="44" y1="132" x2="276" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
       {[0, 1, 2, 3, 4, 5].map((idx) => (
-        <circle key={idx} cx={58 + idx * 40} cy={120 - idx * 14} r={6} fill="rgb(15 23 42)" opacity={Math.min(1, 0.2 + idx * 0.14 * pace)} />
+        <circle key={idx} cx={62 + idx * 38} cy={122} r={6} fill="rgb(15 23 42 / 0.3)" />
       ))}
-      <path d="M 56 122 C 132 88, 196 70, 260 46" fill="none" stroke="rgb(15 23 42 / 0.35)" strokeWidth="3" strokeLinecap="round" />
-      <text x="38" y="44" className="fill-slate-600 text-[11px] font-medium">Transition speed: {current}</text>
-      <text x="38" y="60" className="fill-slate-500 text-[10px]">Focus on repeatable sequencing, not max speed.</text>
+      <rect x="48" y="38" width="224" height="34" rx="8" fill="rgb(255 255 255)" stroke="rgb(226 232 240)" />
+      <text x="58" y="53" className="fill-slate-600 text-[11px] font-medium">Transition accent: {current}</text>
+      <text x="58" y="67" className="fill-slate-500 text-[10px]">Keep sequencing repeatable; speed is secondary.</text>
+      <path d={`M 62 122 C 114 112, 170 96, ${210 + spread * 0.2} ${84 - spread * 0.25}`} fill="none" stroke={accent} strokeWidth="5" strokeLinecap="round" />
+      <circle cx={238} cy={70 - spread * 0.25} r="7" fill={accent} />
     </svg>
   );
 }
