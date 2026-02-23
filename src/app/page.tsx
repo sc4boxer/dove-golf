@@ -71,11 +71,6 @@ export default function HomePage() {
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <Link href="/diagnostic" className="rounded-2xl border border-slate-900 bg-slate-900 px-6 py-4 text-white shadow-sm transition hover:bg-slate-800">
-            <p className="text-base font-semibold">Run DoveGolf<sup className="text-[0.65em] align-super">TM</sup></p>
-            <p className="mt-1 text-sm text-slate-200">2 minutes. A physics-aware fitting diagnosis — free.</p>
-          </Link>
-
           <Link
             href="/learn/ball-flight"
             className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
@@ -90,6 +85,14 @@ export default function HomePage() {
           >
             <p className="text-base font-semibold">How it works</p>
             <p className="mt-1 text-sm text-slate-600">See the fitting logic before you run the workflow.</p>
+          </Link>
+
+          <Link
+            href="/about"
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
+          >
+            <p className="text-base font-semibold">About DoveGolf™</p>
+            <p className="mt-1 text-sm text-slate-600">The philosophy behind cause-and-effect fitting.</p>
           </Link>
         </div>
 
@@ -115,6 +118,31 @@ export default function HomePage() {
             Open DoveClinic™
           </Link>
         </section>
+
+        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-medium tracking-wide text-slate-500">DoveLab™ — Understand the variables</p>
+          <p className="mt-2 text-slate-700">
+            DoveLab™ explores how shaft weight, flex, launch, and strike location interact with ball flight. Designed for golfers who want deeper technical insight.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            <li>• Component interaction modeling</li>
+            <li>• Physics-based visual references</li>
+            <li>• Experimental range scenarios</li>
+          </ul>
+          <Link
+            href="/lab"
+            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open DoveLab™
+          </Link>
+        </section>
+
+        <div className="mt-4 grid gap-4 sm:grid-cols-3">
+          <Link href="/diagnostic" className="rounded-2xl border border-slate-900 bg-slate-900 px-6 py-4 text-white shadow-sm transition hover:bg-slate-800 sm:col-span-1">
+            <p className="text-base font-semibold">Run DoveGolf<sup className="text-[0.65em] align-super">TM</sup></p>
+            <p className="mt-1 text-sm text-slate-200">2 minutes. A physics-aware fitting diagnosis — free.</p>
+          </Link>
+        </div>
       </div>
     </main>
   );
