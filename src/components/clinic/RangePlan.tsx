@@ -18,14 +18,26 @@ function VisualByTest({ testId }: { testId: string }) {
   if (testId === "path-stick") {
     return (
       <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Path stick setup preview">
+        <defs>
+          <marker id="swing-path-arrow" markerWidth="4" markerHeight="4" refX="3.2" refY="2" orient="auto" markerUnits="strokeWidth">
+            <path d="M 0 0 L 4 2 L 0 4 z" fill="rgb(15 23 42)" />
+          </marker>
+        </defs>
         <line x1="44" y1="132" x2="276" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="96" y1="24" x2="96" y2="132" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
-        <circle cx="96" cy="22" r="7" fill="rgb(234 179 8)" />
+        <line x1="198" y1="34" x2="198" y2="132" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
         <line x1="196" y1="128" x2="236" y2="44" stroke="rgb(15 23 42 / 0.7)" strokeWidth="4" strokeLinecap="round" />
         <circle cx="86" cy="124" r="6" fill="rgb(15 23 42)" />
-        <path d="M 86 124 C 116 112, 152 96, 190 48" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
-        <text x="208" y="38" className="fill-slate-600 text-[10px]">alignment stick</text>
-        <text x="106" y="22" className="fill-slate-500 text-[10px]">target line</text>
+        <path
+          d="M 86 124 C 116 112, 152 96, 190 48"
+          fill="none"
+          stroke="rgb(15 23 42)"
+          strokeWidth="4"
+          strokeLinecap="round"
+          markerEnd="url(#swing-path-arrow)"
+        />
+        <circle cx="198" cy="36" r="7" fill="rgb(234 179 8)" />
+        <text x="212" y="36" className="fill-slate-600 text-[10px]">alignment stick</text>
+        <text x="184" y="24" className="fill-slate-500 text-[10px]">target</text>
         <text x="92" y="148" className="fill-slate-500 text-[10px]">swing inside the stick</text>
       </svg>
     );
