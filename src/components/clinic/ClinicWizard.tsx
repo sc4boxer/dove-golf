@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { track } from "@/lib/analytics/ga";
 import { DriverSliceInputs } from "@/lib/clinic/types";
 
 type WizardProps = {
@@ -258,8 +259,23 @@ function StepGuidance({ step, selected }: StepPreviewProps) {
 
 export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
   const [currentStep, setCurrentStep] = useState(0);
+  const clinicStartedTrackedRef = useRef(false);
+  const viewedStepKeysRef = useRef<Set<string>>(new Set());
 
   const active = steps[currentStep] ?? null;
+
+  useEffect(() => {
+    if (!active || viewedStepKeysRef.current.has(active.key)) return;
+
+    viewedStepKeysRef.current.add(active.key);
+    track("dov_clinic_step_viewed", {
+      module: "doveclinic",
+      placement: "driver_slice_wizard",
+      step: active.key,
+      index: currentStep,
+      version: "v1",
+    });
+  }, [active, currentStep]);
 
   const progressStep = active ? currentStep + 1 : steps.length;
 
@@ -279,6 +295,17 @@ export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
                   key={option}
                   type="button"
                   onClick={() => {
+                    if (!clinicStartedTrackedRef.current) {
+                      clinicStartedTrackedRef.current = true;
+                      track("dov_clinic_started", {
+                        module: "doveclinic",
+                        placement: "driver_slice_wizard",
+                        step: active.key,
+                        index: currentStep,
+                        version: "v1",
+                      });
+                    }
+
                     onChange({ [active.key]: option } as Partial<DriverSliceInputs>);
                   }}
                   className={`rounded-xl border px-3 py-2 text-sm capitalize transition ${

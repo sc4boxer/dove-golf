@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import EmailCaptureCard from "./EmailCaptureCard";
 
 import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
+import { track } from "@/lib/analytics/ga";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1900;
@@ -1023,6 +1024,10 @@ function computeResults(a: Answers) {
 
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
+  const viewedStepsRef = useRef<Set<Step>>(new Set());
+  const fitStartedTrackedRef = useRef(false);
+  const fitResultsTrackedRef = useRef(false);
+  const fitCompletedTrackedRef = useRef(false);
 
   const steps = useMemo(() => buildSteps(a.fitFocus), [a.fitFocus]);
   const [stepIndex, setStepIndex] = useState(0);
@@ -1147,6 +1152,45 @@ export default function DiagnosticWizard() {
   }, [steps.length]);
 
   useEffect(() => {
+    if (viewedStepsRef.current.has(step)) return;
+
+    viewedStepsRef.current.add(step);
+    track("dov_fit_step_viewed", {
+      module: "dovefit",
+      placement: "diagnostic_wizard",
+      step,
+      index: stepIndex,
+      version: "v1",
+    });
+  }, [step, stepIndex]);
+
+  useEffect(() => {
+    if (step !== "results" || fitResultsTrackedRef.current) return;
+
+    fitResultsTrackedRef.current = true;
+    track("dov_fit_results_viewed", {
+      module: "dovefit",
+      placement: "diagnostic_results",
+      step,
+      index: stepIndex,
+      version: "v1",
+    });
+  }, [step, stepIndex]);
+
+  useEffect(() => {
+    if (step !== "results" || fitCompletedTrackedRef.current) return;
+
+    fitCompletedTrackedRef.current = true;
+    track("dov_fit_completed", {
+      module: "dovefit",
+      placement: "diagnostic_results",
+      step,
+      index: stepIndex,
+      version: "v1",
+    });
+  }, [step, stepIndex]);
+
+  useEffect(() => {
     try {
       window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(a));
     } catch {
@@ -1213,6 +1257,15 @@ export default function DiagnosticWizard() {
                     mode="single"
                     value={a.fitFocus}
                     onChange={(v) => {
+                      if (!fitStartedTrackedRef.current) {
+                        fitStartedTrackedRef.current = true;
+                        track("dov_fit_started", {
+                          module: "dovefit",
+                          placement: "diagnostic_focus",
+                          step: "focus",
+                          version: "v1",
+                        });
+                      }
                       setA((p) => ({ ...p, fitFocus: v }));
                       setStepIndex(1);
                     }}
