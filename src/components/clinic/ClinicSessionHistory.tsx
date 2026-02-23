@@ -22,7 +22,7 @@ export function ClinicSessionHistory({
   if (sessions.length === 0) {
     return (
       <section className="rounded-2xl border border-slate-200 bg-white p-5 text-sm text-slate-600">
-        No clinic sessions yet. Run Driver Slice once to save your first baseline.
+        No clinic sessions yet. Run a DoveClinic™ module once to save your first baseline.
       </section>
     );
   }

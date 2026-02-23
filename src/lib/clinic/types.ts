@@ -1,4 +1,4 @@
-export type ClinicProblemKey = "driverSlice";
+export type ClinicProblemKey = "driverSlice" | "pullHook";
 
 export type LikelihoodBucketKey =
   | "faceControl"
@@ -17,6 +17,14 @@ export type DriverSliceGrip = "weak" | "neutral" | "strong" | "unsure";
 export type DriverSliceTempo = "smooth" | "neutral" | "quick" | "unsure";
 export type DriverSlicePersistentRightStart = "yes" | "no" | "unsure";
 
+export type PullHookStartLine = "left" | "center" | "right" | "unsure";
+export type PullHookCurveSeverity = "none" | "slight" | "moderate" | "severe";
+export type PullHookStrike = "heel" | "center" | "toe" | "high" | "low" | "unsure";
+export type PullHookMissPattern = "oneWay" | "twoWay" | "unsure";
+export type PullHookTempo = "smooth" | "neutral" | "quick" | "unsure";
+export type PullHookDriverVsIrons = "driverWorse" | "ironsWorse" | "sameBoth" | "unsure";
+export type PullHookAlignment = "square" | "aimLeft" | "ballBack" | "closedStance" | "unsure";
+
 export type DriverSliceInputs = {
   startLine: DriverSliceStartLine;
   curveSeverity: DriverSliceCurveSeverity;
@@ -25,6 +33,16 @@ export type DriverSliceInputs = {
   gripStrength: DriverSliceGrip;
   tempoRelease: DriverSliceTempo;
   persistentRightStart?: DriverSlicePersistentRightStart;
+};
+
+export type PullHookInputs = {
+  startLine: PullHookStartLine;
+  curveSeverity: PullHookCurveSeverity;
+  strikeLocation: PullHookStrike;
+  missPattern?: PullHookMissPattern;
+  tempoTransition: PullHookTempo;
+  driverVsIrons?: PullHookDriverVsIrons;
+  setupPattern?: PullHookAlignment;
 };
 
 export type ClinicFeedbackOutcome = "fixed" | "improved" | "no-change" | "worse";
@@ -58,7 +76,7 @@ export type ClinicSession = {
   id: string;
   createdAt: string;
   problemKey: ClinicProblemKey;
-  inputs: DriverSliceInputs;
+  inputs: DriverSliceInputs | PullHookInputs;
   result: ClinicResult;
   feedbackOutcome?: ClinicFeedbackOutcome;
 };
