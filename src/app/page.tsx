@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TrackLink } from "@/components/analytics/TrackLink";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -54,12 +55,12 @@ export default function HomePage() {
         </p>
 
         <div className="mt-6 flex flex-wrap gap-2 text-sm">
-          <Link href="/diagnostic" className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+          <TrackLink href="/diagnostic" eventParams={{ module: "dovefit", placement: "home_top_nav", version: "v1" }} className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
             Fitting
-          </Link>
-          <Link href="/clinic" className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+          </TrackLink>
+          <TrackLink href="/clinic" eventParams={{ module: "doveclinic", placement: "home_top_nav", version: "v1" }} className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
             Clinic
-          </Link>
+          </TrackLink>
           <span className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-500">
             Lab <span className="text-slate-400">(Coming soon)</span>
           </span>
@@ -71,13 +72,14 @@ export default function HomePage() {
         </div>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <Link
+          <TrackLink
             href="/learn/ball-flight"
+            eventParams={{ module: "learn", placement: "home_feature_card", version: "v1" }}
             className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
             <p className="text-base font-semibold">Ball Flight Library</p>
             <p className="mt-1 text-sm text-slate-600">Curve → probable causes → what to test.</p>
-          </Link>
+          </TrackLink>
 
           <Link
             href="/method"
@@ -112,12 +114,13 @@ export default function HomePage() {
             <li>• Launch/spin + strike-driven head guidance</li>
             <li>• Clear next-step checklist for testing</li>
           </ul>
-          <Link
+          <TrackLink
             href="/diagnostic"
+            eventParams={{ module: "dovefit", placement: "home_module_card", version: "v1" }}
             className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
           >
             Open DoveFit™
-          </Link>
+          </TrackLink>
         </section>
 
         <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
@@ -130,12 +133,13 @@ export default function HomePage() {
             <li>• Range tests with if/then outcomes</li>
             <li>• Save sessions and iterate</li>
           </ul>
-          <Link
+          <TrackLink
             href="/clinic"
+            eventParams={{ module: "doveclinic", placement: "home_module_card", version: "v1" }}
             className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
           >
             Open DoveClinic™
-          </Link>
+          </TrackLink>
         </section>
 
         <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
@@ -148,12 +152,13 @@ export default function HomePage() {
             <li>• Physics-based visual references</li>
             <li>• Experimental range scenarios</li>
           </ul>
-          <Link
+          <TrackLink
             href="/lab"
+            eventParams={{ module: "dovelab", placement: "home_module_card", version: "v1" }}
             className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
           >
             Open DoveLab™
-          </Link>
+          </TrackLink>
         </section>
 
       </div>

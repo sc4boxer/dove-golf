@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TrackLink } from "@/components/analytics/TrackLink";
 import { useState } from "react";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
 import { ClinicHero } from "@/components/clinic/ClinicHero";
@@ -34,9 +34,13 @@ export default function ClinicPage() {
                   {problem.enabled ? "Deterministic diagnosis + range plan." : "Coming soon"}
                 </p>
                 {problem.enabled ? (
-                  <Link className="mt-3 inline-block text-sm font-medium text-slate-900 underline" href={problem.href}>
+                  <TrackLink
+                    className="mt-3 inline-block text-sm font-medium text-slate-900 underline"
+                    href={problem.href}
+                    eventParams={{ module: "doveclinic", placement: "clinic_problem_card", version: "v1" }}
+                  >
                     Start now
-                  </Link>
+                  </TrackLink>
                 ) : null}
               </article>
             ))}

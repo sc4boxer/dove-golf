@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
 import { ClinicWizard } from "@/components/clinic/ClinicWizard";
 import { LikelihoodBars } from "@/components/clinic/LikelihoodBars";
@@ -9,6 +9,7 @@ import { RangePlan } from "@/components/clinic/RangePlan";
 import { evaluateDriverSlice, primaryLeverLabel } from "@/lib/clinic/problems/driverSlice";
 import { loadClinicSessions, saveClinicSession, updateClinicSession } from "@/lib/clinic/storage";
 import { ClinicFeedbackOutcome, ClinicResult, ClinicSession, DriverSliceInputs } from "@/lib/clinic/types";
+import { track } from "@/lib/analytics/ga";
 
 const DISCRIMINATOR_OPTIONS = ["heel", "toe", "center"] as const;
 
@@ -29,6 +30,32 @@ export default function DriverSlicePage() {
   const [sessions, setSessions] = useState<ClinicSession[]>(() => loadClinicSessions());
   const [activeSession, setActiveSession] = useState<ClinicSession | null>(null);
   const [needsDiscriminator, setNeedsDiscriminator] = useState(false);
+  const clinicCompletedTrackedRef = useRef(false);
+  const recommendationViewedTrackedRef = useRef(false);
+
+  useEffect(() => {
+    if (!result || clinicCompletedTrackedRef.current) return;
+
+    clinicCompletedTrackedRef.current = true;
+    track("dov_clinic_completed", {
+      module: "doveclinic",
+      placement: "driver_slice_results",
+      step: "results",
+      version: "v1",
+    });
+  }, [result]);
+
+  useEffect(() => {
+    if (!result || recommendationViewedTrackedRef.current) return;
+
+    recommendationViewedTrackedRef.current = true;
+    track("dov_clinic_recommendation_viewed", {
+      module: "doveclinic",
+      placement: "driver_slice_range_plan",
+      step: "results",
+      version: "v1",
+    });
+  }, [result]);
 
   const explanations = useMemo(() => {
     if (!result) return [];
@@ -152,6 +179,8 @@ export default function DriverSlicePage() {
             <button
               type="button"
               onClick={() => {
+                clinicCompletedTrackedRef.current = false;
+                recommendationViewedTrackedRef.current = false;
                 setResult(null);
                 setInputs(defaultInputs());
               }}

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { TrackLink } from "@/components/analytics/TrackLink";
 
 export const metadata: Metadata = {
   title: "Learn",
@@ -89,14 +90,15 @@ export default function LearnPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Physics Fundamentals</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {physicsFundamentals.map((article) => (
-              <a
+              <TrackLink
                 key={article.href}
                 href={article.href}
+                eventParams={{ module: "learn", placement: "learn_article_card", version: "v1" }}
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300"
               >
                 <h3 className="text-lg font-semibold text-slate-900">{article.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{article.summary}</p>
-              </a>
+              </TrackLink>
             ))}
           </div>
         </section>
@@ -105,14 +107,15 @@ export default function LearnPage() {
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Common Questions</h2>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             {commonQuestions.map((article) => (
-              <a
+              <TrackLink
                 key={article.href}
                 href={article.href}
+                eventParams={{ module: "learn", placement: "learn_article_card", version: "v1" }}
                 className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300"
               >
                 <h3 className="text-lg font-semibold text-slate-900">{article.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{article.summary}</p>
-              </a>
+              </TrackLink>
             ))}
           </div>
         </section>
