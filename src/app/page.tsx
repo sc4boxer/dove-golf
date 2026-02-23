@@ -92,7 +92,7 @@ export default function HomePage() {
             className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
             <p className="text-base font-semibold">About DoveGolf™</p>
-            <p className="mt-1 text-sm text-slate-600">The philosophy behind cause-and-effect fitting.</p>
+            <p className="mt-1 text-sm text-slate-600">Engineered cause and effect.</p>
           </Link>
         </div>
 
@@ -137,12 +137,6 @@ export default function HomePage() {
           </Link>
         </section>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <Link href="/diagnostic" className="rounded-2xl border border-slate-900 bg-slate-900 px-6 py-4 text-white shadow-sm transition hover:bg-slate-800 sm:col-span-1">
-            <p className="text-base font-semibold">Run DoveGolf<sup className="text-[0.65em] align-super">TM</sup></p>
-            <p className="mt-1 text-sm text-slate-200">2 minutes. A physics-aware fitting diagnosis — free.</p>
-          </Link>
-        </div>
       </div>
     </main>
   );
