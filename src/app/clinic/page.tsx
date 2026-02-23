@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { HomeLinkPill } from "@/components/HomeLinkPill";
 import { ClinicHero } from "@/components/clinic/ClinicHero";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
 import { loadClinicSessions } from "@/lib/clinic/storage";
@@ -19,9 +20,7 @@ export default function ClinicPage() {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-16 text-slate-900">
       <div className="mx-auto max-w-4xl space-y-8">
-        <Link href="/" className="inline-flex text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-900">
-          ← Back to landing page
-        </Link>
+        <HomeLinkPill />
 
         <ClinicHero />
 
