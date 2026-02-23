@@ -10,6 +10,18 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/method",
   },
+  openGraph: {
+    title: "Method",
+    description:
+      "How DoveFit™ Engine works: a deterministic, physics-aware fitting model that converts swing tendencies into a testable shaft + build blueprint.",
+    url: "https://dovegolf.fit/method",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Method",
+    description:
+      "How DoveFit™ Engine works: a deterministic, physics-aware fitting model that converts swing tendencies into a testable shaft + build blueprint.",
+  },
 };
 
 export default function MethodPage() {

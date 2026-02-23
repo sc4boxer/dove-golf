@@ -5,8 +5,10 @@ const baseUrl = "https://dovegolf.fit";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
-    "",
+    "/",
     "/diagnostic",
+    "/clinic",
+    "/clinic/driver-slice",
     "/method",
     "/about",
     "/learn",
@@ -20,9 +22,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   return routes.map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: new URL(route, baseUrl).toString(),
     lastModified: new Date(),
-    changeFrequency: route === "" ? "weekly" : "monthly",
-    priority: route === "" ? 1 : 0.8,
+    changeFrequency: route === "/" ? "weekly" : "monthly",
+    priority: route === "/" ? 1 : 0.8,
   }));
 }
