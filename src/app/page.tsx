@@ -49,7 +49,7 @@ export default function HomePage() {
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-slate-600 leading-relaxed">
-          A deterministic system for fitting gear, diagnosing misses, and understanding ball flight.
+          A system for fitting gear, diagnosing misses, and understanding ball flight.
           <span className="block mt-2">No hype. No brand bias. Just logic.</span>
         </p>
 
