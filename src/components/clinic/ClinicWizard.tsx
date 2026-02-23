@@ -53,6 +53,14 @@ function previewColor(active: boolean) {
   return active ? "rgb(15 23 42)" : "rgb(203 213 225)";
 }
 
+function optionLabel(step: Step, option: string) {
+  if (step.key === "missPattern" && option === "twoWay") {
+    return "multi-way";
+  }
+
+  return option.replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
 function StepPreview({ step, selected }: StepPreviewProps) {
   const current = selected ?? step.options[0];
 
@@ -78,11 +86,11 @@ function StepPreview({ step, selected }: StepPreviewProps) {
   if (step.key === "curveSeverity") {
     const targetX = 72;
     const profiles = {
-      none: { c1x: 116, c1y: 126, c2x: 122, c2y: 84, endX: 126, endY: 40 },
-      slight: { c1x: 114, c1y: 128, c2x: 103, c2y: 82, endX: 90, endY: 40 },
-      moderate: { c1x: 112, c1y: 132, c2x: 92, c2y: 84, endX: 76, endY: 44 },
-      severe: { c1x: 110, c1y: 136, c2x: 78, c2y: 90, endX: 58, endY: 50 },
-      unsure: { c1x: 114, c1y: 128, c2x: 103, c2y: 82, endX: 90, endY: 40 },
+      none: { c1x: 80, c1y: 126, c2x: 78, c2y: 84, endX: 76, endY: 40 },
+      slight: { c1x: 88, c1y: 128, c2x: 102, c2y: 86, endX: 114, endY: 44 },
+      moderate: { c1x: 92, c1y: 132, c2x: 124, c2y: 92, endX: 142, endY: 52 },
+      severe: { c1x: 96, c1y: 136, c2x: 144, c2y: 96, endX: 176, endY: 62 },
+      unsure: { c1x: 88, c1y: 128, c2x: 102, c2y: 86, endX: 114, endY: 44 },
     } as const;
     const shape = profiles[current as keyof typeof profiles] ?? profiles.unsure;
 
@@ -134,14 +142,14 @@ function StepPreview({ step, selected }: StepPreviewProps) {
     const oneWay = current === "oneWay";
     const trajectories = oneWay
       ? [
-          "M 86 152 C 104 126, 118 88, 120 36",
-          "M 84 152 C 112 128, 146 92, 178 64",
-          "M 86 152 C 126 132, 172 106, 222 94",
+          "M 86 152 C 98 128, 112 96, 124 44",
+          "M 86 152 C 100 130, 114 98, 128 48",
+          "M 86 152 C 102 132, 116 100, 132 52",
         ]
       : [
           "M 86 152 C 104 126, 118 88, 120 36",
           "M 86 152 C 126 132, 172 106, 222 94",
-          "M 86 152 C 140 132, 194 96, 246 36",
+          "M 84 152 C 136 138, 184 66, 152 30",
         ];
 
     return (
@@ -163,7 +171,7 @@ function StepPreview({ step, selected }: StepPreviewProps) {
             />
           );
         })}
-        <text x="100" y="24" className="fill-slate-500 text-[11px]">{oneWay ? "One-way miss shape" : "Two-way miss shape"}</text>
+        <text x="100" y="24" className="fill-slate-500 text-[11px]">{oneWay ? "One-way miss shape" : "Multi-way miss shape"}</text>
       </svg>
     );
   }
@@ -190,20 +198,24 @@ function StepPreview({ step, selected }: StepPreviewProps) {
   }
 
   const accent = current === "smooth" ? "rgb(34 197 94)" : current === "quick" ? "rgb(239 68 68)" : "rgb(59 130 246)";
-  const spread = current === "smooth" ? 18 : current === "quick" ? 40 : 28;
+  const intensityByTempo = {
+    smooth: [0.18, 0.24, 0.32, 0.46, 0.62, 0.82],
+    neutral: [0.24, 0.38, 0.58, 0.58, 0.38, 0.24],
+    quick: [0.82, 0.62, 0.46, 0.32, 0.24, 0.18],
+    unsure: [0.28, 0.32, 0.36, 0.36, 0.32, 0.28],
+  } as const;
+  const intensities = intensityByTempo[current as keyof typeof intensityByTempo] ?? intensityByTempo.unsure;
 
   return (
     <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Tempo release preview">
       <rect x="24" y="24" width="272" height="132" rx="14" fill="rgb(248 250 252)" stroke="rgb(226 232 240)" />
       <line x1="44" y1="132" x2="276" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-      {[0, 1, 2, 3, 4, 5].map((idx) => (
-        <circle key={idx} cx={62 + idx * 38} cy={122} r={6} fill="rgb(15 23 42 / 0.3)" />
+      {intensities.map((opacity, idx) => (
+        <circle key={idx} cx={62 + idx * 38} cy={122} r={6} fill={accent} opacity={opacity} />
       ))}
       <rect x="48" y="38" width="224" height="34" rx="8" fill="rgb(255 255 255)" stroke="rgb(226 232 240)" />
       <text x="58" y="53" className="fill-slate-600 text-[11px] font-medium">Transition accent: {current}</text>
       <text x="58" y="67" className="fill-slate-500 text-[10px]">Keep sequencing repeatable; speed is secondary.</text>
-      <path d={`M 62 122 C 114 112, 170 96, ${210 + spread * 0.2} ${84 - spread * 0.25}`} fill="none" stroke={accent} strokeWidth="5" strokeLinecap="round" />
-      <circle cx={238} cy={70 - spread * 0.25} r="7" fill={accent} />
     </svg>
   );
 }
@@ -275,7 +287,7 @@ export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
                       : "border-slate-300 text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  {option}
+                  {optionLabel(active, option)}
                 </button>
               ))}
             </div>
@@ -352,7 +364,7 @@ export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
               {active.options.map((option) => (
                 <span key={option} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">
                   <span className="inline-block h-2 w-2 rounded-full" style={{ background: previewColor(value[active.key] === option) }} />
-                  {option}
+                  {optionLabel(active, option)}
                 </span>
               ))}
             </div>
