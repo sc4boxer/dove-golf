@@ -32,8 +32,8 @@ function makeBaseTests(): ClinicRangeTest[] {
       visualAid: {
         title: "Gate placement",
         lanes: ["Target line", "Tee gate", "Ball"],
-        markers: ["      |", "   [ ] |", "    o  |"],
-        hint: "Keep the clubhead moving through the gate without clipping the tees.",
+        markers: ["Target  ●────────────▶", "Gate      [tee]  [tee]", "Ball      o"],
+        hint: "Start the ball between the tees and keep the face from hanging open through impact.",
       },
     },
     {
@@ -49,8 +49,8 @@ function makeBaseTests(): ClinicRangeTest[] {
       visualAid: {
         title: "Path station",
         lanes: ["Stick", "Swing corridor", "Target"],
-        markers: [" |     ", " |  ↗  ", " |   ● "],
-        hint: "Feel the club travel just inside the stick while the ball starts closer to center.",
+        markers: ["Stick     │", "Path      ↗ (inside the stick)", "Ball      o  →  Target"],
+        hint: "Miss the stick on the downswing; your ball should begin closer to center with less wipey spin.",
       },
     },
     {
@@ -66,8 +66,8 @@ function makeBaseTests(): ClinicRangeTest[] {
       visualAid: {
         title: "Face pattern check",
         lanes: ["High", "Center", "Low"],
-        markers: ["  ·  ·  ", " H  C  T", "  ·  L  "],
-        hint: "Prefer center/toe trend over repeated heel marks when the slice is strike-driven.",
+        markers: ["Top row      high", "Middle row   heel | center | toe", "Bottom row   low"],
+        hint: "Circle strike marks after each shot—if heel marks shift toward center/toe, slice tilt should soften.",
       },
     },
   ];
