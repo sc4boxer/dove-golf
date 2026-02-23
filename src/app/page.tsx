@@ -49,7 +49,7 @@ export default function HomePage() {
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-slate-600 leading-relaxed">
-          A deterministic diagnostic that fits your gear to how you actually swing.
+          A deterministic system for fitting gear, diagnosing misses, and understanding ball flight.
           <span className="block mt-2">No hype. No brand bias. Just logic.</span>
         </p>
 
@@ -102,6 +102,25 @@ export default function HomePage() {
         </div>
 
         <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-medium tracking-wide text-slate-500">DoveFit™ — Equipment diagnosis</p>
+          <p className="mt-2 text-slate-700">Fit your gear to your swing in ~2 minutes.</p>
+          <p className="mt-2 text-slate-700">
+            A deterministic, physics-aware fitting engine that turns misses into testable equipment levers.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            <li>• Shaft weight + flex range recommendations</li>
+            <li>• Launch/spin + strike-driven head guidance</li>
+            <li>• Clear next-step checklist for testing</li>
+          </ul>
+          <Link
+            href="/diagnostic"
+            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open DoveFit™
+          </Link>
+        </section>
+
+        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
           <p className="text-sm font-medium tracking-wide text-slate-500">DoveClinic™ — Debug your miss</p>
           <p className="mt-2 text-slate-700">
             DoveFit™ handles equipment decisions. DoveClinic™ helps diagnose ball-flight misses and iterate at the range.
