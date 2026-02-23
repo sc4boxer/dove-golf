@@ -78,14 +78,14 @@ export default function DriverSlicePage() {
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-16 text-slate-900">
       <div className="mx-auto max-w-5xl space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="space-y-1">
+          <div className="flex items-start justify-between gap-4">
             <p className="text-xs font-medium tracking-wide text-slate-500">DoveClinic™</p>
-            <h1 className="text-3xl font-semibold tracking-tight">Driver Slice debugger</h1>
+            <Link href="/clinic" className="text-sm font-medium text-slate-700 underline">
+              Back to Clinic
+            </Link>
           </div>
-          <Link href="/clinic" className="text-sm font-medium text-slate-700 underline">
-            Back to Clinic
-          </Link>
+          <h1 className="text-3xl font-semibold tracking-tight">Driver Slice debugger</h1>
         </div>
 
         {!result ? (
