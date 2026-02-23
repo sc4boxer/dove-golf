@@ -125,46 +125,106 @@ function StepPreview({ step, selected }: StepPreviewProps) {
     return (
       <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Miss pattern preview">
         <line x1="40" y1="160" x2="280" y2="160" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="160" y1="34" x2="160" y2="160" stroke="rgb(226 232 240)" strokeDasharray="5 4" strokeWidth="2" />
         {[0, 1, 2, 3].map((i) => {
-          const x = 60 + i * 58;
-          const swing = oneWay ? -20 : i % 2 === 0 ? -20 : 20;
-          return <path key={x} d={`M ${x} 150 C ${x + 20} 95, ${x + 40 + swing} 70, ${x + 50 + swing} 28`} fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" opacity={current === "unsure" ? 0.45 : 1} />;
+          const x = 62 + i * 52;
+          const swing = oneWay ? -24 : i % 2 === 0 ? -28 : 28;
+          const opacity = current === "unsure" ? 0.45 : 0.8 + i * 0.05;
+          return (
+            <path
+              key={x}
+              d={`M ${x} 150 C ${x + 14} 112, ${x + 26 + swing} 80, ${x + 34 + swing} 34`}
+              fill="none"
+              stroke="rgb(15 23 42)"
+              strokeWidth="4"
+              strokeLinecap="round"
+              opacity={opacity}
+            />
+          );
         })}
+        <text x="48" y="24" className="fill-slate-500 text-[11px]">{oneWay ? "One-way miss shape" : "Two-way dispersion"}</text>
       </svg>
     );
   }
 
   if (step.key === "gripStrength") {
     const angle = current === "weak" ? -28 : current === "strong" ? 26 : 0;
+    const gripLabel =
+      current === "weak"
+        ? "Weak: V points more toward lead shoulder"
+        : current === "strong"
+          ? "Strong: V points more toward trail shoulder"
+          : current === "neutral"
+            ? "Neutral: V points around trail ear/chin"
+            : "Unsure: neutral reference shown";
     return (
       <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Grip strength preview">
         <rect x="84" y="70" width="154" height="26" rx="13" fill="rgb(241 245 249)" stroke="rgb(148 163 184)" />
+        <line x1="160" y1="20" x2="160" y2="150" stroke="rgb(226 232 240)" strokeDasharray="5 4" strokeWidth="2" />
         <line x1="160" y1="83" x2={160 + angle} y2="45" stroke="rgb(15 23 42)" strokeWidth="5" strokeLinecap="round" />
         <circle cx={160 + angle} cy="45" r="7" fill="rgb(15 23 42)" />
-        <text x="70" y="150" className="fill-slate-500 text-[12px]">Lead-hand V direction</text>
+        <text x="70" y="150" className="fill-slate-500 text-[11px]">{gripLabel}</text>
       </svg>
     );
   }
 
-  const pace = current === "smooth" ? 0.5 : current === "quick" ? 1.35 : 0.9;
+  const pace = current === "smooth" ? 0.5 : current === "quick" ? 1.25 : 0.9;
   return (
     <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Tempo release preview">
-      <line x1="40" y1="160" x2="280" y2="160" stroke="rgb(203 213 225)" strokeWidth="2" />
-      {[0, 1, 2, 3, 4].map((idx) => (
-        <circle key={idx} cx={70 + idx * 48} cy={130 - idx * 20} r={7} fill="rgb(15 23 42)" opacity={Math.min(1, 0.25 + idx * 0.15 * pace)} />
+      <rect x="24" y="24" width="272" height="132" rx="14" fill="rgb(248 250 252)" stroke="rgb(226 232 240)" />
+      <line x1="44" y1="132" x2="276" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+      {[0, 1, 2, 3, 4, 5].map((idx) => (
+        <circle key={idx} cx={58 + idx * 40} cy={120 - idx * 14} r={6} fill="rgb(15 23 42)" opacity={Math.min(1, 0.2 + idx * 0.14 * pace)} />
       ))}
-      <path d="M 68 134 C 140 88, 188 60, 260 48" fill="none" stroke="rgb(15 23 42 / 0.35)" strokeWidth="3" strokeLinecap="round" />
+      <path d="M 56 122 C 132 88, 196 70, 260 46" fill="none" stroke="rgb(15 23 42 / 0.35)" strokeWidth="3" strokeLinecap="round" />
+      <text x="38" y="44" className="fill-slate-600 text-[11px] font-medium">Transition speed: {current}</text>
+      <text x="38" y="60" className="fill-slate-500 text-[10px]">Focus on repeatable sequencing, not max speed.</text>
     </svg>
   );
 }
 
+function StepGuidance({ step, selected }: StepPreviewProps) {
+  if (step.key === "tempoRelease") {
+    const notes = {
+      smooth: "Smooth: transition feels gradual; release timing tends to be easier to repeat.",
+      neutral: "Neutral: balanced pace from top to impact with no obvious rush.",
+      quick: "Quick: transition feels abrupt; face/strike timing can become less stable.",
+      unsure: "Unsure: pick this when tempo changes shot-to-shot or you cannot tell.",
+    } as const;
+
+    return (
+      <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700">
+        <p className="font-semibold text-slate-900">Tempo / release guide</p>
+        <ul className="mt-2 space-y-1.5">
+          {step.options.map((option) => (
+            <li key={option} className={selected === option ? "font-medium text-slate-900" : ""}>
+              • {notes[option as keyof typeof notes]}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
+
+  if (step.key === "gripStrength") {
+    const notes = {
+      weak: "Weak grip often leaves the face open longer; common with right starts for right-handed players.",
+      neutral: "Neutral grip is usually easiest to pair with centered starts and predictable curve.",
+      strong: "Strong grip can help closure rate, but too strong may over-close and miss left.",
+      unsure: "Unsure is valid if glove wear and hand placement change during the session.",
+    } as const;
+    return <p className="mt-3 text-xs text-slate-600">{notes[(selected ?? "neutral") as keyof typeof notes]}</p>;
+  }
+
+  return null;
+}
+
 export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
-  const answered = steps.filter((step) => value[step.key]).length;
   const [currentStep, setCurrentStep] = useState(0);
 
   const active = steps[currentStep] ?? null;
 
-  const progressStep = currentStep >= steps.length ? steps.length : Math.max(answered + 1, currentStep + 1);
+  const progressStep = active ? currentStep + 1 : steps.length;
 
   const canComplete = steps.every((step) => value[step.key]);
 
@@ -183,7 +243,6 @@ export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
                   type="button"
                   onClick={() => {
                     onChange({ [active.key]: option } as Partial<DriverSliceInputs>);
-                    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
                   }}
                   className={`rounded-xl border px-3 py-2 text-sm capitalize transition ${
                     value[active.key] === option
@@ -211,6 +270,14 @@ export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
               >
                 Skip for now
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentStep((prev) => Math.min(prev + 1, steps.length))}
+                disabled={!value[active.key]}
+                className="rounded-lg border border-slate-900 bg-slate-900 px-3 py-2 text-sm text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-200 disabled:text-slate-500"
+              >
+                Next
               </button>
             </div>
           </div>
@@ -255,6 +322,7 @@ export function ClinicWizard({ value, onChange, onComplete }: WizardProps) {
             <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-2">
               <StepPreview step={active} selected={value[active.key]} />
             </div>
+            <StepGuidance step={active} selected={value[active.key]} />
             <div className="mt-4 flex flex-wrap gap-2">
               {active.options.map((option) => (
                 <span key={option} className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700">
