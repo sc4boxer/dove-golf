@@ -48,9 +48,9 @@ function makeBaseTests(): ClinicRangeTest[] {
       targets: ["pathDirection", "setupAlignment"],
       visualAid: {
         title: "Path station",
-        lanes: ["Stick", "Swing corridor", "Target"],
-        markers: ["Stick     │", "Path      ↗ (inside the stick)", "Ball      o  →  Target"],
-        hint: "Miss the stick on the downswing; your ball should begin closer to center with less wipey spin.",
+        lanes: ["Alignment stick", "Swing path", "Reference"],
+        markers: ["Set one stick just outside your ball-to-target line", "Trace swings that stay inside the stick on the way down", "Ball starts closer to target line with less right curve"],
+        hint: "The stick is only a barrier; if you miss it and start lines improve, path direction is likely part of the problem.",
       },
     },
     {
