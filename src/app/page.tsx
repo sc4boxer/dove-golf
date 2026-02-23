@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Online Golf Club Fitting & Equipment Diagnostic",
   description:
-    "Get data-driven golf club fitting recommendations for drivers, irons, and wedges with Dove Golf's online diagnostic.",
+    "Get data-driven golf club fitting recommendations and miss-debug guidance with Dove Golf's deterministic diagnostic modules.",
   alternates: {
     canonical: "/",
   },
@@ -53,6 +53,15 @@ export default function HomePage() {
           <span className="block mt-2">No hype. No brand bias. Just logic.</span>
         </p>
 
+        <div className="mt-6 flex flex-wrap gap-2 text-sm">
+          <Link href="/diagnostic" className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+            Diagnostic
+          </Link>
+          <Link href="/clinic" className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+            Clinic
+          </Link>
+        </div>
+
         {/* Viz moved below copy, above buttons (mobile-friendly) */}
         <div className="mt-10">
           <TrajectoryHeroViz />
@@ -85,6 +94,24 @@ export default function HomePage() {
           For golfers who care about cause and effect — and want clear, data-driven reasoning behind
           equipment decisions.
         </div>
+
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-medium tracking-wide text-slate-500">DoveClinic™ — Debug your miss</p>
+          <p className="mt-2 text-slate-700">
+            DoveFit™ handles equipment decisions. DoveClinic™ helps diagnose ball-flight misses and iterate at the range.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            <li>• Likelihood split across root causes</li>
+            <li>• Range tests with if/then outcomes</li>
+            <li>• Save sessions and iterate</li>
+          </ul>
+          <Link
+            href="/clinic"
+            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open DoveClinic™
+          </Link>
+        </section>
       </div>
     </main>
   );
