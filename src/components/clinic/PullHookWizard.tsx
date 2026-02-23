@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics/ga";
 import { PullHookInputs } from "@/lib/clinic/types";
+import { PullHookSetupVisual } from "@/components/clinic/PullHookSetupVisual";
 
 type WizardProps = {
   value: Partial<PullHookInputs>;
@@ -191,26 +192,7 @@ function StepPreview({ step, selected }: StepPreviewProps) {
     );
   }
 
-  const setup = {
-    square: "Square lines",
-    aimLeft: "Aim left",
-    ballBack: "Ball back",
-    closedStance: "Closed stance",
-    unsure: "Neutral ref",
-  } as const;
-
-  const lineOffset = current === "aimLeft" ? -24 : current === "closedStance" ? -16 : 0;
-  const ballX = current === "ballBack" ? 132 : 160;
-
-  return (
-    <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Setup pattern preview">
-      <line x1="52" y1="140" x2="268" y2="140" stroke="rgb(203 213 225)" strokeWidth="2" />
-      <line x1="160" y1="28" x2="160" y2="140" stroke="rgb(203 213 225)" strokeDasharray="5 4" strokeWidth="2" />
-      <line x1={102 + lineOffset} y1="110" x2={218 + lineOffset} y2="74" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
-      <circle cx={ballX} cy="126" r="7" fill="rgb(15 23 42)" />
-      <text x="96" y="160" className="fill-slate-600 text-[11px]">{setup[current as keyof typeof setup] ?? setup.unsure}</text>
-    </svg>
-  );
+  return <PullHookSetupVisual selected={current} />;
 }
 
 function StepGuidance({ step, selected }: StepPreviewProps) {
