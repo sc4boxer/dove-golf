@@ -55,11 +55,14 @@ export default function HomePage() {
 
         <div className="mt-6 flex flex-wrap gap-2 text-sm">
           <Link href="/diagnostic" className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
-            Diagnostic
+            Fitting
           </Link>
           <Link href="/clinic" className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
             Clinic
           </Link>
+          <span className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-500">
+            Lab <span className="text-slate-400">(Coming soon)</span>
+          </span>
         </div>
 
         {/* Viz moved below copy, above buttons (mobile-friendly) */}
