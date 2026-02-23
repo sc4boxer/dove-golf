@@ -215,7 +215,7 @@ function StepPreview({ step, selected }: StepPreviewProps) {
       ))}
       <rect x="48" y="38" width="224" height="34" rx="8" fill="rgb(255 255 255)" stroke="rgb(226 232 240)" />
       <text x="58" y="53" className="fill-slate-600 text-[11px] font-medium">Transition accent: {current}</text>
-      <text x="58" y="67" className="fill-slate-500 text-[10px]">Keep sequencing repeatable; speed is secondary.</text>
+      <text x="58" y="67" className="fill-slate-500 text-[10px]">Prioritize repeatable sequencing over raw speed.</text>
     </svg>
   );
 }
