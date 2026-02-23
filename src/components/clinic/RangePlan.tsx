@@ -1,32 +1,62 @@
 import { ClinicRangeTest } from "@/lib/clinic/types";
 
-function markerPosition(marker: string) {
-  const normalized = marker.toLowerCase();
-  if (normalized.includes("left") || normalized.includes("heel")) return "18%";
-  if (normalized.includes("right") || normalized.includes("toe")) return "82%";
-  return "50%";
+function VisualByTest({ testId }: { testId: string }) {
+  if (testId === "face-gate") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Face gate setup preview">
+        <line x1="48" y1="132" x2="272" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="160" y1="132" x2="160" y2="36" stroke="rgb(148 163 184)" strokeDasharray="5 5" strokeWidth="2" />
+        <rect x="136" y="88" width="8" height="28" rx="3" fill="rgb(15 23 42 / 0.6)" />
+        <rect x="176" y="88" width="8" height="28" rx="3" fill="rgb(15 23 42 / 0.6)" />
+        <circle cx="160" cy="124" r="6" fill="rgb(15 23 42)" />
+        <path d="M 160 124 C 160 96, 160 64, 160 42" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
+        <text x="126" y="84" className="fill-slate-600 text-[10px]">tee gate</text>
+      </svg>
+    );
+  }
+
+  if (testId === "path-stick") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Path stick setup preview">
+        <line x1="44" y1="132" x2="276" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="220" y1="128" x2="250" y2="34" stroke="rgb(15 23 42 / 0.7)" strokeWidth="4" strokeLinecap="round" />
+        <circle cx="90" cy="124" r="6" fill="rgb(15 23 42)" />
+        <path d="M 90 124 C 132 112, 172 96, 214 48" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
+        <text x="232" y="32" className="fill-slate-600 text-[10px]">stick</text>
+        <text x="96" y="150" className="fill-slate-500 text-[10px]">inside corridor</text>
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Impact spray pattern preview">
+      <rect x="96" y="34" width="128" height="92" rx="16" fill="white" stroke="rgb(148 163 184)" strokeWidth="3" />
+      <line x1="160" y1="38" x2="160" y2="122" stroke="rgb(226 232 240)" strokeWidth="2" />
+      <line x1="100" y1="80" x2="220" y2="80" stroke="rgb(226 232 240)" strokeWidth="2" />
+      <circle cx="124" cy="80" r="5" fill="rgb(15 23 42 / 0.5)" />
+      <circle cx="132" cy="72" r="5" fill="rgb(15 23 42 / 0.6)" />
+      <circle cx="142" cy="90" r="5" fill="rgb(15 23 42 / 0.45)" />
+      <circle cx="154" cy="84" r="5" fill="rgb(15 23 42 / 0.35)" />
+      <text x="103" y="142" className="fill-slate-500 text-[10px]">Heel cluster shifting toward center</text>
+    </svg>
+  );
 }
 
 function TestVisualAid({ test }: { test: ClinicRangeTest }) {
   return (
     <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3">
       <p className="text-xs font-semibold tracking-wide text-slate-500">Visual aid — {test.visualAid.title}</p>
-      <div className="mt-3 space-y-2">
-        {test.visualAid.lanes.map((lane, idx) => (
-          <div key={`${test.id}-row-${lane}`} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{lane}</p>
-            <div className="mt-1 relative h-6 rounded-full border border-slate-200 bg-white">
-              <div className="absolute left-1/2 top-0 h-full -translate-x-1/2 border-l border-dashed border-slate-200" />
-              <span
-                className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-slate-800"
-                style={{ left: markerPosition(test.visualAid.markers[idx]) }}
-              />
-            </div>
-            <p className="mt-1 text-[11px] text-slate-700">{test.visualAid.markers[idx]}</p>
-          </div>
-        ))}
+      <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 p-2">
+        <VisualByTest testId={test.id} />
       </div>
-      <p className="mt-3 text-xs text-slate-600">{test.visualAid.hint}</p>
+      <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-slate-700">
+        {test.visualAid.lanes.map((lane, idx) => (
+          <li key={`${test.id}-${lane}`}>
+            <span className="font-semibold text-slate-900">{lane}:</span> {test.visualAid.markers[idx]}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs font-medium text-slate-700">Execution cue: {test.visualAid.hint}</p>
     </div>
   );
 }
