@@ -25,6 +25,8 @@ export function PullHookSetupVisual({ selected = "unsure" }: { selected?: string
         ? { x1: 112, y1: 150, x2: 184, y2: 124 }
         : { x1: 118, y1: 148, x2: 202, y2: 148 };
 
+  const isBallBack = mode === "ballBack";
+
   return (
     <svg viewBox="0 0 320 190" className="h-auto w-full" role="img" aria-label="Setup quick check top-down range map">
       <line x1="160" y1="22" x2="160" y2="128" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
@@ -37,7 +39,7 @@ export function PullHookSetupVisual({ selected = "unsure" }: { selected?: string
       <text x="188" y="60" className="fill-slate-500 text-[9px]">start line / face line</text>
 
       <line x1={feetLine.x1} y1={feetLine.y1} x2={feetLine.x2} y2={feetLine.y2} stroke="rgb(100 116 139)" strokeWidth="4" strokeLinecap="round" />
-      <text x="88" y="176" className="fill-slate-500 text-[9px]">feet / stance line</text>
+      <text x="88" y={isBallBack ? "168" : "176"} className="fill-slate-500 text-[9px]">feet / stance line</text>
 
       <circle cx="160" cy="162" r="4" fill="rgb(100 116 139)" />
       <text x="168" y="166" className="fill-slate-500 text-[9px]">stance center</text>
@@ -45,15 +47,15 @@ export function PullHookSetupVisual({ selected = "unsure" }: { selected?: string
       <circle cx={ballX} cy="122" r="6" fill="white" stroke="rgb(15 23 42)" strokeWidth="2" />
       <text x={mode === "ballBack" ? "102" : "168"} y="112" className="fill-slate-500 text-[9px]">ball position</text>
 
-      {mode === "ballBack" ? (
+      {isBallBack ? (
         <>
           <line x1="160" y1="122" x2={ballX + 8} y2="122" stroke="rgb(239 68 68 / 0.9)" strokeWidth="2" />
-          <text x="88" y="96" className="fill-rose-600 text-[10px]">de-loft / earlier closure risk / left-start bias</text>
+          <text x="76" y="92" className="fill-rose-600 text-[10px]">de-loft / earlier closure risk / left-start bias</text>
         </>
       ) : null}
 
       {mode === "unsure" ? <text x="228" y="138" className="fill-slate-500 text-sm">?</text> : null}
-      <text x="24" y="184" className="fill-slate-700 text-[11px]">{labels[mode]}</text>
+      <text x="24" y={isBallBack ? "186" : "184"} className="fill-slate-700 text-[11px]">{labels[mode]}</text>
     </svg>
   );
 }
