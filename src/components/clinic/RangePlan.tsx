@@ -43,6 +43,50 @@ function VisualByTest({ testId }: { testId: string }) {
     );
   }
 
+
+
+  if (testId === "start-line-gate") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Start-line gate preview">
+        <line x1="48" y1="132" x2="272" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="232" y1="132" x2="232" y2="30" stroke="rgb(148 163 184)" strokeDasharray="5 5" strokeWidth="2" />
+        <rect x="214" y="84" width="8" height="30" rx="3" fill="rgb(15 23 42 / 0.6)" />
+        <rect x="242" y="84" width="8" height="30" rx="3" fill="rgb(15 23 42 / 0.6)" />
+        <circle cx="232" cy="124" r="6" fill="rgb(15 23 42)" />
+        <path d="M 232 124 C 220 102, 196 80, 164 44" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
+        <text x="188" y="24" className="fill-slate-500 text-[10px]">neutral start-line gate</text>
+      </svg>
+    );
+  }
+
+  if (testId === "strike-map") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Strike map preview">
+        <rect x="96" y="34" width="128" height="92" rx="16" fill="white" stroke="rgb(148 163 184)" strokeWidth="3" />
+        <line x1="160" y1="38" x2="160" y2="122" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <line x1="100" y1="80" x2="220" y2="80" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <circle cx="198" cy="82" r="6" fill="rgb(239 68 68 / 0.65)" />
+        <circle cx="206" cy="72" r="6" fill="rgb(239 68 68 / 0.6)" />
+        <circle cx="194" cy="92" r="6" fill="rgb(239 68 68 / 0.5)" />
+        <circle cx="160" cy="82" r="6" fill="rgb(15 23 42 / 0.35)" />
+        <text x="110" y="142" className="fill-slate-500 text-[10px]">toe cluster often = more hook gear effect</text>
+      </svg>
+    );
+  }
+
+  if (testId === "delivery-gear-check") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Delivery and gear check preview">
+        <rect x="42" y="26" width="236" height="118" rx="12" fill="rgb(248 250 252)" stroke="rgb(226 232 240)" />
+        <line x1="160" y1="38" x2="160" y2="130" stroke="rgb(203 213 225)" strokeDasharray="5 4" strokeWidth="2" />
+        <path d="M 92 124 C 118 110, 142 90, 162 54" fill="none" stroke="rgb(15 23 42 / 0.8)" strokeWidth="4" strokeLinecap="round" />
+        <path d="M 228 124 C 206 108, 188 86, 172 48" fill="none" stroke="rgb(71 85 105 / 0.75)" strokeWidth="4" strokeLinecap="round" />
+        <text x="80" y="142" className="fill-slate-500 text-[10px]">A: current delivery</text>
+        <text x="176" y="142" className="fill-slate-500 text-[10px]">B: neutralized delivery</text>
+      </svg>
+    );
+  }
+
   return (
     <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Impact spray pattern preview">
       <rect x="96" y="34" width="128" height="92" rx="16" fill="white" stroke="rgb(148 163 184)" strokeWidth="3" />

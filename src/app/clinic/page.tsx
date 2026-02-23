@@ -10,7 +10,7 @@ import { ClinicSession } from "@/lib/clinic/types";
 
 const problems = [
   { title: "Driver Slice", href: "/clinic/driver-slice", enabled: true },
-  { title: "Pull Hook", href: "#", enabled: false },
+  { title: "Pull Hook", href: "/clinic/pull-hook", enabled: true },
   { title: "Thin Irons", href: "#", enabled: false },
 ];
 

@@ -90,11 +90,15 @@ export default function DriverSlicePage() {
   };
 
   const applyDiscriminator = (strike: (typeof DISCRIMINATOR_OPTIONS)[number]) => {
-    if (!activeSession) return;
-    const recalculated = evaluateDriverSlice({ ...activeSession.inputs, strikeLocation: strike, persistentRightStart: "yes" });
+    if (!activeSession || activeSession.problemKey !== "driverSlice") return;
+    const recalculated = evaluateDriverSlice({
+      ...(activeSession.inputs as DriverSliceInputs),
+      strikeLocation: strike,
+      persistentRightStart: "yes",
+    });
     const updated = updateClinicSession(activeSession.id, (existing) => ({
       ...existing,
-      inputs: { ...existing.inputs, strikeLocation: strike, persistentRightStart: "yes" },
+      inputs: { ...(existing.inputs as DriverSliceInputs), strikeLocation: strike, persistentRightStart: "yes" },
       result: recalculated,
     }));
     setSessions(updated);
@@ -192,11 +196,12 @@ export default function DriverSlicePage() {
         )}
 
         <ClinicSessionHistory
-          sessions={sessions}
+          sessions={sessions.filter((session) => session.problemKey === "driverSlice")}
           onOpen={(session) => {
+            if (session.problemKey !== "driverSlice") return;
             setActiveSession(session);
             setResult(session.result);
-            setInputs(session.inputs);
+            setInputs(session.inputs as DriverSliceInputs);
           }}
         />
       </div>
