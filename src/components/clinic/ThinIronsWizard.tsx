@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ThinIronsInputs } from "@/lib/clinic/types";
+import { Ball, FlightArc, Ground, RangeMapFrame, RANGE_MAP, TargetLine, TargetMarker } from "@/components/clinic/visuals/RangeMapPrimitives";
 
 type Props = { value: Partial<ThinIronsInputs>; onChange: (patch: Partial<ThinIronsInputs>) => void; onComplete: () => void };
 
@@ -21,16 +22,58 @@ function optionLabel(option: string) {
 }
 
 function StepPreview({ step, selected }: { step: Step; selected?: string }) {
+  // Audit summary: all six step visuals existed but several were generic/non-teaching; low-point and posture geometry were ambiguous;
+  // some steps were not meaningfully state-driven. Rebuilt each step with one shared coordinate system and direct geometry tied to selection.
   const current = selected ?? step.options[0];
+
   if (step.key === "lowPointControl") {
-    const lowPointX = current === "clean" ? 176 : current === "mixed" ? 162 : 148;
-    return <svg viewBox="0 0 320 180" className="w-full"><line x1="40" y1="150" x2="280" y2="150" stroke="rgb(203 213 225)" strokeWidth="2" /><circle cx="160" cy="142" r="6" fill="rgb(15 23 42)" /><line x1="152" y1="150" x2="152" y2="64" stroke="rgb(148 163 184)" strokeDasharray="4 4" /><line x1={lowPointX} y1="150" x2={lowPointX} y2="96" stroke="rgb(239 68 68)" strokeWidth="3" /><text x="156" y="60" className="fill-slate-500 text-[10px]">ball</text><text x={lowPointX + 4} y="92" className="fill-rose-500 text-[10px]">low point</text></svg>;
+    const lowPointX = current === "clean" ? 152 : current === "mixed" ? 140 : 122;
+    const badThin = current === "mixed" || current === "noDivot";
+    return (
+      <RangeMapFrame label="Thin irons low-point map">
+        <Ground />
+        <Ball />
+        <TargetLine />
+        <TargetMarker />
+        <line x1={lowPointX} y1={RANGE_MAP.groundY} x2={lowPointX} y2="98" stroke={badThin ? "rgb(239 68 68)" : "rgb(16 185 129)"} strokeWidth="3" />
+        {badThin ? <line x1="124" y1="130" x2="140" y2="126" stroke="rgb(239 68 68)" strokeWidth="3" strokeLinecap="round" /> : null}
+      </RangeMapFrame>
+    );
   }
+
   if (step.key === "earlyExtension") {
-    const chestY = current === "often" ? 90 : 70;
-    return <svg viewBox="0 0 320 180" className="w-full"><line x1="72" y1="150" x2="260" y2="150" stroke="rgb(203 213 225)"/><rect x="110" y="58" width="70" height="84" fill="rgb(241 245 249)" stroke="rgb(148 163 184)"/><circle cx="145" cy={chestY} r="14" fill="rgb(15 23 42)"/><line x1="182" y1="58" x2="182" y2="142" stroke="rgb(239 68 68)" strokeDasharray="4 3"/><text x="188" y="56" className="fill-rose-500 text-[10px]">hip depth ref</text></svg>;
+    const torsoX = current === "often" ? 186 : current === "sometimes" ? 176 : 166;
+    return (
+      <RangeMapFrame label="Thin irons posture reference">
+        <Ground />
+        <Ball />
+        <line x1="202" y1="52" x2="202" y2={RANGE_MAP.groundY} stroke="rgb(148 163 184)" strokeWidth="2" strokeDasharray="4 4" />
+        <line x1={torsoX} y1="78" x2={torsoX - 8} y2="126" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
+      </RangeMapFrame>
+    );
   }
-  return <svg viewBox="0 0 320 180" className="w-full"><line x1="42" y1="150" x2="278" y2="150" stroke="rgb(203 213 225)"/><line x1="160" y1="20" x2="160" y2="150" stroke="rgb(148 163 184)" strokeDasharray="5 4"/><circle cx="160" cy="142" r="6" fill="rgb(15 23 42)"/><path d="M 160 142 C 168 122, 186 94, 200 66" fill="none" stroke="rgb(15 23 42)" strokeWidth="4"/><text x="46" y="26" className="fill-slate-500 text-[11px]">{optionLabel(current)}</text></svg>;
+
+  if (step.key === "setupWindow") {
+    const ballX = current === "ballForward" || current === "both" ? 144 : RANGE_MAP.ballX;
+    const lowPointX = current === "ballForward" || current === "both" ? 140 : 152;
+    return (
+      <RangeMapFrame label="Thin irons ball position setup">
+        <Ground />
+        <Ball x={ballX} />
+        <TargetLine />
+        <line x1={lowPointX} y1={RANGE_MAP.groundY} x2={lowPointX} y2="102" stroke="rgb(239 68 68 / 0.85)" strokeWidth="3" />
+      </RangeMapFrame>
+    );
+  }
+
+  return (
+    <RangeMapFrame label="Thin irons compression map">
+      <Ground />
+      <Ball />
+      <TargetLine />
+      <FlightArc d={`M ${RANGE_MAP.ballX} ${RANGE_MAP.ballY} C 160 128, 196 96, ${RANGE_MAP.targetX} ${RANGE_MAP.targetY + 6}`} tone="dark" />
+    </RangeMapFrame>
+  );
 }
 
 export function ThinIronsWizard({ value, onChange, onComplete }: Props) {

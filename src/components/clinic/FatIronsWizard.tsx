@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { FatIronsInputs } from "@/lib/clinic/types";
+import { Ball, FlightArc, Ground, RangeMapFrame, RANGE_MAP, TargetLine, TargetMarker } from "@/components/clinic/visuals/RangeMapPrimitives";
 
 type Props = { value: Partial<FatIronsInputs>; onChange: (patch: Partial<FatIronsInputs>) => void; onComplete: () => void };
 
@@ -18,12 +19,44 @@ type Step = (typeof steps)[number];
 const label = (value: string) => value.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 function StepPreview({ step, selected }: { step: Step; selected?: string }) {
+  // Audit summary: visuals were mostly generic and did not clearly show ground-before-ball contact, low-point behind/ahead, or pressure shift state.
+  // Rebuilt step-by-step geometry so each option change immediately moves core markers.
   const current = selected ?? step.options[0];
+
   if (step.key === "pressurePattern") {
-    const dotX = current === "forward" ? 194 : 132;
-    return <svg viewBox="0 0 320 180" className="w-full"><line x1="40" y1="150" x2="280" y2="150" stroke="rgb(203 213 225)"/><circle cx="160" cy="142" r="6" fill="rgb(15 23 42)"/><rect x="98" y="72" width="124" height="16" rx="8" fill="rgb(226 232 240)"/><circle cx={dotX} cy="80" r="11" fill="rgb(15 23 42)"/><text x="88" y="62" className="fill-slate-500 text-[10px]">trail</text><text x="210" y="62" className="fill-slate-500 text-[10px]">lead</text></svg>;
+    const comX = current === "forward" ? 190 : current === "mixed" ? 168 : 142;
+    return (
+      <RangeMapFrame label="Fat irons pressure shift">
+        <Ground />
+        <Ball />
+        <line x1="124" y1="86" x2="198" y2="86" stroke="rgb(226 232 240)" strokeWidth="10" strokeLinecap="round" />
+        <circle cx={comX} cy="86" r="8" fill="rgb(15 23 42)" />
+        <line x1="154" y1={RANGE_MAP.groundY} x2="154" y2="104" stroke={current === "forward" ? "rgb(16 185 129)" : "rgb(239 68 68)"} strokeWidth="3" />
+      </RangeMapFrame>
+    );
   }
-  return <svg viewBox="0 0 320 180" className="w-full"><line x1="40" y1="150" x2="280" y2="150" stroke="rgb(203 213 225)"/><circle cx="170" cy="142" r="6" fill="rgb(15 23 42)"/><rect x="126" y="134" width="42" height="6" fill="rgb(239 68 68 / .5)"/><path d="M 126 142 C 144 130, 164 104, 190 72" fill="none" stroke="rgb(15 23 42)" strokeWidth="4"/><text x="42" y="28" className="fill-slate-500 text-[11px]">{label(current)}</text></svg>;
+
+  if (step.key === "fatSeverity") {
+    const chunk = current === "chunk" || current === "mixed";
+    return (
+      <RangeMapFrame label="Fat irons chunk pattern">
+        <Ground />
+        <Ball />
+        <TargetLine />
+        <TargetMarker />
+        {chunk ? <line x1="118" y1={RANGE_MAP.groundY - 2} x2="132" y2={RANGE_MAP.groundY - 8} stroke="rgb(239 68 68)" strokeWidth="5" strokeLinecap="round" /> : null}
+        <line x1={chunk ? 122 : 154} y1={RANGE_MAP.groundY} x2={chunk ? 122 : 154} y2="106" stroke={chunk ? "rgb(239 68 68)" : "rgb(16 185 129)"} strokeWidth="3" />
+      </RangeMapFrame>
+    );
+  }
+
+  return (
+    <RangeMapFrame label="Fat irons low-point map">
+      <Ground />
+      <Ball x={current === "veryForward" ? 146 : current === "forward" ? 140 : RANGE_MAP.ballX} />
+      <FlightArc d={`M ${RANGE_MAP.ballX - 8} ${RANGE_MAP.ballY} C 150 126, 188 96, ${RANGE_MAP.targetX - 8} ${RANGE_MAP.targetY + 10}`} />
+    </RangeMapFrame>
+  );
 }
 
 export function FatIronsWizard({ value, onChange, onComplete }: Props) {
