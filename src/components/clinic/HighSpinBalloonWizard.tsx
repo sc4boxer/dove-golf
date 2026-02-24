@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { HighSpinBalloonInputs } from "@/lib/clinic/types";
+import { Ball, FlightArc, Ground, RangeMapFrame, RANGE_MAP, TargetLine, TargetMarker } from "@/components/clinic/visuals/RangeMapPrimitives";
 
 type Props = { value: Partial<HighSpinBalloonInputs>; onChange: (patch: Partial<HighSpinBalloonInputs>) => void; onComplete: () => void };
 
@@ -15,19 +16,61 @@ const steps = [
 ] as const;
 
 type Step = (typeof steps)[number];
-const label = (value: string) => value.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 function StepPreview({ step, selected }: { step: Step; selected?: string }) {
+  // Audit summary: flight and dynamic-loft visuals existed but were inconsistent with other modules and not fully state-mapped.
+  // Rebuilt all steps using the shared range-map geometry to keep arc direction, loft cues, and contact cues consistent.
   const current = selected ?? step.options[0];
+
   if (step.key === "flightPattern") {
-    return <svg viewBox="0 0 320 180" className="w-full"><line x1="40" y1="150" x2="280" y2="150" stroke="rgb(203 213 225)"/><line x1="160" y1="24" x2="160" y2="150" stroke="rgb(148 163 184)" strokeDasharray="4 4"/><circle cx="140" cy="142" r="6" fill="rgb(15 23 42)"/><path d="M 140 142 C 156 86, 184 46, 230 34" fill="none" stroke="rgb(239 68 68)" strokeWidth="4"/><path d="M 140 142 C 158 120, 184 94, 214 78" fill="none" stroke="rgb(15 23 42)" strokeWidth="3" strokeDasharray="4 3"/><text x="236" y="34" className="fill-rose-500 text-[10px]">balloon</text><text x="216" y="77" className="fill-slate-500 text-[10px]">flighted</text></svg>;
+    const highArc = current === "highShort" || current === "both" || current === "windBalloon";
+    return (
+      <RangeMapFrame label="High spin balloon trajectory map">
+        <Ground />
+        <Ball />
+        <TargetLine />
+        <TargetMarker />
+        {highArc ? <FlightArc d={`M ${RANGE_MAP.ballX} ${RANGE_MAP.ballY} C 152 68, 196 30, 230 66`} tone="bad" /> : null}
+        <FlightArc d={`M ${RANGE_MAP.ballX} ${RANGE_MAP.ballY} C 160 118, 194 88, 232 72`} dashed={highArc} />
+      </RangeMapFrame>
+    );
   }
+
   if (step.key === "dynamicLoft") {
-    const handX = current === "handsAhead" ? 186 : current === "handsBehind" ? 136 : 162;
-    return <svg viewBox="0 0 320 180" className="w-full"><line x1="50" y1="150" x2="270" y2="150" stroke="rgb(203 213 225)"/><circle cx="160" cy="142" r="6" fill="rgb(15 23 42)"/><line x1={handX} y1="120" x2="198" y2="92" stroke="rgb(15 23 42)" strokeWidth="5"/><circle cx={handX} cy="120" r="7" fill="rgb(239 68 68 / .7)"/><text x="108" y="54" className="fill-slate-500 text-[11px]">{label(current)}</text></svg>;
+    const shaftX = current === "handsBehind" ? 120 : current === "handsAhead" ? 145 : 132;
+    return (
+      <RangeMapFrame label="High spin balloon dynamic loft">
+        <Ground />
+        <Ball />
+        <line x1={shaftX} y1="126" x2="172" y2="92" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" />
+        <line x1="132" y1={RANGE_MAP.groundY} x2="132" y2="102" stroke={current === "handsBehind" ? "rgb(239 68 68)" : "rgb(16 185 129)"} strokeWidth="3" />
+      </RangeMapFrame>
+    );
   }
-  return <svg viewBox="0 0 320 180" className="w-full"><line x1="42" y1="150" x2="278" y2="150" stroke="rgb(203 213 225)"/><circle cx="160" cy="142" r="6" fill="rgb(15 23 42)"/><path d="M 160 142 C 172 120, 190 96, 208 64" fill="none" stroke="rgb(15 23 42)" strokeWidth="4"/><text x="42" y="28" className="fill-slate-500 text-[11px]">{label(current)}</text></svg>;
+
+  if (step.key === "contactPattern") {
+    const strikeY = current === "lowFace" ? 116 : 98;
+    return (
+      <RangeMapFrame label="High spin balloon contact height">
+        <rect x="102" y="50" width="110" height="88" rx="10" fill="white" stroke="rgb(148 163 184)" strokeWidth="2.5" />
+        <line x1="157" y1="54" x2="157" y2="134" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <line x1="106" y1="94" x2="208" y2="94" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <circle cx="157" cy="94" r="5" fill="rgb(15 23 42 / 0.35)" />
+        <circle cx="157" cy={strikeY} r="6" fill={current === "lowFace" ? "rgb(239 68 68 / 0.75)" : "rgb(15 23 42 / 0.75)"} />
+      </RangeMapFrame>
+    );
+  }
+
+  return (
+    <RangeMapFrame label="High spin balloon setup and flight">
+      <Ground />
+      <Ball x={current === "ballForward" || current === "both" ? 144 : RANGE_MAP.ballX} />
+      <FlightArc d={`M ${RANGE_MAP.ballX} ${RANGE_MAP.ballY} C 162 122, 192 96, 226 70`} />
+    </RangeMapFrame>
+  );
 }
+
+const label = (value: string) => value.replace(/([a-z])([A-Z])/g, "$1 $2");
 
 export function HighSpinBalloonWizard({ value, onChange, onComplete }: Props) {
   const [currentStep, setCurrentStep] = useState(0);

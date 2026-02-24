@@ -1,6 +1,7 @@
 import { RangeTest2ABVisual } from "@/components/clinic/RangeTest2ABVisual";
 import { RangeTest3GateVisual } from "@/components/clinic/RangeTest3GateVisual";
 import { ClinicRangeTest } from "@/lib/clinic/types";
+import { Ball, FlightArc, Ground, RangeMapFrame, RANGE_MAP, TargetLine, TargetMarker } from "@/components/clinic/visuals/RangeMapPrimitives";
 
 function VisualByTest({ testId }: { testId: string }) {
   if (testId === "face-gate") {
@@ -48,97 +49,110 @@ function VisualByTest({ testId }: { testId: string }) {
 
   if (testId === "thin-low-point-line") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Thin irons low-point line drill">
-        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="168" y1="132" x2="168" y2="40" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
-        <line x1="152" y1="132" x2="152" y2="70" stroke="rgb(239 68 68)" strokeWidth="3" />
-        <circle cx="168" cy="124" r="6" fill="rgb(15 23 42)" />
-        <path d="M 120 130 C 144 116, 162 98, 186 66" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" />
-        <text x="156" y="66" className="fill-rose-500 text-[10px]">low-point line</text>
-      </svg>
+      <RangeMapFrame label="Thin irons low-point line drill">
+        <Ground />
+        <Ball x={144} />
+        <TargetLine />
+        <TargetMarker />
+        <line x1="136" y1={RANGE_MAP.groundY} x2="136" y2="102" stroke="rgb(239 68 68)" strokeWidth="3" />
+        <line x1="152" y1={RANGE_MAP.groundY} x2="152" y2="104" stroke="rgb(16 185 129)" strokeWidth="3" />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "thin-posture-constraint") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Posture and hip-depth reference">
-        <line x1="42" y1="132" x2="278" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <rect x="124" y="56" width="70" height="72" fill="rgb(241 245 249)" stroke="rgb(148 163 184)" />
-        <circle cx="158" cy="72" r="11" fill="rgb(15 23 42)" />
-        <line x1="202" y1="48" x2="202" y2="132" stroke="rgb(239 68 68)" strokeDasharray="4 3" strokeWidth="2" />
-        <circle cx="166" cy="124" r="6" fill="rgb(15 23 42)" />
-        <text x="208" y="46" className="fill-rose-500 text-[10px]">hip depth ref</text>
-      </svg>
+      <RangeMapFrame label="Thin irons posture constraint">
+        <Ground />
+        <Ball />
+        <line x1="202" y1="50" x2="202" y2={RANGE_MAP.groundY} stroke="rgb(148 163 184)" strokeWidth="2" strokeDasharray="4 4" />
+        <line x1="190" y1="78" x2="178" y2="126" stroke="rgb(239 68 68)" strokeWidth="4" strokeLinecap="round" />
+        <line x1="172" y1="76" x2="164" y2="126" stroke="rgb(16 185 129)" strokeWidth="4" strokeLinecap="round" />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "thin-ball-handle-ab") {
-    return <RangeTest2ABVisual />;
+    return (
+      <RangeMapFrame label="Thin irons ball position A/B">
+        <Ground />
+        <Ball x={144} />
+        <Ball x={132} />
+        <line x1="140" y1={RANGE_MAP.groundY} x2="140" y2="106" stroke="rgb(239 68 68)" strokeWidth="2.5" />
+        <line x1="152" y1={RANGE_MAP.groundY} x2="152" y2="106" stroke="rgb(16 185 129)" strokeWidth="2.5" />
+      </RangeMapFrame>
+    );
   }
 
   if (testId === "fat-towel-behind") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Towel behind ball drill">
-        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <rect x="132" y="120" width="24" height="8" rx="3" fill="rgb(239 68 68 / 0.65)" />
-        <circle cx="170" cy="124" r="6" fill="rgb(15 23 42)" />
-        <path d="M 120 128 C 142 110, 160 94, 188 62" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" />
-        <text x="124" y="116" className="fill-rose-500 text-[10px]">towel</text>
-      </svg>
+      <RangeMapFrame label="Fat irons towel drill">
+        <Ground />
+        <rect x="110" y="132" width="22" height="9" rx="2" fill="rgb(239 68 68 / 0.7)" />
+        <Ball />
+        <FlightArc d={`M 108 ${RANGE_MAP.ballY + 2} C 146 130, 186 102, 226 70`} tone="good" />
+        <FlightArc d={`M 108 ${RANGE_MAP.ballY + 2} C 114 138, 124 136, 140 124`} tone="bad" dashed />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "fat-pressure-forward") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Pressure forward checkpoint">
-        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <rect x="110" y="74" width="120" height="14" rx="7" fill="rgb(226 232 240)" />
-        <circle cx="192" cy="81" r="10" fill="rgb(15 23 42)" />
-        <circle cx="166" cy="124" r="6" fill="rgb(15 23 42)" />
-        <text x="112" y="64" className="fill-slate-500 text-[10px]">trail</text><text x="214" y="64" className="fill-slate-500 text-[10px]">lead</text>
-      </svg>
+      <RangeMapFrame label="Fat irons pressure-forward drill">
+        <Ground />
+        <Ball />
+        <line x1="124" y1="86" x2="200" y2="86" stroke="rgb(226 232 240)" strokeWidth="10" strokeLinecap="round" />
+        <circle cx="190" cy="86" r="8" fill="rgb(15 23 42)" />
+        <line x1="154" y1={RANGE_MAP.groundY} x2="154" y2="104" stroke="rgb(16 185 129)" strokeWidth="3" />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "fat-divot-start") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Divot-start checkpoint">
-        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="152" y1="132" x2="152" y2="74" stroke="rgb(148 163 184)" strokeDasharray="4 3" strokeWidth="2" />
-        <circle cx="168" cy="124" r="6" fill="rgb(15 23 42)" />
-        <rect x="178" y="126" width="28" height="5" fill="rgb(16 185 129 / 0.7)" />
-        <text x="178" y="118" className="fill-emerald-600 text-[10px]">divot starts after ball</text>
-      </svg>
+      <RangeMapFrame label="Fat irons divot start checkpoint">
+        <Ground />
+        <Ball />
+        <rect x="114" y="138" width="20" height="4" rx="2" fill="rgb(239 68 68 / 0.75)" />
+        <rect x="148" y="138" width="24" height="4" rx="2" fill="rgb(16 185 129 / 0.75)" />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "balloon-flighted-punch") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Balloon vs flighted arc">
-        <line x1="38" y1="132" x2="282" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
-        <line x1="164" y1="26" x2="164" y2="132" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
-        <circle cx="154" cy="124" r="6" fill="rgb(15 23 42)" />
-        <path d="M 154 124 C 166 74, 196 44, 240 34" fill="none" stroke="rgb(239 68 68)" strokeWidth="4" />
-        <path d="M 154 124 C 172 106, 198 88, 228 72" fill="none" stroke="rgb(15 23 42)" strokeWidth="3" strokeDasharray="4 3" />
-      </svg>
+      <RangeMapFrame label="High spin balloon flighted punch">
+        <Ground />
+        <Ball />
+        <TargetLine />
+        <TargetMarker />
+        <FlightArc d={`M ${RANGE_MAP.ballX} ${RANGE_MAP.ballY} C 156 68, 198 30, 234 64`} tone="bad" />
+        <FlightArc d={`M ${RANGE_MAP.ballX} ${RANGE_MAP.ballY} C 160 116, 194 88, 232 72`} dashed />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "balloon-contact-check") {
     return (
-      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Balloon contact check">
-        <rect x="96" y="34" width="128" height="92" rx="16" fill="white" stroke="rgb(148 163 184)" strokeWidth="3" />
-        <line x1="160" y1="38" x2="160" y2="122" stroke="rgb(226 232 240)" strokeWidth="2" />
-        <line x1="100" y1="80" x2="220" y2="80" stroke="rgb(226 232 240)" strokeWidth="2" />
-        <circle cx="160" cy="82" r="6" fill="rgb(15 23 42 / 0.55)" />
-        <circle cx="160" cy="98" r="6" fill="rgb(239 68 68 / 0.6)" />
-        <text x="108" y="142" className="fill-slate-500 text-[10px]">center-face cluster lowers spin volatility</text>
-      </svg>
+      <RangeMapFrame label="High spin balloon contact check">
+        <rect x="102" y="50" width="110" height="88" rx="10" fill="white" stroke="rgb(148 163 184)" strokeWidth="2.5" />
+        <line x1="157" y1="54" x2="157" y2="134" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <line x1="106" y1="94" x2="208" y2="94" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <circle cx="157" cy="112" r="6" fill="rgb(239 68 68 / 0.75)" />
+        <circle cx="157" cy="94" r="5" fill="rgb(15 23 42 / 0.45)" />
+      </RangeMapFrame>
     );
   }
 
   if (testId === "balloon-handle-forward-ab") {
-    return <RangeTest2ABVisual />;
+    return (
+      <RangeMapFrame label="High spin balloon handle-forward rehearsal">
+        <Ground />
+        <Ball />
+        <line x1="120" y1="126" x2="170" y2="90" stroke="rgb(239 68 68 / 0.9)" strokeWidth="3.5" strokeLinecap="round" />
+        <line x1="144" y1="126" x2="176" y2="94" stroke="rgb(16 185 129 / 0.9)" strokeWidth="3.5" strokeLinecap="round" />
+      </RangeMapFrame>
+    );
   }
 
 
