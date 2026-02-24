@@ -7,12 +7,7 @@ import { ClinicHero } from "@/components/clinic/ClinicHero";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
 import { loadClinicSessions } from "@/lib/clinic/storage";
 import { ClinicSession } from "@/lib/clinic/types";
-
-const problems = [
-  { title: "Driver Slice", href: "/clinic/driver-slice", enabled: true },
-  { title: "Pull Hook", href: "/clinic/pull-hook", enabled: true },
-  { title: "Thin Irons", href: "#", enabled: false },
-];
+import { CLINIC_MODULES } from "@/lib/clinic/modules";
 
 export default function ClinicPage() {
   const [sessions] = useState<ClinicSession[]>(() => loadClinicSessions());
@@ -27,16 +22,14 @@ export default function ClinicPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
           <h2 className="text-xl font-semibold tracking-tight">Common problems</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {problems.map((problem) => (
-              <article key={problem.title} className="rounded-xl border border-slate-200 p-4">
+            {CLINIC_MODULES.map((problem) => (
+              <article key={problem.id} className="rounded-xl border border-slate-200 p-4">
                 <p className="font-medium text-slate-900">{problem.title}</p>
-                <p className="mt-1 text-sm text-slate-600">
-                  {problem.enabled ? "Deterministic diagnosis + range plan." : "Coming soon"}
-                </p>
-                {problem.enabled ? (
+                <p className="mt-1 text-sm text-slate-600">{problem.status === "active" ? problem.cardDescription : "Coming soon"}</p>
+                {problem.status === "active" ? (
                   <TrackLink
                     className="mt-3 inline-block text-sm font-medium text-slate-900 underline"
-                    href={problem.href}
+                    href={problem.route}
                     eventParams={{ module: "doveclinic", placement: "clinic_problem_card", version: "v1" }}
                   >
                     Start now

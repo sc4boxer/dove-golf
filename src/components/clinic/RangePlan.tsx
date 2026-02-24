@@ -46,6 +46,101 @@ function VisualByTest({ testId }: { testId: string }) {
   }
 
 
+  if (testId === "thin-low-point-line") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Thin irons low-point line drill">
+        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="168" y1="132" x2="168" y2="40" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
+        <line x1="152" y1="132" x2="152" y2="70" stroke="rgb(239 68 68)" strokeWidth="3" />
+        <circle cx="168" cy="124" r="6" fill="rgb(15 23 42)" />
+        <path d="M 120 130 C 144 116, 162 98, 186 66" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" />
+        <text x="156" y="66" className="fill-rose-500 text-[10px]">low-point line</text>
+      </svg>
+    );
+  }
+
+  if (testId === "thin-posture-constraint") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Posture and hip-depth reference">
+        <line x1="42" y1="132" x2="278" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <rect x="124" y="56" width="70" height="72" fill="rgb(241 245 249)" stroke="rgb(148 163 184)" />
+        <circle cx="158" cy="72" r="11" fill="rgb(15 23 42)" />
+        <line x1="202" y1="48" x2="202" y2="132" stroke="rgb(239 68 68)" strokeDasharray="4 3" strokeWidth="2" />
+        <circle cx="166" cy="124" r="6" fill="rgb(15 23 42)" />
+        <text x="208" y="46" className="fill-rose-500 text-[10px]">hip depth ref</text>
+      </svg>
+    );
+  }
+
+  if (testId === "thin-ball-handle-ab") {
+    return <RangeTest2ABVisual />;
+  }
+
+  if (testId === "fat-towel-behind") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Towel behind ball drill">
+        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <rect x="132" y="120" width="24" height="8" rx="3" fill="rgb(239 68 68 / 0.65)" />
+        <circle cx="170" cy="124" r="6" fill="rgb(15 23 42)" />
+        <path d="M 120 128 C 142 110, 160 94, 188 62" fill="none" stroke="rgb(15 23 42)" strokeWidth="4" />
+        <text x="124" y="116" className="fill-rose-500 text-[10px]">towel</text>
+      </svg>
+    );
+  }
+
+  if (testId === "fat-pressure-forward") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Pressure forward checkpoint">
+        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <rect x="110" y="74" width="120" height="14" rx="7" fill="rgb(226 232 240)" />
+        <circle cx="192" cy="81" r="10" fill="rgb(15 23 42)" />
+        <circle cx="166" cy="124" r="6" fill="rgb(15 23 42)" />
+        <text x="112" y="64" className="fill-slate-500 text-[10px]">trail</text><text x="214" y="64" className="fill-slate-500 text-[10px]">lead</text>
+      </svg>
+    );
+  }
+
+  if (testId === "fat-divot-start") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Divot-start checkpoint">
+        <line x1="40" y1="132" x2="280" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="152" y1="132" x2="152" y2="74" stroke="rgb(148 163 184)" strokeDasharray="4 3" strokeWidth="2" />
+        <circle cx="168" cy="124" r="6" fill="rgb(15 23 42)" />
+        <rect x="178" y="126" width="28" height="5" fill="rgb(16 185 129 / 0.7)" />
+        <text x="178" y="118" className="fill-emerald-600 text-[10px]">divot starts after ball</text>
+      </svg>
+    );
+  }
+
+  if (testId === "balloon-flighted-punch") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Balloon vs flighted arc">
+        <line x1="38" y1="132" x2="282" y2="132" stroke="rgb(203 213 225)" strokeWidth="2" />
+        <line x1="164" y1="26" x2="164" y2="132" stroke="rgb(148 163 184)" strokeDasharray="5 4" strokeWidth="2" />
+        <circle cx="154" cy="124" r="6" fill="rgb(15 23 42)" />
+        <path d="M 154 124 C 166 74, 196 44, 240 34" fill="none" stroke="rgb(239 68 68)" strokeWidth="4" />
+        <path d="M 154 124 C 172 106, 198 88, 228 72" fill="none" stroke="rgb(15 23 42)" strokeWidth="3" strokeDasharray="4 3" />
+      </svg>
+    );
+  }
+
+  if (testId === "balloon-contact-check") {
+    return (
+      <svg viewBox="0 0 320 160" className="h-auto w-full" role="img" aria-label="Balloon contact check">
+        <rect x="96" y="34" width="128" height="92" rx="16" fill="white" stroke="rgb(148 163 184)" strokeWidth="3" />
+        <line x1="160" y1="38" x2="160" y2="122" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <line x1="100" y1="80" x2="220" y2="80" stroke="rgb(226 232 240)" strokeWidth="2" />
+        <circle cx="160" cy="82" r="6" fill="rgb(15 23 42 / 0.55)" />
+        <circle cx="160" cy="98" r="6" fill="rgb(239 68 68 / 0.6)" />
+        <text x="108" y="142" className="fill-slate-500 text-[10px]">center-face cluster lowers spin volatility</text>
+      </svg>
+    );
+  }
+
+  if (testId === "balloon-handle-forward-ab") {
+    return <RangeTest2ABVisual />;
+  }
+
 
   if (testId === "start-line-gate") {
     return <RangeTest3GateVisual />;

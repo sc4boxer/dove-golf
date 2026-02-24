@@ -2,26 +2,29 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { DriverSliceMiniChart, PullHookMiniChart } from "@/components/clinic/ClinicHeroMiniCharts";
+import {
+  DriverSliceMiniChart,
+  FatIronsMiniChart,
+  HighSpinBalloonMiniChart,
+  PullHookMiniChart,
+  ThinIronsMiniChart,
+} from "@/components/clinic/ClinicHeroMiniCharts";
+import { CLINIC_MODULES } from "@/lib/clinic/modules";
 
-const heroTiles = [
-  {
-    key: "driver-slice",
-    cta: "Start: Driver Slice",
-    href: "/clinic/driver-slice",
-    Visual: DriverSliceMiniChart,
-  },
-  {
-    key: "pull-hook",
-    cta: "Start: Pull Hook",
-    href: "/clinic/pull-hook",
-    Visual: PullHookMiniChart,
-  },
-] as const;
+const chartByGraphic = {
+  driverSlice: DriverSliceMiniChart,
+  pullHook: PullHookMiniChart,
+  thinIrons: ThinIronsMiniChart,
+  fatIrons: FatIronsMiniChart,
+  highSpinBalloon: HighSpinBalloonMiniChart,
+} as const;
+
+const heroTiles = CLINIC_MODULES.filter((module) => module.status === "active");
 
 export function ClinicHero() {
   const [activeTile, setActiveTile] = useState(0);
   const tile = heroTiles[activeTile] ?? heroTiles[0];
+  const Visual = chartByGraphic[tile.heroGraphic];
 
   return (
     <section className="relative rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
@@ -55,16 +58,16 @@ export function ClinicHero() {
           <p className="mt-3 max-w-2xl text-slate-600">Debug your miss in minutes. Deterministic, physics-aware guidance.</p>
           <p className="mt-4 text-sm text-slate-500">Not a swing coach. A structured diagnostic you can test at the range.</p>
           <Link
-            href={tile.href}
+            href={tile.route}
             className="mt-6 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
           >
-            {tile.cta}
+            {tile.heroCta}
           </Link>
 
           <div className="mt-4 flex gap-2">
             {heroTiles.map((entry, idx) => (
               <span
-                key={entry.key}
+                key={entry.id}
                 className={`h-1.5 w-6 rounded-full ${idx === activeTile ? "bg-slate-900" : "bg-slate-200"}`}
                 aria-hidden="true"
               />
@@ -73,7 +76,7 @@ export function ClinicHero() {
         </div>
 
         <div className="mx-auto w-full max-w-[230px] rounded-2xl border border-slate-200 bg-slate-50 p-2">
-          <tile.Visual />
+          <Visual />
         </div>
       </div>
     </section>
