@@ -1,4 +1,4 @@
-export type ClinicProblemKey = "driverSlice" | "pullHook" | "thinIrons" | "fatIrons" | "highSpinBalloon";
+export type ClinicProblemKey = "driverSlice" | "pullHook";
 
 export type LikelihoodBucketKey =
   | "faceControl"
@@ -25,32 +25,8 @@ export type PullHookTempo = "smooth" | "neutral" | "quick" | "unsure";
 export type PullHookDriverVsIrons = "driverWorse" | "ironsWorse" | "sameBoth" | "unsure";
 export type PullHookAlignment = "square" | "aimLeft" | "ballBack" | "closedStance" | "unsure";
 
-export type ThinIronsInputs = {
-  lowPointControl: "clean" | "mixed" | "noDivot" | "unsure";
-  earlyExtension: "rare" | "sometimes" | "often" | "unsure";
-  liftIntent: "never" | "sometimes" | "often" | "unsure";
-  setupWindow: "neutral" | "ballForward" | "handleHigh" | "both" | "unsure";
-  strikeClue: "lowFace" | "toe" | "heel" | "mixed" | "unsure";
-  missPattern: "oneWay" | "twoWay" | "unsure";
-};
 
-export type FatIronsInputs = {
-  fatSeverity: "slight" | "chunk" | "mixed" | "unsure";
-  turfCondition: "normal" | "soft" | "mixed" | "unsure";
-  ballPosition: "neutral" | "forward" | "veryForward" | "unsure";
-  pressurePattern: "forward" | "staysBack" | "mixed" | "unsure";
-  loftPattern: "compress" | "flip" | "mixed" | "unsure";
-  tempoTransition: "smooth" | "neutral" | "quick" | "unsure";
-};
 
-export type HighSpinBalloonInputs = {
-  flightPattern: "highShort" | "windBalloon" | "both" | "unsure";
-  divotClue: "shallow" | "steep" | "mixed" | "unsure";
-  dynamicLoft: "handsAhead" | "neutral" | "handsBehind" | "unsure";
-  contactPattern: "center" | "lowFace" | "mixed" | "unsure";
-  setupWindow: "neutral" | "ballForward" | "handleBack" | "both" | "unsure";
-  tempoTransition: "smooth" | "neutral" | "quick" | "unsure";
-};
 
 export type DriverSliceInputs = {
   startLine: DriverSliceStartLine;
@@ -103,7 +79,7 @@ export type ClinicSession = {
   id: string;
   createdAt: string;
   problemKey: ClinicProblemKey;
-  inputs: DriverSliceInputs | PullHookInputs | ThinIronsInputs | FatIronsInputs | HighSpinBalloonInputs;
+  inputs: DriverSliceInputs | PullHookInputs;
   result: ClinicResult;
   feedbackOutcome?: ClinicFeedbackOutcome;
 };

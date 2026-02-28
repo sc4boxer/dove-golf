@@ -2,21 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  DriverSliceMiniChart,
-  FatIronsMiniChart,
-  HighSpinBalloonMiniChart,
-  PullHookMiniChart,
-  ThinIronsMiniChart,
-} from "@/components/clinic/ClinicHeroMiniCharts";
+import { DriverSliceMiniChart, PullHookMiniChart } from "@/components/clinic/ClinicHeroMiniCharts";
 import { CLINIC_MODULES } from "@/lib/clinic/modules";
 
 const chartByGraphic = {
   driverSlice: DriverSliceMiniChart,
   pullHook: PullHookMiniChart,
-  thinIrons: ThinIronsMiniChart,
-  fatIrons: FatIronsMiniChart,
-  highSpinBalloon: HighSpinBalloonMiniChart,
 } as const;
 
 const heroTiles = CLINIC_MODULES.filter((module) => module.status === "active");
