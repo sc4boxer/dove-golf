@@ -100,9 +100,9 @@ function StepPreview({ step, selected }: StepPreviewProps) {
 
   if (step.key === "strikeLocation") {
     const position = {
-      heel: { x: 105, y: 90 },
+      heel: { x: 215, y: 90 },
       center: { x: 160, y: 90 },
-      toe: { x: 215, y: 90 },
+      toe: { x: 105, y: 90 },
       high: { x: 160, y: 58 },
       low: { x: 160, y: 122 },
       unsure: { x: 160, y: 90 },
@@ -114,8 +114,9 @@ function StepPreview({ step, selected }: StepPreviewProps) {
         <line x1="160" y1="45" x2="160" y2="135" stroke="rgb(226 232 240)" strokeWidth="2" />
         <line x1="87" y1="90" x2="233" y2="90" stroke="rgb(226 232 240)" strokeWidth="2" />
         <line x1="248" y1="24" x2="232" y2="54" stroke="rgb(71 85 105)" strokeWidth="5" strokeLinecap="round" />
-        <text x="93" y="152" className="fill-slate-500 text-[11px]">Heel</text>
-        <text x="211" y="152" className="fill-slate-500 text-[11px]">Toe</text>
+        <text x="244" y="20" className="fill-slate-600 text-[10px] font-semibold">Shaft</text>
+        <text x="93" y="152" className="fill-slate-500 text-[11px]">Toe</text>
+        <text x="211" y="152" className="fill-slate-500 text-[11px]">Heel (shaft side)</text>
         <circle cx={position.x} cy={position.y} r="13" fill="rgb(15 23 42 / 0.15)" />
         <circle cx={position.x} cy={position.y} r="7" fill="rgb(15 23 42)" />
       </svg>
