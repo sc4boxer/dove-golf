@@ -6,6 +6,8 @@ import EmailCaptureCard from "./EmailCaptureCard";
 import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
 import { track } from "@/lib/analytics/ga";
+import { getShotPathGeometry, xFromSide } from "@/lib/visual/shotShapeSemantics";
+import { STRIKE_SEMANTICS } from "@/lib/visual/strikeSemantics";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1900;
@@ -2762,28 +2764,16 @@ function BallFlightViz({
   const groundY = h * 0.78;
   const targetX = w * 0.5;
 
-  // True start point is offset from the target line
-  const startOffset =
-    start === "left" ? -w * 0.18 : start === "right" ? w * 0.18 : 0;
-
-  const sx = targetX + startOffset;
-  const sy = groundY;
-
-  // End point ALWAYS on target line (your requirement)
-  const ex = targetX;
-  const ey = h * 0.20;
-
-  // In SVG coordinates, negative X bends left and positive X bends right.
-  const sign = curve === "draw" ? -1 : curve === "fade" ? 1 : 0;
-
-  const bend = sign * w * 0.22;
-  const midX = (sx + ex) / 2;
-
-  const c1x = sx + bend * 0.35;
-  const c1y = h * 0.62;
-
-  const c2x = midX + bend;
-  const c2y = h * 0.28;
+  const semanticsShape = curve === "unsure" ? "straight" : curve;
+  const geometry = getShotPathGeometry({ width: w, height: h, shape: semanticsShape, startSide: start === "unsure" ? undefined : start });
+  const sx = geometry.startX;
+  const sy = geometry.startY;
+  const ex = geometry.endX;
+  const ey = geometry.endY;
+  const c1x = geometry.c1x;
+  const c1y = geometry.c1y;
+  const c2x = geometry.c2x;
+  const c2y = geometry.c2y;
 
   const path = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
 
@@ -2861,9 +2851,10 @@ function FaceStrikeViz({
   const shaftY2 = shaftY1 - 26;
 
   const y = faceY + faceH * 0.55;
-  const heelX = faceX + faceW * 0.25;
   const centerX = faceX + faceW * 0.50;
-  const toeX = faceX + faceW * 0.75;
+  const laneOffset = faceW * 0.25;
+  const heelX = xFromSide(STRIKE_SEMANTICS.heel.renderingAnchor, centerX, laneOffset);
+  const toeX = xFromSide(STRIKE_SEMANTICS.toe.renderingAnchor, centerX, laneOffset);
 
   const normalized = strike === "all_over" ? "mixed" : strike;
 
@@ -2926,10 +2917,10 @@ function FaceStrikeViz({
       {normalized === "unsure" && <circle cx={centerX} cy={y} r={5} fill="rgb(203 213 225)" />}
 
       <text x={faceX} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
-        heel
+        {STRIKE_SEMANTICS.heel.label.toLowerCase()}
       </text>
       <text x={faceX + faceW - 22} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
-        toe
+        {STRIKE_SEMANTICS.toe.label.toLowerCase()}
       </text>
       <text x={hoselX - 2} y={faceY - 6} fontSize="10" fill="rgb(100 116 139)">
         shaft

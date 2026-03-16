@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { track } from "@/lib/analytics/ga";
+import { getShotPathGeometry } from "@/lib/visual/shotShapeSemantics";
+import { STRIKE_SEMANTICS } from "@/lib/visual/strikeSemantics";
 import { DriverSliceInputs } from "@/lib/clinic/types";
 
 type WizardProps = {
@@ -85,43 +87,45 @@ function StepPreview({ step, selected }: StepPreviewProps) {
   }
 
   if (step.key === "curveSeverity") {
-    const targetX = 72;
-    const profiles = {
-      none: { c1x: 80, c1y: 126, c2x: 78, c2y: 84, endX: 76, endY: 40 },
-      slight: { c1x: 88, c1y: 128, c2x: 102, c2y: 86, endX: 114, endY: 44 },
-      moderate: { c1x: 92, c1y: 132, c2x: 124, c2y: 92, endX: 142, endY: 52 },
-      severe: { c1x: 96, c1y: 136, c2x: 144, c2y: 96, endX: 176, endY: 62 },
-      unsure: { c1x: 88, c1y: 128, c2x: 102, c2y: 86, endX: 114, endY: 44 },
+    const targetX = 160;
+    const shapeBySeverity = {
+      none: "straight",
+      slight: "fade",
+      moderate: "slice",
+      severe: "slice",
+      unsure: "fade",
     } as const;
-    const shape = profiles[current as keyof typeof profiles] ?? profiles.unsure;
+    const geometry = getShotPathGeometry({ width: 320, height: 180, shape: shapeBySeverity[current as keyof typeof shapeBySeverity] ?? "fade" });
 
     return (
       <svg viewBox="0 0 320 180" className="h-auto w-full" role="img" aria-label="Curve severity preview">
         <line x1="40" y1="160" x2="280" y2="160" stroke="rgb(203 213 225)" strokeWidth="2" />
         <line x1={targetX} y1="24" x2={targetX} y2="160" stroke="rgb(203 213 225)" strokeDasharray="5 5" strokeWidth="2" />
         <circle cx={targetX} cy="22" r="8" fill="rgb(234 179 8)" />
-        <text x="84" y="26" className="fill-slate-500 text-[10px]">Target line</text>
+        <text x="172" y="26" className="fill-slate-500 text-[10px]">Target line</text>
         <path
-          d={`M 72 155 C ${shape.c1x} ${shape.c1y}, ${shape.c2x} ${shape.c2y}, ${shape.endX} ${shape.endY}`}
+          d={`M ${geometry.startX} ${geometry.startY} C ${geometry.c1x} ${geometry.c1y}, ${geometry.c2x} ${geometry.c2y}, ${geometry.endX} ${geometry.endY}`}
           fill="none"
           stroke="rgb(15 23 42)"
           strokeWidth="5"
           strokeLinecap="round"
           className="[stroke-dasharray:320] [stroke-dashoffset:320] animate-[dash_0.7s_ease-out_forwards]"
         />
-        <circle cx={shape.endX} cy={shape.endY} r="6" fill="rgb(15 23 42)" />
+        <circle cx={geometry.endX} cy={geometry.endY} r="6" fill="rgb(15 23 42)" />
       </svg>
     );
   }
 
   if (step.key === "strikeLocation") {
+    const centerX = 160;
+    const laneOffset = 55;
     const position = {
-      heel: { x: 105, y: 90 },
-      center: { x: 160, y: 90 },
-      toe: { x: 215, y: 90 },
-      high: { x: 160, y: 58 },
-      low: { x: 160, y: 122 },
-      unsure: { x: 160, y: 90 },
+      heel: { x: centerX + laneOffset, y: 90 },
+      center: { x: centerX, y: 90 },
+      toe: { x: centerX - laneOffset, y: 90 },
+      high: { x: centerX, y: 58 },
+      low: { x: centerX, y: 122 },
+      unsure: { x: centerX, y: 90 },
     }[current as DriverSliceInputs["strikeLocation"]];
 
     return (
@@ -131,8 +135,8 @@ function StepPreview({ step, selected }: StepPreviewProps) {
         <line x1="87" y1="90" x2="233" y2="90" stroke="rgb(226 232 240)" strokeWidth="2" />
         <line x1="248" y1="24" x2="232" y2="54" stroke="rgb(71 85 105)" strokeWidth="5" strokeLinecap="round" />
         <text x="244" y="20" className="fill-slate-600 text-[10px] font-semibold">Shaft</text>
-        <text x="93" y="152" className="fill-slate-500 text-[11px]">Heel</text>
-        <text x="211" y="152" className="fill-slate-500 text-[11px]">Toe (shaft side)</text>
+        <text x="93" y="152" className="fill-slate-500 text-[11px]">{STRIKE_SEMANTICS.toe.label}</text>
+        <text x="211" y="152" className="fill-slate-500 text-[11px]">{STRIKE_SEMANTICS.heel.label} (shaft side)</text>
         <circle cx={position.x} cy={position.y} r="13" fill="rgb(15 23 42 / 0.15)" />
         <circle cx={position.x} cy={position.y} r="7" fill="rgb(15 23 42)" />
       </svg>
