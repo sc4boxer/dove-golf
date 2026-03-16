@@ -2773,8 +2773,8 @@ function BallFlightViz({
   const ex = targetX;
   const ey = h * 0.20;
 
-  // Curve direction: draw = left, fade = right
-  const sign = curve === "draw" ? 1 : curve === "fade" ? -1 : 0;
+  // In SVG coordinates, negative X bends left and positive X bends right.
+  const sign = curve === "draw" ? -1 : curve === "fade" ? 1 : 0;
 
   const bend = sign * w * 0.22;
   const midX = (sx + ex) / 2;
