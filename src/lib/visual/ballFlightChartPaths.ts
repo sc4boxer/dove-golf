@@ -1,10 +1,12 @@
+import { getShotShapeGeometry, SHOT_SHAPE_MAP, type CanonicalShotShape } from "./shotShapeModel";
+
 export const CANONICAL_BALL_FLIGHT_SHAPES = [
   "pull-draw",
   "pull",
   "pull-fade",
-  "straight-draw",
+  "draw",
   "straight",
-  "straight-fade",
+  "fade",
   "push-draw",
   "push",
   "push-fade",
@@ -25,94 +27,31 @@ export type BallFlightChartPathNormalized = {
 
 export type BallFlightChartPathGeometry = BallFlightChartPathNormalized;
 
-const SHARED_START = {
-  startX: 0.5,
-  startY: 0.9,
-} as const;
+const CHART_NORMALIZED_WIDTH = 100;
+const CHART_NORMALIZED_HEIGHT = 100;
 
-export const BALL_FLIGHT_CHART_PATHS_NORMALIZED: Record<BallFlightChartShape, BallFlightChartPathNormalized> = {
-  "pull-draw": {
-    ...SHARED_START,
-    cp1X: 0.44,
-    cp1Y: 0.7,
-    cp2X: 0.16,
-    cp2Y: 0.42,
-    endX: 0.2,
-    endY: 0.12,
-  },
-  pull: {
-    ...SHARED_START,
-    cp1X: 0.43,
-    cp1Y: 0.69,
-    cp2X: 0.33,
-    cp2Y: 0.41,
-    endX: 0.28,
-    endY: 0.12,
-  },
-  "pull-fade": {
-    ...SHARED_START,
-    cp1X: 0.42,
-    cp1Y: 0.7,
-    cp2X: 0.44,
-    cp2Y: 0.42,
-    endX: 0.36,
-    endY: 0.12,
-  },
-  "straight-draw": {
-    ...SHARED_START,
-    cp1X: 0.5,
-    cp1Y: 0.7,
-    cp2X: 0.38,
-    cp2Y: 0.42,
-    endX: 0.44,
-    endY: 0.12,
-  },
-  straight: {
-    ...SHARED_START,
-    cp1X: 0.5,
-    cp1Y: 0.69,
-    cp2X: 0.5,
-    cp2Y: 0.4,
-    endX: 0.5,
-    endY: 0.12,
-  },
-  "straight-fade": {
-    ...SHARED_START,
-    cp1X: 0.5,
-    cp1Y: 0.7,
-    cp2X: 0.62,
-    cp2Y: 0.42,
-    endX: 0.56,
-    endY: 0.12,
-  },
-  "push-draw": {
-    ...SHARED_START,
-    cp1X: 0.6,
-    cp1Y: 0.7,
-    cp2X: 0.56,
-    cp2Y: 0.42,
-    endX: 0.64,
-    endY: 0.12,
-  },
-  push: {
-    ...SHARED_START,
-    cp1X: 0.57,
-    cp1Y: 0.69,
-    cp2X: 0.67,
-    cp2Y: 0.41,
-    endX: 0.72,
-    endY: 0.12,
-  },
-  "push-fade": {
-    ...SHARED_START,
-    cp1X: 0.58,
-    cp1Y: 0.7,
-    cp2X: 0.84,
-    cp2Y: 0.42,
-    endX: 0.8,
-    endY: 0.12,
-  },
-};
+function toNormalized(geometry: ReturnType<typeof getShotShapeGeometry>): BallFlightChartPathNormalized {
+  return {
+    startX: geometry.startX / CHART_NORMALIZED_WIDTH,
+    startY: geometry.startY / CHART_NORMALIZED_HEIGHT,
+    cp1X: geometry.c1x / CHART_NORMALIZED_WIDTH,
+    cp1Y: geometry.c1y / CHART_NORMALIZED_HEIGHT,
+    cp2X: geometry.c2x / CHART_NORMALIZED_WIDTH,
+    cp2Y: geometry.c2y / CHART_NORMALIZED_HEIGHT,
+    endX: geometry.endX / CHART_NORMALIZED_WIDTH,
+    endY: geometry.endY / CHART_NORMALIZED_HEIGHT,
+  };
+}
+
+export const BALL_FLIGHT_CHART_PATHS_NORMALIZED: Record<BallFlightChartShape, BallFlightChartPathNormalized> =
+  CANONICAL_BALL_FLIGHT_SHAPES.reduce((acc, shape) => {
+    acc[shape] = toNormalized(getShotShapeGeometry({
+      shape: shape as CanonicalShotShape,
+      width: CHART_NORMALIZED_WIDTH,
+      height: CHART_NORMALIZED_HEIGHT,
+    }));
+    return acc;
+  }, {} as Record<BallFlightChartShape, BallFlightChartPathNormalized>);
 
 export function getBallFlightChartPathGeometry({
   shape,
@@ -123,20 +62,22 @@ export function getBallFlightChartPathGeometry({
   width: number;
   height: number;
 }): BallFlightChartPathGeometry {
-  const normalized = BALL_FLIGHT_CHART_PATHS_NORMALIZED[shape];
+  const geometry = getShotShapeGeometry({ shape, width, height });
 
   return {
-    startX: normalized.startX * width,
-    startY: normalized.startY * height,
-    cp1X: normalized.cp1X * width,
-    cp1Y: normalized.cp1Y * height,
-    cp2X: normalized.cp2X * width,
-    cp2Y: normalized.cp2Y * height,
-    endX: normalized.endX * width,
-    endY: normalized.endY * height,
+    startX: geometry.startX,
+    startY: geometry.startY,
+    cp1X: geometry.c1x,
+    cp1Y: geometry.c1y,
+    cp2X: geometry.c2x,
+    cp2Y: geometry.c2y,
+    endX: geometry.endX,
+    endY: geometry.endY,
   };
 }
 
 export function toBallFlightChartSvgPath(path: BallFlightChartPathGeometry): string {
   return `M ${path.startX} ${path.startY} C ${path.cp1X} ${path.cp1Y}, ${path.cp2X} ${path.cp2Y}, ${path.endX} ${path.endY}`;
 }
+
+export const BALL_FLIGHT_CHART_SHAPE_MAP = SHOT_SHAPE_MAP;

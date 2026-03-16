@@ -1,9 +1,4 @@
-import {
-  getShotPathGeometry,
-  SHOT_SHAPE_PATHS_NORMALIZED,
-  type FlightSide,
-  type ShotShape,
-} from "./shotShapePaths";
+import { getShotPathGeometry, SHOT_SHAPE_PATHS_NORMALIZED, type FlightSide, type ShotShape } from "./shotShapePaths";
 
 export type Handedness = "right-handed";
 export type CurveDirection = "left" | "none" | "right";
@@ -18,20 +13,17 @@ export type BallFlightSemantic = {
   endBias: FlightSide;
 };
 
-function sideFromX(x: number): FlightSide {
-  if (x < 0.47) return "left";
-  if (x > 0.53) return "right";
+function sideFromAxis(axis: number): FlightSide {
+  if (axis < -8) return "left";
+  if (axis > 8) return "right";
   return "center";
 }
 
-function curveDirectionFromControlPoints(shape: ShotShape): CurveDirection {
-  if (shape === "straight" || shape === "pull" || shape === "push") return "none";
-  return SHOT_SHAPE_PATHS_NORMALIZED[shape].c2x < 0.5 ? "left" : "right";
-}
-
-function curveAmount(shape: ShotShape): number {
-  const normalized = SHOT_SHAPE_PATHS_NORMALIZED[shape];
-  return Math.abs(normalized.c2x - 0.5);
+function curveDirectionFromDef(shape: ShotShape): CurveDirection {
+  const curve = SHOT_SHAPE_PATHS_NORMALIZED[shape].curve;
+  if (curve < 0) return "left";
+  if (curve > 0) return "right";
+  return "none";
 }
 
 function labelForShape(shape: ShotShape): string {
@@ -43,15 +35,15 @@ function labelForShape(shape: ShotShape): string {
 export const BALL_FLIGHT_SEMANTICS: Record<ShotShape, BallFlightSemantic> = (Object.keys(
   SHOT_SHAPE_PATHS_NORMALIZED,
 ) as ShotShape[]).reduce((acc, shape) => {
-  const normalized = SHOT_SHAPE_PATHS_NORMALIZED[shape];
+  const def = SHOT_SHAPE_PATHS_NORMALIZED[shape];
   acc[shape] = {
     shape,
     label: labelForShape(shape),
     handedness: "right-handed",
-    startSide: "center",
-    curveDirection: curveDirectionFromControlPoints(shape),
-    curveAmount: curveAmount(shape),
-    endBias: sideFromX(normalized.endX),
+    startSide: sideFromAxis(def.startX),
+    curveDirection: curveDirectionFromDef(shape),
+    curveAmount: Math.abs(def.curve),
+    endBias: sideFromAxis(def.endX),
   };
   return acc;
 }, {} as Record<ShotShape, BallFlightSemantic>);

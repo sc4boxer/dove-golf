@@ -15,8 +15,8 @@ function toChartShape(startLine: StartLine, curve: Curve): BallFlightChartShape 
     return "push";
   }
 
-  if (curve === "draw") return "straight-draw";
-  if (curve === "fade") return "straight-fade";
+  if (curve === "draw") return "draw";
+  if (curve === "fade") return "fade";
   return "straight";
 }
 
