@@ -1,456 +1,105 @@
-import Link from "next/link";
-import { TrackLink } from "@/components/analytics/TrackLink";
 import type { Metadata } from "next";
+import { TrackLink } from "@/components/analytics/TrackLink";
 
 export const metadata: Metadata = {
-  title: "Online Golf Club Fitting & Equipment Diagnostic",
+  title: "DoveGolf | Visual Golf Diagnosis with DoveClinic",
   description:
-    "Get data-driven golf club fitting recommendations and miss-debug guidance with Dove Golf's deterministic diagnostic modules.",
+    "DoveClinic helps golfers diagnose visible ball-flight symptoms, test likely causes, and build straighter, more solid shots.",
   alternates: {
     canonical: "/",
   },
 };
 
 export default function HomePage() {
-  const baseUrl = "https://dovegolf.fit";
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Dove Golf",
-    url: baseUrl,
-    description:
-      "A deterministic, physics-aware golf fitting engine that converts real swing tendencies into testable equipment decisions.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${baseUrl}/diagnostic`,
-      "query-input": "required name=golf fitting",
-    },
-  };
-
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-      />
-      <div className="mx-auto max-w-3xl px-6 py-24">
-        {/* Micro-brand line */}
-        <div className="flex items-center gap-3 text-xs font-medium tracking-wide text-slate-500">
-          <span className="text-slate-600">Dove Golf, Inc.</span>
-          <span className="h-px w-6 bg-slate-300" />
-          <span>Golf Equipment Diagnostic</span>
-        </div>
-
-        {/* Headline block (independent positioning) */}
-        <h1 className="mt-6 max-w-3xl text-4xl sm:text-5xl font-semibold tracking-tight leading-[1.08] sm:leading-tight">
-          Independent fitting.
-          <span className="block">
-            Driven by <span className="font-bold">physics.</span>
-          </span>
-        </h1>
-
-        <p className="mt-6 max-w-2xl text-lg text-slate-600 leading-relaxed">
-          A system for fitting gear, diagnosing misses, and understanding ball flight.
-          <span className="block mt-2">No hype. No brand bias. Just logic.</span>
-        </p>
-
-        <div className="mt-6 flex flex-wrap gap-2 text-sm">
-          <TrackLink href="/diagnostic" eventParams={{ module: "dovefit", placement: "home_top_nav", version: "v1" }} className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
-            Fitting
-          </TrackLink>
-          <TrackLink href="/clinic" eventParams={{ module: "doveclinic", placement: "home_top_nav", version: "v1" }} className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
-            Clinic
-          </TrackLink>
-          <span className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-500">
-            Lab <span className="text-slate-400">(Coming soon)</span>
-          </span>
-        </div>
-
-        {/* Viz moved below copy, above buttons (mobile-friendly) */}
-        <div className="mt-10">
-          <TrajectoryHeroViz />
-        </div>
-
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
-          <TrackLink
-            href="/learn/ball-flight"
-            eventParams={{ module: "learn", placement: "home_feature_card", version: "v1" }}
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
-          >
-            <p className="text-base font-semibold">Ball Flight Library</p>
-            <p className="mt-1 text-sm text-slate-600">Curve → probable causes → what to test.</p>
-          </TrackLink>
-
-          <Link
-            href="/method"
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
-          >
-            <p className="text-base font-semibold">How it works</p>
-            <p className="mt-1 text-sm text-slate-600">See the fitting logic before you run the workflow.</p>
-          </Link>
-
-          <Link
-            href="/about"
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
-          >
-            <p className="text-base font-semibold">About DoveGolf™</p>
-            <p className="mt-1 text-sm text-slate-600">Engineered cause and effect.</p>
-          </Link>
-        </div>
-
-        <div className="mt-14 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
-          For golfers who care about cause and effect — and want clear, data-driven reasoning behind
-          equipment decisions.
-        </div>
-
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-sm font-medium tracking-wide text-slate-500">DoveFit™ — Equipment diagnosis</p>
-          <p className="mt-2 text-slate-700">Fit your gear to your swing in ~2 minutes.</p>
-          <p className="mt-2 text-slate-700">
-            A deterministic, physics-aware fitting engine that turns misses into testable equipment levers.
+      <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
+        <section className="rounded-3xl border border-slate-200 bg-slate-50 p-8 sm:p-12">
+          <p className="text-xs font-medium tracking-wide text-slate-500">DoveGolf platform</p>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Fix your miss with clarity.</h1>
+          <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
+            DoveClinic helps you understand your ball flight, test likely causes, and work toward straighter,
+            more solid shots.
           </p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li>• Shaft weight + flex range recommendations</li>
-            <li>• Launch/spin + strike-driven head guidance</li>
-            <li>• Clear next-step checklist for testing</li>
-          </ul>
-          <TrackLink
-            href="/diagnostic"
-            eventParams={{ module: "dovefit", placement: "home_module_card", version: "v1" }}
-            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Open DoveFit™
-          </TrackLink>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <TrackLink
+              href="/clinic/ball-curves-right"
+              eventParams={{ module: "doveclinic", placement: "home_hero_primary", version: "v2" }}
+              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              Start DoveClinic
+            </TrackLink>
+            <TrackLink
+              href="/diagnostic"
+              eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "v2" }}
+              className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-800 hover:bg-slate-100"
+            >
+              Explore DoveFit
+            </TrackLink>
+            <span className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
+              DoveLab coming soon
+            </span>
+          </div>
         </section>
 
-        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-sm font-medium tracking-wide text-slate-500">DoveClinic™ — Debug your miss</p>
-          <p className="mt-2 text-slate-700">
-            DoveFit™ handles equipment decisions. DoveClinic™ helps diagnose ball-flight misses and iterate at the range.
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li>• Likelihood split across root causes</li>
-            <li>• Range tests with if/then outcomes</li>
-            <li>• Save sessions and iterate</li>
-          </ul>
-          <TrackLink
-            href="/clinic"
-            eventParams={{ module: "doveclinic", placement: "home_module_card", version: "v1" }}
-            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Open DoveClinic™
-          </TrackLink>
-        </section>
+        <section className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
+          <article className="rounded-3xl border border-slate-900 bg-slate-900 p-6 text-white">
+            <p className="text-sm font-medium tracking-wide text-slate-300">Primary product</p>
+            <h2 className="mt-2 text-2xl font-semibold">DoveClinic</h2>
+            <p className="mt-2 text-sm text-slate-200">
+              Diagnose ball-flight and strike symptoms with visual cause-and-effect logic.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-200">
+              <li>• Match the shot shape you actually see</li>
+              <li>• Get ranked likely causes</li>
+              <li>• Test one change at a time</li>
+            </ul>
+            <TrackLink
+              href="/clinic"
+              eventParams={{ module: "doveclinic", placement: "home_product_card", version: "v2" }}
+              className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-900"
+            >
+              Open DoveClinic
+            </TrackLink>
+          </article>
 
-        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
-          <p className="text-sm font-medium tracking-wide text-slate-500">DoveLab™ — Understand the variables</p>
-          <p className="mt-2 text-slate-700">
-            DoveLab™ explores how shaft weight, flex, launch, and strike location interact with ball flight. Designed for golfers who want deeper technical insight.
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-slate-600">
-            <li>• Component interaction modeling</li>
-            <li>• Physics-based visual references</li>
-            <li>• Experimental range scenarios</li>
-          </ul>
-          <TrackLink
-            href="/lab"
-            eventParams={{ module: "dovelab", placement: "home_module_card", version: "v1" }}
-            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Open DoveLab™
-          </TrackLink>
-        </section>
+          <article className="rounded-3xl border border-slate-200 bg-white p-6">
+            <p className="text-sm font-medium tracking-wide text-slate-500">Equipment engine</p>
+            <h2 className="mt-2 text-2xl font-semibold">DoveFit</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Evaluate whether your equipment is helping or hurting your delivery.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li>• Shaft weight and flex guidance</li>
+              <li>• Launch and bias recommendation logic</li>
+              <li>• Practical testing checklist</li>
+            </ul>
+            <TrackLink
+              href="/diagnostic"
+              eventParams={{ module: "dovefit", placement: "home_product_card", version: "v2" }}
+              className="mt-5 inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800"
+            >
+              Open DoveFit
+            </TrackLink>
+          </article>
 
+          <article className="rounded-3xl border border-slate-200 bg-white p-6">
+            <p className="text-sm font-medium tracking-wide text-slate-500">Advanced layer</p>
+            <h2 className="mt-2 text-2xl font-semibold">DoveLab</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Future deeper analysis tools for testing, learning, and advanced diagnostics.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li>• Variable interaction studies</li>
+              <li>• Expanded visual analytics</li>
+              <li>• Experimental modules</li>
+            </ul>
+            <div className="mt-5 inline-flex rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-500">
+              Coming soon
+            </div>
+          </article>
+        </section>
       </div>
     </main>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/*  TrajectoryHeroViz
-    Requirements implemented:
-    ✅ NOTHING visible at start except axes after they animate in
-    ✅ Sequence: axes -> dotted high/short -> dotted low/mid -> solid optimal
-    ✅ Dotted paths "grow" smoothly (not flashing), slower than solid
-    ✅ Solid peak is BETWEEN the two dotted peaks
-    ✅ No target marker/line
-/* -------------------------------------------------------------------------- */
-
-function TrajectoryHeroViz() {
-  const w = 760;
-  const h = 240;
-
-  const padL = 56;
-  const padR = 34;
-  const padT = 26;
-  const padB = 44;
-
-  const originX = padL;
-  const originY = h - padB;
-
-  const xMax = w - padR;
-  const yMax = padT;
-
-  // Helper: quadratic curve from origin to end, with a peak height.
-  // Returns SVG path string using a smooth cubic that "peaks" at cpY.
-  function curvePath(endX: number, endY: number, peakY: number) {
-    // Two control points:
-    // - early lift control (near origin)
-    // - late descent control (near end)
-    const c1x = originX + (endX - originX) * 0.28;
-    const c2x = originX + (endX - originX) * 0.72;
-    const c1y = peakY;
-    const c2y = peakY;
-
-    return `M ${originX} ${originY} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${endX} ${endY}`;
-  }
-
-  // Three trajectories:
-  // 1) High height, low distance (dotted)
-  // 2) Low height, mid distance (dotted)
-  // 3) Optimal (solid): peak BETWEEN the two dotted peaks + furthest distance
-  const highShortEndX = originX + (xMax - originX) * 0.52;
-  const highShortPeakY = yMax + (originY - yMax) * 0.10; // highest
-  const highShortEndY = originY - 2;
-
-  const lowMidEndX = originX + (xMax - originX) * 0.76;
-  const lowMidPeakY = yMax + (originY - yMax) * 0.58; // lowest
-  const lowMidEndY = originY - 2;
-
-  const optimalEndX = originX + (xMax - originX) * 0.92;
-  const optimalPeakY = yMax + (originY - yMax) * 0.36; // between high + low
-  const optimalEndY = originY - 2;
-
-  const pathHigh = curvePath(highShortEndX, highShortEndY, highShortPeakY);
-  const pathLow = curvePath(lowMidEndX, lowMidEndY, lowMidPeakY);
-  const pathOptimal = curvePath(optimalEndX, optimalEndY, optimalPeakY);
-
-  // Animation timings (slowed down a lot)
-  const tAxes = 0.9; // axes draw
-  const tGap = 0.2;
-
-  const tHighStart = tAxes + tGap; // 1.1s
-  const tHighDur = 3.0; // dotted grows slowly
-
-  const tLowStart = tHighStart + tHighDur + 0.35;
-  const tLowDur = 3.0;
-
-  const tOptStart = tLowStart + tLowDur + 0.35;
-  const tOptDur = 2.2; // solid slightly faster than dotted, but still smooth
-
-  // We’ll use stroke-dasharray/offset for growth.
-  // Use a big enough length; SVG will clamp fine.
-  const dashLen = 1200;
-
-  return (
-    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <svg
-        width="100%"
-        height="100%"
-        viewBox={`0 0 ${w} ${h}`}
-        className="w-full"
-        aria-label="Trajectory visualization"
-      >
-        {/* subtle grid (appears with axes via opacity) */}
-        <g opacity="0">
-          <animate attributeName="opacity" from="0" to="1" dur={`${tAxes}s`} fill="freeze" />
-          {Array.from({ length: 6 }).map((_, i) => {
-            const x = originX + ((xMax - originX) * (i + 1)) / 7;
-            return (
-              <line
-                key={`gx-${i}`}
-                x1={x}
-                y1={yMax}
-                x2={x}
-                y2={originY}
-                stroke="rgb(241 245 249)"
-                strokeWidth="2"
-              />
-            );
-          })}
-          {Array.from({ length: 3 }).map((_, i) => {
-            const y = yMax + ((originY - yMax) * (i + 1)) / 4;
-            return (
-              <line
-                key={`gy-${i}`}
-                x1={originX}
-                y1={y}
-                x2={xMax}
-                y2={y}
-                stroke="rgb(241 245 249)"
-                strokeWidth="2"
-              />
-            );
-          })}
-        </g>
-
-        {/* AXES: start with NOTHING else visible */}
-        <g>
-          {/* y-axis */}
-          <line
-            x1={originX}
-            y1={originY}
-            x2={originX}
-            y2={yMax}
-            stroke="rgb(203 213 225)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={dashLen}
-            strokeDashoffset={dashLen}
-          >
-            <animate
-              attributeName="stroke-dashoffset"
-              from={dashLen}
-              to="0"
-              dur={`${tAxes}s`}
-              fill="freeze"
-            />
-          </line>
-
-          {/* x-axis */}
-          <line
-            x1={originX}
-            y1={originY}
-            x2={xMax}
-            y2={originY}
-            stroke="rgb(203 213 225)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray={dashLen}
-            strokeDashoffset={dashLen}
-          >
-            <animate
-              attributeName="stroke-dashoffset"
-              from={dashLen}
-              to="0"
-              dur={`${tAxes}s`}
-              fill="freeze"
-            />
-          </line>
-
-          {/* axis labels appear AFTER axes */}
-          <text x={originX + 6} y={yMax + 14} fontSize="12" fill="rgb(100 116 139)" opacity="0">
-            Height
-            <animate
-              attributeName="opacity"
-              from="0"
-              to="1"
-              begin={`${tAxes}s`}
-              dur="0.35s"
-              fill="freeze"
-            />
-          </text>
-
-          <text
-            x={xMax - 62}
-            y={originY + 26}
-            fontSize="12"
-            fill="rgb(100 116 139)"
-            opacity="0"
-          >
-            Distance
-            <animate
-              attributeName="opacity"
-              from="0"
-              to="1"
-              begin={`${tAxes}s`}
-              dur="0.35s"
-              fill="freeze"
-            />
-          </text>
-        </g>
-
-        {/* 1) HIGH / SHORT dotted path (appears only when it starts growing) */}
-        <path
-          d={pathHigh}
-          fill="none"
-          stroke="rgb(148 163 184)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="14 26"
-          opacity="0"
-          strokeDashoffset={dashLen}
-        >
-          <animate
-            attributeName="opacity"
-            from="0"
-            to="1"
-            begin={`${tHighStart}s`}
-            dur="0.01s"
-            fill="freeze"
-          />
-          <animate
-            attributeName="stroke-dashoffset"
-            from={dashLen}
-            to="0"
-            begin={`${tHighStart}s`}
-            dur={`${tHighDur}s`}
-            fill="freeze"
-          />
-        </path>
-
-        {/* 2) LOW / MID dotted path */}
-        <path
-          d={pathLow}
-          fill="none"
-          stroke="rgb(148 163 184)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeDasharray="14 26"
-          opacity="0"
-          strokeDashoffset={dashLen}
-        >
-          <animate
-            attributeName="opacity"
-            from="0"
-            to="1"
-            begin={`${tLowStart}s`}
-            dur="0.01s"
-            fill="freeze"
-          />
-          <animate
-            attributeName="stroke-dashoffset"
-            from={dashLen}
-            to="0"
-            begin={`${tLowStart}s`}
-            dur={`${tLowDur}s`}
-            fill="freeze"
-          />
-        </path>
-
-        {/* 3) OPTIMAL solid path */}
-        <path
-          d={pathOptimal}
-          fill="none"
-          stroke="rgb(15 23 42)"
-          strokeWidth="4"
-          strokeLinecap="round"
-          opacity="0"
-          strokeDasharray={dashLen}
-          strokeDashoffset={dashLen}
-        >
-          <animate
-            attributeName="opacity"
-            from="0"
-            to="1"
-            begin={`${tOptStart}s`}
-            dur="0.01s"
-            fill="freeze"
-          />
-          <animate
-            attributeName="stroke-dashoffset"
-            from={dashLen}
-            to="0"
-            begin={`${tOptStart}s`}
-            dur={`${tOptDur}s`}
-            fill="freeze"
-          />
-        </path>
-      </svg>
-
-      <div className="mt-3 text-xs text-slate-500">
-        Different swings → different trajectories. Fit optimizes your “default.”
-      </div>
-    </div>
   );
 }
