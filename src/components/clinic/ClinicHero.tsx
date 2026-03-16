@@ -3,11 +3,13 @@
 import Link from "next/link";
 import { useState } from "react";
 import { DriverSliceMiniChart, PullHookMiniChart } from "@/components/clinic/ClinicHeroMiniCharts";
+import { BallFlightViz } from "@/components/clinic/BallFlightViz";
 import { CLINIC_MODULES } from "@/lib/clinic/modules";
 
 const chartByGraphic = {
   driverSlice: DriverSliceMiniChart,
   pullHook: PullHookMiniChart,
+  ballCurvesRight: () => <BallFlightViz startDirection="center" curveDirection="right" curveSeverity="medium" className="h-40 w-full" />,
 } as const;
 
 const heroTiles = CLINIC_MODULES.filter((module) => module.status === "active");
