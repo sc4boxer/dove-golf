@@ -1,7 +1,17 @@
-export type VisualHandedness = "right-handed";
-export type ShotShapeName = "draw" | "fade" | "hook" | "slice" | "straight";
-export type StartSide = "left" | "center" | "right";
-export type CurveDirection = "left" | "none" | "right";
+import {
+  BALL_FLIGHT_SEMANTICS,
+  curveDirectionSign,
+  getBallFlightPathGeometry,
+  sideToNormalizedX,
+  type CurveDirection,
+  type FlightSide,
+  type Handedness,
+  type ShotShape,
+} from "@/lib/visual/ballFlightSemantics";
+
+export type VisualHandedness = Handedness;
+export type ShotShapeName = ShotShape;
+export type StartSide = FlightSide;
 
 export type ShotShapeSemantics = {
   name: ShotShapeName;
@@ -13,88 +23,52 @@ export type ShotShapeSemantics = {
 };
 
 export const SHOT_SHAPE_SEMANTICS: Record<ShotShapeName, ShotShapeSemantics> = {
+  straight: {
+    name: "straight",
+    startSide: BALL_FLIGHT_SEMANTICS.straight.startSide,
+    curveDirection: BALL_FLIGHT_SEMANTICS.straight.curveDirection,
+    curvatureStrength: BALL_FLIGHT_SEMANTICS.straight.curveAmount,
+    endSide: BALL_FLIGHT_SEMANTICS.straight.endBias,
+    handednessAssumption: "right-handed",
+  },
   draw: {
     name: "draw",
-    startSide: "right",
-    curveDirection: "left",
-    curvatureStrength: 0.45,
-    endSide: "center",
+    startSide: BALL_FLIGHT_SEMANTICS.draw.startSide,
+    curveDirection: BALL_FLIGHT_SEMANTICS.draw.curveDirection,
+    curvatureStrength: BALL_FLIGHT_SEMANTICS.draw.curveAmount,
+    endSide: BALL_FLIGHT_SEMANTICS.draw.endBias,
     handednessAssumption: "right-handed",
   },
   fade: {
     name: "fade",
-    startSide: "left",
-    curveDirection: "right",
-    curvatureStrength: 0.45,
-    endSide: "center",
+    startSide: BALL_FLIGHT_SEMANTICS.fade.startSide,
+    curveDirection: BALL_FLIGHT_SEMANTICS.fade.curveDirection,
+    curvatureStrength: BALL_FLIGHT_SEMANTICS.fade.curveAmount,
+    endSide: BALL_FLIGHT_SEMANTICS.fade.endBias,
     handednessAssumption: "right-handed",
   },
   hook: {
     name: "hook",
-    startSide: "right",
-    curveDirection: "left",
-    curvatureStrength: 0.9,
-    endSide: "left",
+    startSide: BALL_FLIGHT_SEMANTICS.hook.startSide,
+    curveDirection: BALL_FLIGHT_SEMANTICS.hook.curveDirection,
+    curvatureStrength: BALL_FLIGHT_SEMANTICS.hook.curveAmount,
+    endSide: BALL_FLIGHT_SEMANTICS.hook.endBias,
     handednessAssumption: "right-handed",
   },
   slice: {
     name: "slice",
-    startSide: "left",
-    curveDirection: "right",
-    curvatureStrength: 0.9,
-    endSide: "right",
-    handednessAssumption: "right-handed",
-  },
-  straight: {
-    name: "straight",
-    startSide: "center",
-    curveDirection: "none",
-    curvatureStrength: 0,
-    endSide: "center",
+    startSide: BALL_FLIGHT_SEMANTICS.slice.startSide,
+    curveDirection: BALL_FLIGHT_SEMANTICS.slice.curveDirection,
+    curvatureStrength: BALL_FLIGHT_SEMANTICS.slice.curveAmount,
+    endSide: BALL_FLIGHT_SEMANTICS.slice.endBias,
     handednessAssumption: "right-handed",
   },
 };
 
-export function curveDirectionSign(curveDirection: CurveDirection): -1 | 0 | 1 {
-  if (curveDirection === "left") return -1;
-  if (curveDirection === "right") return 1;
-  return 0;
-}
+export { curveDirectionSign };
 
 export function xFromSide(side: StartSide, centerX: number, laneOffset: number): number {
-  if (side === "left") return centerX - laneOffset;
-  if (side === "right") return centerX + laneOffset;
-  return centerX;
+  return centerX + sideToNormalizedX(side) * laneOffset;
 }
 
-export function getShotPathGeometry({
-  width,
-  height,
-  shape,
-  startSide,
-}: {
-  width: number;
-  height: number;
-  shape: ShotShapeName;
-  startSide?: StartSide;
-}) {
-  const semantics = SHOT_SHAPE_SEMANTICS[shape];
-  const centerX = width * 0.5;
-  const laneOffset = width * 0.18;
-  const resolvedStartSide = startSide ?? semantics.startSide;
-  const startX = xFromSide(resolvedStartSide, centerX, laneOffset);
-  const endX = xFromSide(semantics.endSide, centerX, laneOffset);
-  const sign = curveDirectionSign(semantics.curveDirection);
-  const bend = sign * width * 0.22 * semantics.curvatureStrength;
-
-  return {
-    startX,
-    startY: height * 0.78,
-    endX,
-    endY: height * 0.2,
-    c1x: startX + bend * 0.35,
-    c1y: height * 0.62,
-    c2x: (startX + endX) / 2 + bend,
-    c2y: height * 0.28,
-  };
-}
+export const getShotPathGeometry = getBallFlightPathGeometry;
