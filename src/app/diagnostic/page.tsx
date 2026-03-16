@@ -6,8 +6,8 @@ import EmailCaptureCard from "./EmailCaptureCard";
 import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
 import { track } from "@/lib/analytics/ga";
-import { getShotPathGeometry, xFromSide } from "@/lib/visual/shotShapeSemantics";
-import { STRIKE_SEMANTICS } from "@/lib/visual/strikeSemantics";
+import { BallFlightDiagram } from "@/components/visuals/BallFlightDiagram";
+import { StrikeFaceDiagram } from "@/components/visuals/StrikeFaceDiagram";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1900;
@@ -1413,7 +1413,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightViz start={a.driverStartLine} curve={"straight"} />
+                      <BallFlightDiagram shape="straight" startSide={a.driverStartLine === "unsure" ? undefined : a.driverStartLine} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1432,7 +1432,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightViz start={a.driverStartLine} curve={a.driverCurve} />
+                      <BallFlightDiagram shape={a.driverCurve === "unsure" ? "straight" : a.driverCurve} startSide={a.driverStartLine === "unsure" ? undefined : a.driverStartLine} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1451,7 +1451,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <FaceStrikeViz strike={a.driverStrike === "all_over" ? "mixed" : a.driverStrike} />
+                      <StrikeFaceDiagram strike={a.driverStrike === "all_over" ? "mixed" : a.driverStrike} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1563,7 +1563,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightViz start={a.ironStartLine} curve={"straight"} />
+                      <BallFlightDiagram shape="straight" startSide={a.ironStartLine === "unsure" ? undefined : a.ironStartLine} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1582,7 +1582,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightViz start={a.ironStartLine} curve={a.ironCurve} />
+                      <BallFlightDiagram shape={a.ironCurve === "unsure" ? "straight" : a.ironCurve} startSide={a.ironStartLine === "unsure" ? undefined : a.ironStartLine} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1635,7 +1635,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <FaceStrikeViz strike={a.ironFaceStrike} />
+                      <StrikeFaceDiagram strike={a.ironFaceStrike} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -2088,7 +2088,7 @@ function ResultsView({
                   {modelStart} / {modelCurve}
                 </span>
               </div>
-              <BallFlightViz start={modelStart} curve={modelCurve} compact={false} />
+              <BallFlightDiagram shape={modelCurve === "unsure" ? "straight" : modelCurve} startSide={modelStart === "unsure" ? undefined : modelStart} compact={false} />
             </div>
           </Card>
         )}
@@ -2129,7 +2129,7 @@ function ResultsView({
                 <div className="text-sm font-semibold text-slate-900">Face strike</div>
                 <div className="mt-1 text-xs text-slate-500">{a.ironFaceStrike}</div>
                 <div className="mt-3">
-                  <FaceStrikeViz strike={a.ironFaceStrike} />
+                  <StrikeFaceDiagram strike={a.ironFaceStrike} />
                 </div>
               </div>
             </div>
@@ -2484,7 +2484,7 @@ function EquipmentAlignmentShareCard({
       <text x="88" y="432" fontSize="20" fontWeight="600" fill="#0f172a">Impact visuals</text>
       <rect x="88" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
       <svg x="96" y="456" width="270" height="92" viewBox="0 0 520 160">
-        <BallFlightViz start={modelStart} curve={modelCurve} compact={false} staticRender />
+        <BallFlightDiagram shape={modelCurve === "unsure" ? "straight" : modelCurve} startSide={modelStart === "unsure" ? undefined : modelStart} compact={false} staticRender />
       </svg>
       <rect x="397" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
       <svg x="410" y="454" width="260" height="94" viewBox="0 0 260 120">
@@ -2492,7 +2492,7 @@ function EquipmentAlignmentShareCard({
       </svg>
       <rect x="706" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
       <svg x="719" y="454" width="260" height="94" viewBox="0 0 260 120">
-        <FaceStrikeViz strike={a.ironFaceStrike} />
+        <StrikeFaceDiagram strike={a.ironFaceStrike} />
       </svg>
 
       <rect x="64" y={recommendationCardY} width="952" height={recommendationCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
@@ -2738,196 +2738,6 @@ function MiniVizCard({ children }: { children: React.ReactNode }) {
 }
 
 /* ---------------- MICRO-VISUALS (SVG) ---------------- */
-
-/**
- * BallFlightViz (FIXED to your yellow-highlight spec):
- * ✅ Start point is LEFT/CENTER/RIGHT of target line (true start)
- * ✅ End point ALWAYS lands on target line (center)
- * ✅ Draw = curves LEFT toward target, Fade = curves RIGHT toward target
- * ✅ NO moving ball circle (removes the stray/yellow dot issue)
- * ✅ "start" label sits under the true start point
- */
-function BallFlightViz({
-  start,
-  curve,
-  compact = true,
-  staticRender = false,
-}: {
-  start: StartLine;
-  curve: Curve;
-  compact?: boolean;
-  staticRender?: boolean;
-}) {
-  const w = compact ? 260 : 520;
-  const h = compact ? 120 : 160;
-
-  const groundY = h * 0.78;
-  const targetX = w * 0.5;
-
-  const semanticsShape = curve === "unsure" ? "straight" : curve;
-  const geometry = getShotPathGeometry({ width: w, height: h, shape: semanticsShape, startSide: start === "unsure" ? undefined : start });
-  const sx = geometry.startX;
-  const sy = geometry.startY;
-  const ex = geometry.endX;
-  const ey = geometry.endY;
-  const c1x = geometry.c1x;
-  const c1y = geometry.c1y;
-  const c2x = geometry.c2x;
-  const c2y = geometry.c2y;
-
-  const path = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
-
-  const startLabelX = Math.max(w * 0.06, Math.min(sx - 14, w * 0.94));
-
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-      <line
-        x1={w * 0.1}
-        y1={groundY}
-        x2={w * 0.9}
-        y2={groundY}
-        stroke="rgb(226 232 240)"
-        strokeWidth="2"
-      />
-
-      <line
-        x1={targetX}
-        y1={groundY}
-        x2={targetX}
-        y2={h * 0.12}
-        stroke="rgb(203 213 225)"
-        strokeWidth="2"
-        strokeDasharray="6 6"
-      />
-
-      <path
-        d={path}
-        fill="none"
-        stroke="rgb(15 23 42)"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray={staticRender ? undefined : "900"}
-        strokeDashoffset={staticRender ? undefined : "900"}
-      >
-        {!staticRender && <animate attributeName="stroke-dashoffset" from="900" to="0" dur="0.9s" fill="freeze" />}
-      </path>
-
-      <text x={startLabelX} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
-        start
-      </text>
-      <text x={targetX + 10} y={h * 0.16} fontSize="10" fill="rgb(100 116 139)">
-        target
-      </text>
-    </svg>
-  );
-}
-
-/**
- * FaceStrikeViz:
- * - Heel/toe always show
- * - Shaft/hosel reference on RIGHT (toe side)
- */
-function FaceStrikeViz({
-  strike,
-}: {
-  strike: "heel" | "center" | "toe" | "mixed" | "unsure" | "all_over";
-}) {
-  const w = 260;
-  const h = 120;
-
-  const faceX = w * 0.22;
-  const faceY = h * 0.30;
-  const faceW = w * 0.56;
-  const faceH = h * 0.50;
-
-  const hoselX = faceX + faceW + 6;
-  const hoselY = faceY + faceH * 0.25;
-  const hoselW = 10;
-  const hoselH = faceH * 0.55;
-
-  const shaftX1 = hoselX + hoselW * 0.65;
-  const shaftY1 = hoselY + hoselH * 0.15;
-  const shaftX2 = shaftX1 + 22;
-  const shaftY2 = shaftY1 - 26;
-
-  const y = faceY + faceH * 0.55;
-  const centerX = faceX + faceW * 0.50;
-  const laneOffset = faceW * 0.25;
-  const heelX = xFromSide(STRIKE_SEMANTICS.heel.renderingAnchor, centerX, laneOffset);
-  const toeX = xFromSide(STRIKE_SEMANTICS.toe.renderingAnchor, centerX, laneOffset);
-
-  const normalized = strike === "all_over" ? "mixed" : strike;
-
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-      <rect
-        x={faceX}
-        y={faceY}
-        width={faceW}
-        height={faceH}
-        rx="18"
-        fill="rgb(248 250 252)"
-        stroke="rgb(226 232 240)"
-        strokeWidth="2"
-      />
-
-      {Array.from({ length: 6 }).map((_, i) => (
-        <line
-          key={i}
-          x1={faceX + faceW * 0.06}
-          x2={faceX + faceW * 0.94}
-          y1={faceY + faceH * (0.18 + i * 0.12)}
-          y2={faceY + faceH * (0.18 + i * 0.12)}
-          stroke="rgb(226 232 240)"
-          strokeWidth="2"
-        />
-      ))}
-
-      <rect
-        x={hoselX}
-        y={hoselY}
-        width={hoselW}
-        height={hoselH}
-        rx="6"
-        fill="rgb(241 245 249)"
-        stroke="rgb(226 232 240)"
-        strokeWidth="2"
-      />
-      <line
-        x1={shaftX1}
-        y1={shaftY1}
-        x2={shaftX2}
-        y2={shaftY2}
-        stroke="rgb(226 232 240)"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-
-      {normalized === "mixed" && (
-        <>
-          <circle cx={heelX} cy={y} r={4} fill="rgb(148 163 184)" />
-          <circle cx={centerX} cy={y} r={5} fill="rgb(100 116 139)" />
-          <circle cx={toeX} cy={y} r={4} fill="rgb(148 163 184)" />
-        </>
-      )}
-
-      {normalized === "center" && <circle cx={centerX} cy={y} r={7} fill="rgb(15 23 42)" />}
-      {normalized === "heel" && <circle cx={heelX} cy={y} r={6} fill="rgb(148 163 184)" />}
-      {normalized === "toe" && <circle cx={toeX} cy={y} r={6} fill="rgb(148 163 184)" />}
-      {normalized === "unsure" && <circle cx={centerX} cy={y} r={5} fill="rgb(203 213 225)" />}
-
-      <text x={faceX} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
-        {STRIKE_SEMANTICS.heel.label.toLowerCase()}
-      </text>
-      <text x={faceX + faceW - 22} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
-        {STRIKE_SEMANTICS.toe.label.toLowerCase()}
-      </text>
-      <text x={hoselX - 2} y={faceY - 6} fontSize="10" fill="rgb(100 116 139)">
-        shaft
-      </text>
-    </svg>
-  );
-}
 
 /**
  * LowPointViz:

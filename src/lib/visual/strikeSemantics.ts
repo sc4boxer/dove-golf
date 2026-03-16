@@ -1,4 +1,6 @@
-export type FaceStrikeName = "heel" | "center" | "toe";
+import { STRIKE_FACE_SEMANTICS, type StrikeLocation } from "@/lib/visual/strikeFaceSemantics";
+
+export type FaceStrikeName = StrikeLocation;
 
 export type StrikeSemantics = {
   name: FaceStrikeName;
@@ -11,25 +13,23 @@ export type StrikeSemantics = {
 export const STRIKE_SEMANTICS: Record<FaceStrikeName, StrikeSemantics> = {
   heel: {
     name: "heel",
-    horizontalPositionOnFace: -1,
-    label: "Heel",
-    renderingAnchor: "left",
-    rightHandedVisualOrientationNotes:
-      "For right-handed visuals with the hosel drawn on the right edge, heel contact sits nearest the hosel/golfer on the right side of the face graphic.",
+    horizontalPositionOnFace: STRIKE_FACE_SEMANTICS.heel.normalizedX,
+    label: STRIKE_FACE_SEMANTICS.heel.label,
+    renderingAnchor: "right",
+    rightHandedVisualOrientationNotes: "Heel is nearest the hosel/shaft side in this right-handed face orientation.",
   },
   center: {
     name: "center",
-    horizontalPositionOnFace: 0,
-    label: "Center",
+    horizontalPositionOnFace: STRIKE_FACE_SEMANTICS.center.normalizedX,
+    label: STRIKE_FACE_SEMANTICS.center.label,
     renderingAnchor: "center",
-    rightHandedVisualOrientationNotes: "Centered strike is drawn at the geometric middle of the face graphic.",
+    rightHandedVisualOrientationNotes: "Center is the geometric middle of the clubface.",
   },
   toe: {
     name: "toe",
-    horizontalPositionOnFace: 1,
-    label: "Toe",
-    renderingAnchor: "right",
-    rightHandedVisualOrientationNotes:
-      "For right-handed visuals with the hosel drawn on the right edge, toe contact sits farthest from the hosel/golfer on the left side of the face graphic.",
+    horizontalPositionOnFace: STRIKE_FACE_SEMANTICS.toe.normalizedX,
+    label: STRIKE_FACE_SEMANTICS.toe.label,
+    renderingAnchor: "left",
+    rightHandedVisualOrientationNotes: "Toe is farthest from the hosel/shaft side in this right-handed face orientation.",
   },
 };
