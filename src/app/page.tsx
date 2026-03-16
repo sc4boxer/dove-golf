@@ -1,6 +1,38 @@
+import Link from "next/link";
+import { TrackLink } from "@/components/analytics/TrackLink";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Online Golf Club Fitting & Equipment Diagnostic",
+  description:
+    "Get data-driven golf club fitting recommendations and miss-debug guidance with Dove Golf's deterministic diagnostic modules.",
+  alternates: {
+    canonical: "/",
+  },
+};
+
 export default function HomePage() {
+  const baseUrl = "https://dovegolf.fit";
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Dove Golf",
+    url: baseUrl,
+    description:
+      "A deterministic, physics-aware golf fitting engine that converts real swing tendencies into testable equipment decisions.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${baseUrl}/diagnostic`,
+      "query-input": "required name=golf fitting",
+    },
+  };
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <div className="mx-auto max-w-3xl px-6 py-24">
         {/* Micro-brand line */}
         <div className="flex items-center gap-3 text-xs font-medium tracking-wide text-slate-500">
@@ -18,43 +50,117 @@ export default function HomePage() {
         </h1>
 
         <p className="mt-6 max-w-2xl text-lg text-slate-600 leading-relaxed">
-          A deterministic diagnostic that fits your gear to how you actually swing.
+          A system for fitting gear, diagnosing misses, and understanding ball flight.
           <span className="block mt-2">No hype. No brand bias. Just logic.</span>
         </p>
+
+        <div className="mt-6 flex flex-wrap gap-2 text-sm">
+          <TrackLink href="/diagnostic" eventParams={{ module: "dovefit", placement: "home_top_nav", version: "v1" }} className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+            Fitting
+          </TrackLink>
+          <TrackLink href="/clinic" eventParams={{ module: "doveclinic", placement: "home_top_nav", version: "v1" }} className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-700 hover:bg-slate-50">
+            Clinic
+          </TrackLink>
+          <span className="rounded-full border border-slate-300 px-3 py-1.5 text-slate-500">
+            Lab <span className="text-slate-400">(Coming soon)</span>
+          </span>
+        </div>
 
         {/* Viz moved below copy, above buttons (mobile-friendly) */}
         <div className="mt-10">
           <TrajectoryHeroViz />
         </div>
 
-        {/* 3-button CTA row */}
-        <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-          <a
-            href="/diagnostic"
-            className="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-8 py-4 text-white font-medium shadow-sm hover:bg-slate-800 transition"
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          <TrackLink
+            href="/learn/ball-flight"
+            eventParams={{ module: "learn", placement: "home_feature_card", version: "v1" }}
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
-            Start Free Diagnostic
-          </a>
+            <p className="text-base font-semibold">Ball Flight Library</p>
+            <p className="mt-1 text-sm text-slate-600">Curve → probable causes → what to test.</p>
+          </TrackLink>
 
-          <a
+          <Link
             href="/method"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-8 py-4 font-medium text-slate-900 hover:bg-slate-50 transition"
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
-            How it works
-          </a>
+            <p className="text-base font-semibold">How it works</p>
+            <p className="mt-1 text-sm text-slate-600">See the fitting logic before you run the workflow.</p>
+          </Link>
 
-          <a
+          <Link
             href="/about"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-200 px-8 py-4 font-medium text-slate-900 hover:bg-slate-50 transition"
+            className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-slate-900 shadow-sm transition hover:border-slate-300"
           >
-            About Dove Golf
-          </a>
+            <p className="text-base font-semibold">About DoveGolf™</p>
+            <p className="mt-1 text-sm text-slate-600">Engineered cause and effect.</p>
+          </Link>
         </div>
 
         <div className="mt-14 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600">
           For golfers who care about cause and effect — and want clear, data-driven reasoning behind
           equipment decisions.
         </div>
+
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-medium tracking-wide text-slate-500">DoveFit™ — Equipment diagnosis</p>
+          <p className="mt-2 text-slate-700">Fit your gear to your swing in ~2 minutes.</p>
+          <p className="mt-2 text-slate-700">
+            A deterministic, physics-aware fitting engine that turns misses into testable equipment levers.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            <li>• Shaft weight + flex range recommendations</li>
+            <li>• Launch/spin + strike-driven head guidance</li>
+            <li>• Clear next-step checklist for testing</li>
+          </ul>
+          <TrackLink
+            href="/diagnostic"
+            eventParams={{ module: "dovefit", placement: "home_module_card", version: "v1" }}
+            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open DoveFit™
+          </TrackLink>
+        </section>
+
+        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-medium tracking-wide text-slate-500">DoveClinic™ — Debug your miss</p>
+          <p className="mt-2 text-slate-700">
+            DoveFit™ handles equipment decisions. DoveClinic™ helps diagnose ball-flight misses and iterate at the range.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            <li>• Likelihood split across root causes</li>
+            <li>• Range tests with if/then outcomes</li>
+            <li>• Save sessions and iterate</li>
+          </ul>
+          <TrackLink
+            href="/clinic"
+            eventParams={{ module: "doveclinic", placement: "home_module_card", version: "v1" }}
+            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open DoveClinic™
+          </TrackLink>
+        </section>
+
+        <section className="mt-4 rounded-2xl border border-slate-200 bg-white p-6">
+          <p className="text-sm font-medium tracking-wide text-slate-500">DoveLab™ — Understand the variables</p>
+          <p className="mt-2 text-slate-700">
+            DoveLab™ explores how shaft weight, flex, launch, and strike location interact with ball flight. Designed for golfers who want deeper technical insight.
+          </p>
+          <ul className="mt-4 space-y-2 text-sm text-slate-600">
+            <li>• Component interaction modeling</li>
+            <li>• Physics-based visual references</li>
+            <li>• Experimental range scenarios</li>
+          </ul>
+          <TrackLink
+            href="/lab"
+            eventParams={{ module: "dovelab", placement: "home_module_card", version: "v1" }}
+            className="mt-5 inline-flex rounded-xl border border-slate-900 bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open DoveLab™
+          </TrackLink>
+        </section>
+
       </div>
     </main>
   );

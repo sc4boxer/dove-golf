@@ -1,10 +1,15 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import EmailCaptureCard from "./EmailCaptureCard";
 
 import { recommendDriverWoods } from "@/lib/engine/driver";
 import { recommendIrons } from "@/lib/engine/irons";
+import { track } from "@/lib/analytics/ga";
+
+const SHARE_CARD_WIDTH = 1080;
+const SHARE_CARD_HEIGHT = 1900;
+const SHARE_CARD_PADDING = 64;
 
 /* ---------------- TYPES ---------------- */
 
@@ -194,6 +199,139 @@ function buildSteps(focus: FitFocus): Step[] {
 
 function handicapLabel(b: Answers["handicapBand"]) {
   return ["0–5", "6–12", "13–20", "21–30", "31+"][b];
+}
+
+function hashString(input: string) {
+  let h = 2166136261;
+  for (let i = 0; i < input.length; i += 1) {
+    h ^= input.charCodeAt(i);
+    h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+  }
+  return Math.abs(h >>> 0);
+}
+
+function buildCertificateId(a: Answers, result: ReturnType<typeof computeResults>) {
+  const raw = JSON.stringify({
+    focus: result.focus,
+    goals: a.goals,
+    driverStartLine: a.driverStartLine,
+    driverCurve: a.driverCurve,
+    ironStartLine: a.ironStartLine,
+    ironCurve: a.ironCurve,
+    confidence: result.confidence,
+    driverFit: result.driver?.fitScore,
+    ironFit: result.irons?.fitScore,
+    wedgeFit: result.wedges?.fitScore,
+  });
+  const n = hashString(raw).toString(36).toUpperCase().padStart(6, "0");
+  return `DG-${n.slice(0, 4)}-${n.slice(4, 6)}`;
+}
+
+function computeAlignmentScore(result: ReturnType<typeof computeResults>) {
+  const scores = [result.driver?.fitScore, result.irons?.fitScore, result.wedges?.fitScore].filter(
+    (v): v is number => typeof v === "number"
+  );
+  if (!scores.length) return result.confidence;
+  return Math.round(scores.reduce((acc, n) => acc + n, 0) / scores.length);
+}
+
+function normalizeFitFocus(value: unknown): FitFocus {
+  if (value === "driver_woods" || value === "irons" || value === "wedges" || value === "full_bag") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === "driver" || normalized === "driver+woods" || normalized === "driver_wood") {
+      return "driver_woods";
+    }
+    if (normalized === "full bag" || normalized === "fullbag" || normalized === "full-bag") {
+      return "full_bag";
+    }
+  }
+
+  return DEFAULT_ANSWERS.fitFocus;
+}
+
+function sanitizeStoredAnswers(rawPayload: unknown): Partial<Answers> {
+  if (!rawPayload || typeof rawPayload !== "object") return {};
+  const parsed = { ...(rawPayload as Record<string, unknown>) };
+
+  if (Array.isArray(parsed.goals)) {
+    // keep as-is
+  } else if (typeof parsed.goal === "string") {
+    parsed.goals = [parsed.goal];
+  } else {
+    parsed.goals = DEFAULT_ANSWERS.goals;
+  }
+
+  parsed.fitFocus = normalizeFitFocus(parsed.fitFocus);
+  delete parsed.goal;
+
+  return parsed as Partial<Answers>;
+}
+
+function extractContactProfile(rawPayload: unknown): { firstName: string | null; lastName: string | null; email: string | null } {
+  if (!rawPayload || typeof rawPayload !== "object") {
+    return { firstName: null, lastName: null, email: null };
+  }
+
+  const payload = rawPayload as Record<string, unknown>;
+  const contact = payload.contactProfile && typeof payload.contactProfile === "object"
+    ? (payload.contactProfile as Record<string, unknown>)
+    : payload;
+
+  return {
+    firstName: typeof contact.firstName === "string" ? contact.firstName : null,
+    lastName: typeof contact.lastName === "string" ? contact.lastName : null,
+    email: typeof contact.email === "string" ? contact.email : null,
+  };
+}
+
+
+function buildInlineQrSvg(data: string, size: number) {
+  const cells = 29;
+  const quietZone = 2;
+  const moduleSize = Math.floor(size / (cells + quietZone * 2));
+  const offset = Math.floor((size - moduleSize * (cells + quietZone * 2)) / 2);
+
+  function hashAt(x: number, y: number) {
+    const seed = `${data}:${x}:${y}`;
+    let h = 2166136261;
+    for (let i = 0; i < seed.length; i += 1) {
+      h ^= seed.charCodeAt(i);
+      h += (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24);
+    }
+    return (h >>> 0) % 2 === 0;
+  }
+
+  const isFinder = (x: number, y: number, ox: number, oy: number) => x >= ox && x < ox + 7 && y >= oy && y < oy + 7;
+
+  const rects: string[] = [];
+  for (let y = 0; y < cells; y += 1) {
+    for (let x = 0; x < cells; x += 1) {
+      const inTopLeft = isFinder(x, y, 0, 0);
+      const inTopRight = isFinder(x, y, cells - 7, 0);
+      const inBottomLeft = isFinder(x, y, 0, cells - 7);
+
+      let dark = false;
+      if (inTopLeft || inTopRight || inBottomLeft) {
+        const fx = inTopRight ? x - (cells - 7) : x;
+        const fy = inBottomLeft ? y - (cells - 7) : y;
+        const border = fx === 0 || fy === 0 || fx === 6 || fy === 6;
+        const center = fx >= 2 && fx <= 4 && fy >= 2 && fy <= 4;
+        dark = border || center;
+      } else {
+        dark = hashAt(x, y);
+      }
+
+      if (dark) {
+        rects.push(`<rect x="${offset + (x + quietZone) * moduleSize}" y="${offset + (y + quietZone) * moduleSize}" width="${moduleSize}" height="${moduleSize}" fill="#0f172a"/>`);
+      }
+    }
+  }
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#fff"/>${rects.join("")}</svg>`;
 }
 
 /* ---------------- SPEED ESTIMATORS ---------------- */
@@ -886,12 +1024,19 @@ function computeResults(a: Answers) {
 
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
+  const viewedStepsRef = useRef<Set<Step>>(new Set());
+  const fitStartedTrackedRef = useRef(false);
+  const fitResultsTrackedRef = useRef(false);
+  const fitCompletedTrackedRef = useRef(false);
 
   const steps = useMemo(() => buildSteps(a.fitFocus), [a.fitFocus]);
   const [stepIndex, setStepIndex] = useState(0);
   const step = steps[stepIndex] ?? "focus";
 
   const [isVerified, setIsVerified] = useState(false);
+  const [verifyStatus, setVerifyStatus] = useState<
+    "verified" | "already_verified" | "expired" | "invalid" | null
+  >(null);
   const [pendingJumpToResults, setPendingJumpToResults] = useState(false);
 
   useEffect(() => {
@@ -908,40 +1053,86 @@ export default function DiagnosticWizard() {
       const url = new URL(window.location.href);
 
       const verified = url.searchParams.get("verified") === "1";
+      const verifyStatusParam = url.searchParams.get("verifyStatus");
       const wantsResults = url.searchParams.get("step") === "results";
 
-      if (verified) {
+      if (
+        verifyStatusParam === "verified" ||
+        verifyStatusParam === "already_verified" ||
+        verifyStatusParam === "expired" ||
+        verifyStatusParam === "invalid"
+      ) {
+        setVerifyStatus(verifyStatusParam);
+      }
+
+      if (verified || verifyStatusParam === "verified" || verifyStatusParam === "already_verified") {
         setIsVerified(true);
         window.localStorage.setItem("lead_verified", "1");
       }
 
       if (verified || wantsResults) {
-        const savedPayload = window.localStorage.getItem("diagnostic_last_payload");
-        if (savedPayload) {
-          try {
-            const parsed = JSON.parse(savedPayload);
+        const hydrateFromPayload = (payload: unknown) => {
+          setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(payload) });
 
-            if (parsed && typeof parsed === "object") {
-              if (Array.isArray(parsed.goals)) {
-                // ok
-              } else if (typeof parsed.goal === "string") {
-                parsed.goals = [parsed.goal];
-              } else {
-                parsed.goals = ["accuracy"];
-              }
-              delete parsed.goal;
-            }
-
-            setA({ ...DEFAULT_ANSWERS, ...parsed });
-          } catch {
-            // ignore bad JSON
+          const contact = extractContactProfile(payload);
+          if (contact.firstName && contact.lastName && contact.email) {
+            window.localStorage.setItem("lead_contact_profile", JSON.stringify(contact));
           }
-        }
+        };
 
-        setPendingJumpToResults(true);
+        const resumeToken = url.searchParams.get("resumeToken");
+        const savedPayload = window.localStorage.getItem("diagnostic_last_payload");
+
+        // Prefer the verified-link payload whenever a resume token exists.
+        // This avoids showing stale local results from an older diagnostic run.
+        if (resumeToken) {
+          fetch(`/api/lead/context?token=${encodeURIComponent(resumeToken)}`)
+            .then((res) => res.json().catch(() => ({ ok: false })))
+            .then((ctx) => {
+              if (ctx?.ok && ctx?.payload) {
+                window.localStorage.setItem("diagnostic_last_payload", JSON.stringify(ctx.payload));
+                hydrateFromPayload(ctx.payload);
+                return;
+              }
+
+              if (savedPayload) {
+                try {
+                  const parsed = JSON.parse(savedPayload);
+                  hydrateFromPayload(parsed);
+                } catch {
+                  // ignore bad JSON
+                }
+              }
+            })
+            .catch(() => {
+              if (savedPayload) {
+                try {
+                  const parsed = JSON.parse(savedPayload);
+                  hydrateFromPayload(parsed);
+                } catch {
+                  // ignore bad JSON
+                }
+              }
+            })
+            .finally(() => {
+              setPendingJumpToResults(true);
+            });
+        } else {
+          if (savedPayload) {
+            try {
+              const parsed = JSON.parse(savedPayload);
+              hydrateFromPayload(parsed);
+            } catch {
+              // ignore bad JSON
+            }
+          }
+          setPendingJumpToResults(true);
+        }
 
         url.searchParams.delete("step");
         url.searchParams.delete("verified");
+        url.searchParams.delete("verifyStatus");
+        url.searchParams.delete("resumeToken");
         window.history.replaceState({}, "", url.toString());
       }
     } catch {
@@ -959,6 +1150,45 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     setStepIndex((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
+
+  useEffect(() => {
+    if (viewedStepsRef.current.has(step)) return;
+
+    viewedStepsRef.current.add(step);
+    track("dov_fit_step_viewed", {
+      module: "dovefit",
+      placement: "diagnostic_wizard",
+      step,
+      index: stepIndex,
+      version: "v1",
+    });
+  }, [step, stepIndex]);
+
+  useEffect(() => {
+    if (step !== "results" || fitResultsTrackedRef.current) return;
+
+    fitResultsTrackedRef.current = true;
+    track("dov_fit_results_viewed", {
+      module: "dovefit",
+      placement: "diagnostic_results",
+      step,
+      index: stepIndex,
+      version: "v1",
+    });
+  }, [step, stepIndex]);
+
+  useEffect(() => {
+    if (step !== "results" || fitCompletedTrackedRef.current) return;
+
+    fitCompletedTrackedRef.current = true;
+    track("dov_fit_completed", {
+      module: "dovefit",
+      placement: "diagnostic_results",
+      step,
+      index: stepIndex,
+      version: "v1",
+    });
+  }, [step, stepIndex]);
 
   useEffect(() => {
     try {
@@ -985,6 +1215,7 @@ export default function DiagnosticWizard() {
     setStepIndex(0);
     try {
       window.localStorage.removeItem("diagnostic_last_payload");
+      window.localStorage.removeItem("diagnostic_completed_at");
     } catch {
       // ignore
     }
@@ -1026,6 +1257,15 @@ export default function DiagnosticWizard() {
                     mode="single"
                     value={a.fitFocus}
                     onChange={(v) => {
+                      if (!fitStartedTrackedRef.current) {
+                        fitStartedTrackedRef.current = true;
+                        track("dov_fit_started", {
+                          module: "dovefit",
+                          placement: "diagnostic_focus",
+                          step: "focus",
+                          version: "v1",
+                        });
+                      }
                       setA((p) => ({ ...p, fitFocus: v }));
                       setStepIndex(1);
                     }}
@@ -1554,7 +1794,13 @@ export default function DiagnosticWizard() {
               </div>
             </>
           ) : (
-            <ResultsView a={a} result={result} isVerified={isVerified} onReset={resetAll} />
+            <ResultsView
+              a={a}
+              result={result}
+              isVerified={isVerified}
+              verifyStatus={verifyStatus}
+              onReset={resetAll}
+            />
           )}
         </section>
 
@@ -1572,13 +1818,17 @@ function ResultsView({
   a,
   result,
   isVerified,
+  verifyStatus,
   onReset,
 }: {
   a: Answers;
   result: ReturnType<typeof computeResults>;
   isVerified: boolean;
+  verifyStatus: "verified" | "already_verified" | "expired" | "invalid" | null;
   onReset: () => void;
 }) {
+  const [shareCardUrl, setShareCardUrl] = useState<string | null>(null);
+  const [copyState, setCopyState] = useState<"link" | "caption" | null>(null);
   const showDriver = result.focus === "driver_woods" || result.focus === "full_bag";
   const showIrons = result.focus === "irons" || result.focus === "full_bag";
   const showWedges = result.focus === "wedges" || result.focus === "full_bag";
@@ -1591,9 +1841,134 @@ function ResultsView({
 
   const modelStart = showIrons && !showDriver ? a.ironStartLine : a.driverStartLine;
   const modelCurve = showIrons && !showDriver ? a.ironCurve : a.driverCurve;
+  const certificateId = useMemo(() => buildCertificateId(a, result), [a, result]);
+  const alignmentScore = useMemo(() => computeAlignmentScore(result), [result]);
+  const verificationUrl = `https://dovegolf.fit/verify/${certificateId}`;
+  const [contactProfile, setContactProfile] = useState<{
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+  }>({ firstName: null, lastName: null, email: null });
+  const [completedAt, setCompletedAt] = useState<string>("");
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("lead_contact_profile");
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setContactProfile({
+          firstName: typeof parsed?.firstName === "string" ? parsed.firstName : null,
+          lastName: typeof parsed?.lastName === "string" ? parsed.lastName : null,
+          email: typeof parsed?.email === "string" ? parsed.email : null,
+        });
+      } else {
+        const payloadRaw = window.localStorage.getItem("diagnostic_last_payload");
+        if (payloadRaw) {
+          const parsedPayload = JSON.parse(payloadRaw);
+          const fallbackProfile = extractContactProfile(parsedPayload);
+          setContactProfile(fallbackProfile);
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    try {
+      const stored = window.localStorage.getItem("diagnostic_completed_at");
+      if (stored) {
+        setCompletedAt(stored);
+      } else {
+        const nowIso = new Date().toISOString();
+        window.localStorage.setItem("diagnostic_completed_at", nowIso);
+        setCompletedAt(nowIso);
+      }
+    } catch {
+      setCompletedAt(new Date().toISOString());
+    }
+  }, []);
+
+  const completedLabel = useMemo(
+    () =>
+      new Date(completedAt || Date.now()).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+    [completedAt]
+  );
+
+  const qrSvgMarkup = useMemo(() => buildInlineQrSvg(verificationUrl, 112), [verificationUrl]);
 
   // Optional: wedge-only gets a wedge-specific “interaction” model instead of a dummy driver model
   const showWedgeModelOnly = showWedges && !showDriver && !showIrons;
+
+  const generateShareCard = async () => {
+    const node = document.getElementById("equipment-alignment-share-card");
+    if (!node) return;
+    if (!qrSvgMarkup) return;
+
+    try {
+      await (document as any).fonts?.ready;
+    } catch {
+      // ignore
+    }
+
+    await new Promise((resolve) => requestAnimationFrame(() => resolve(true)));
+
+    const svgText = new XMLSerializer().serializeToString(node as Node);
+    const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+    const blobUrl = URL.createObjectURL(blob);
+    const img = new window.Image();
+
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("Unable to render share card."));
+      img.src = blobUrl;
+    });
+
+    const scale = 2;
+    const hiresCanvas = document.createElement("canvas");
+    hiresCanvas.width = SHARE_CARD_WIDTH * scale;
+    hiresCanvas.height = SHARE_CARD_HEIGHT * scale;
+    const hiresCtx = hiresCanvas.getContext("2d");
+    if (!hiresCtx) {
+      URL.revokeObjectURL(blobUrl);
+      return;
+    }
+
+    hiresCtx.fillStyle = "#fff";
+    hiresCtx.fillRect(0, 0, hiresCanvas.width, hiresCanvas.height);
+    hiresCtx.drawImage(img, 0, 0, hiresCanvas.width, hiresCanvas.height);
+    URL.revokeObjectURL(blobUrl);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = SHARE_CARD_WIDTH;
+    canvas.height = SHARE_CARD_HEIGHT;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(hiresCanvas, 0, 0, SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT);
+
+    const pngUrl = canvas.toDataURL("image/png");
+    setShareCardUrl(pngUrl);
+
+    const link = document.createElement("a");
+    link.href = pngUrl;
+    link.download = `dovegolf-record-${certificateId}.png`;
+    link.click();
+  };
+
+  const copyVerificationLink = async () => {
+    await navigator.clipboard.writeText(verificationUrl);
+    setCopyState("link");
+    window.setTimeout(() => setCopyState(null), 1500);
+  };
+
+  const copyCaption = async () => {
+    const caption = `My Dove Golf™ Equipment Alignment Record is live.\n\nEquipment Alignment Score: ${alignmentScore}%\nVerify my certificate: ${verificationUrl}\n\n#DoveGolf #EquipmentAlignment #GolfFitting #FitToYourSwing`;
+    await navigator.clipboard.writeText(caption);
+    setCopyState("caption");
+    window.setTimeout(() => setCopyState(null), 1500);
+  };
 
   return (
     <>
@@ -1615,8 +1990,30 @@ function ResultsView({
 
       {isVerified && (
         <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-          <div className="text-sm font-semibold text-emerald-900">✅ Email verified</div>
-          <div className="mt-1 text-sm text-emerald-800">Premium insights are now unlocked.</div>
+          <div className="text-sm font-semibold text-emerald-900">
+            {verifyStatus === "already_verified" ? "✅ Email already verified" : "✅ Email verified"}
+          </div>
+          <div className="mt-1 text-sm text-emerald-800">
+            {verifyStatus === "already_verified"
+              ? "This link was already used, and your premium insights remain unlocked."
+              : "Premium insights are now unlocked."}
+          </div>
+        </div>
+      )}
+
+      {!isVerified && verifyStatus === "expired" && (
+        <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="text-sm font-semibold text-amber-900">⚠️ Verification link expired</div>
+          <div className="mt-1 text-sm text-amber-800">
+            Please request a new verification email and use the most recent link.
+          </div>
+        </div>
+      )}
+
+      {!isVerified && verifyStatus === "invalid" && (
+        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+          <div className="text-sm font-semibold text-rose-900">⚠️ Invalid verification link</div>
+          <div className="mt-1 text-sm text-rose-800">Please request a new verification email.</div>
         </div>
       )}
 
@@ -1634,7 +2031,51 @@ function ResultsView({
       </div>
 
       <div className="mt-8 grid gap-4">
-        {!isVerified && <EmailCaptureCard payload={a} />}
+        <Card title="Equipment Alignment Record">
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={generateShareCard}
+              disabled={!isVerified}
+              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+            >
+              Generate Share Card
+            </button>
+            {!isVerified && (
+              <div className="text-xs text-slate-600">Verify email to unlock your Equipment Alignment Record.</div>
+            )}
+            {shareCardUrl && isVerified && (
+              <div className="flex flex-wrap gap-2 text-xs text-slate-700">
+                <button type="button" onClick={generateShareCard} className="rounded-lg border border-slate-300 px-3 py-1.5">
+                  Download Image
+                </button>
+                <button
+                  type="button"
+                  onClick={copyVerificationLink}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5"
+                >
+                  Copy Verification Link{copyState === "link" ? " · Link copied." : ""}
+                </button>
+                <button type="button" onClick={copyCaption} className="rounded-lg border border-slate-300 px-3 py-1.5">
+                  Copy Caption{copyState === "caption" ? " · Caption copied." : ""}
+                </button>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {!isVerified && (
+          <EmailCaptureCard
+            payload={a}
+            onProfileSaved={(profile) => {
+              setContactProfile({
+                firstName: profile.firstName,
+                lastName: profile.lastName,
+                email: profile.email,
+              });
+            }}
+          />
+        )}
 
         {showBallFlight && (
           <Card title="Your ball flight model">
@@ -1829,7 +2270,313 @@ function ResultsView({
           </a>
         </div>
       </div>
+
+      <div className="pointer-events-none fixed -left-[9999px] top-0 opacity-0" aria-hidden>
+        <EquipmentAlignmentShareCard
+          a={a}
+          result={result}
+          certificateId={certificateId}
+          completedLabel={completedLabel}
+          verificationUrl={verificationUrl}
+          qrSvgMarkup={qrSvgMarkup}
+          modelStart={modelStart}
+          modelCurve={modelCurve}
+          showDriver={showDriver}
+          showIrons={showIrons}
+          firstName={contactProfile.firstName}
+          lastName={contactProfile.lastName}
+          email={contactProfile.email}
+        />
+      </div>
     </>
+  );
+}
+
+function EquipmentAlignmentShareCard({
+  a,
+  result,
+  certificateId,
+  completedLabel,
+  verificationUrl,
+  qrSvgMarkup,
+  modelStart,
+  modelCurve,
+  showDriver,
+  showIrons,
+  firstName,
+  lastName,
+}: {
+  a: Answers;
+  result: ReturnType<typeof computeResults>;
+  certificateId: string;
+  completedLabel: string;
+  verificationUrl: string;
+  qrSvgMarkup: string;
+  modelStart: StartLine;
+  modelCurve: Curve;
+  showDriver: boolean;
+  showIrons: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+}) {
+  const displayName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ") || "Dove Golfer";
+  const contentWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
+
+  const energyTransfer = a.driverTempo === "quick" ? "Fast Energy" : a.driverTempo === "smooth" ? "Smooth Energy" : "Neutral";
+  const stabilityRequirement = result.confidence >= 80 ? "Medium Stability" : result.confidence >= 65 ? "High Stability" : "Low Stability";
+  const spinBias = a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid";
+
+  const swingSignature = [
+    { label: "Club speed", value: `${showDriver ? result.driverSpeedEstimate : result.sevenIronSpeedEstimate} mph` },
+    { label: "Start line bias", value: showIrons && !showDriver ? a.ironStartLine : a.driverStartLine },
+    { label: "Tempo profile", value: showIrons && !showDriver ? a.ironTempo : a.driverTempo },
+    ...(a.ironFaceStrike !== "unsure" ? [{ label: "Face strike", value: a.ironFaceStrike }] : []),
+    { label: "Attack angle", value: a.driverFlight === "high" ? "Positive" : a.driverFlight === "low" ? "Negative" : "Neutral" },
+    { label: "Curvature pattern", value: showIrons && !showDriver ? a.ironCurve : a.driverCurve },
+    ...(a.ironLowPoint !== "unsure" ? [{ label: "Divot depth", value: a.ironLowPoint }] : []),
+    ...(a.ironLowPoint !== "unsure" ? [{ label: "Low point / contact", value: a.ironLowPoint }] : []),
+  ];
+
+  const recommendationGroups = [
+    showDriver && result.driver
+      ? {
+          title: "Driver recommendation",
+          lines: [
+            ["Fit score", `${result.driver.fitScore}%`],
+            ["Shaft weight range", result.driver.shaft.weight],
+            ["Flex", result.driver.shaft.flex],
+            ["Launch target", result.driver.shaft.launch],
+            ["Head bias", result.driver.primaryLever],
+            ["Target swing weight", result.driver.targetSwingWeight],
+          ],
+        }
+      : null,
+    showIrons && result.irons
+      ? {
+          title: "Iron recommendation",
+          lines: [
+            ["Fit score", `${result.irons.fitScore}%`],
+            ["Shaft weight range", result.irons.shaft.weight],
+            ["Flex", result.irons.shaft.flex],
+            ["Launch target", result.irons.shaft.launch],
+            ["Head bias", result.irons.headBias],
+            ["Target swing weight", result.irons.targetSwingWeight],
+          ],
+        }
+      : null,
+    result.wedges
+      ? {
+          title: "Wedge recommendation",
+          lines: [
+            ["Fit score", `${result.wedges.fitScore}%`],
+            ["Shaft weight range", result.wedges.shaft.weight],
+            ["Flex", result.wedges.shaft.flex],
+            ["Launch target", result.wedges.shaft.bounce],
+            ["Target swing weight", result.wedges.targetSwingWeight],
+          ],
+        }
+      : null,
+  ].filter(Boolean) as { title: string; lines: string[][] }[];
+
+  const causeItems = result.cause ?? [];
+  const whyItems = result.why ?? [];
+
+  const wrapForCard = (value: string, maxChars: number) => {
+    if (!value) return [""];
+    const words = value.split(/\s+/);
+    const lines: string[] = [];
+    let current = "";
+
+    words.forEach((word) => {
+      if (!current) {
+        current = word;
+        return;
+      }
+
+      if (`${current} ${word}`.length <= maxChars) {
+        current = `${current} ${word}`;
+      } else {
+        lines.push(current);
+        current = word;
+      }
+    });
+
+    if (current) lines.push(current);
+    return lines;
+  };
+
+  const recommendationLineHeight = 15;
+  const recommendationRows = recommendationGroups.map((group) => {
+    const rows = group.lines.map(([label, value]) => {
+      const wrappedLabel = wrapForCard(label, 26);
+      const wrappedValue = wrapForCard(value, 70);
+      const rowLineCount = Math.max(wrappedLabel.length, wrappedValue.length);
+      const rowHeight = rowLineCount * recommendationLineHeight + 8;
+      return { label, value, wrappedLabel, wrappedValue, rowLineCount, rowHeight };
+    });
+    const bodyHeight = rows.reduce((acc, row) => acc + row.rowHeight, 0);
+    const cardHeight = 58 + bodyHeight + 18;
+    return { ...group, rows, cardHeight };
+  });
+
+  const recommendationCardY = 590;
+  const recommendationCardHeight =
+    56 + recommendationRows.reduce((acc, group) => acc + group.cardHeight + 10, 0) + 10;
+  const causeCardY = recommendationCardY + recommendationCardHeight + 16;
+  const causeWrappedItems = causeItems.map((item) => wrapForCard(item, 110));
+  const causeBodyLineCount = causeWrappedItems.reduce((acc, lines) => acc + lines.length, 0);
+  const causeCardHeight = Math.max(134, 74 + causeBodyLineCount * 18 + Math.max(0, causeItems.length - 1) * 4);
+  const causeTitleY = causeCardY + 30;
+  const causeLinesStartY = causeCardY + 56;
+  const summaryCardY = causeCardY + causeCardHeight + 16;
+  const summaryWrappedItems = whyItems.map((item) => wrapForCard(item, 110));
+  const summaryBodyLineCount = summaryWrappedItems.reduce((acc, lines) => acc + lines.length, 0);
+  const summaryCardHeight = Math.max(120, 74 + summaryBodyLineCount * 18 + Math.max(0, whyItems.length - 1) * 4);
+  const summaryTitleY = summaryCardY + 30;
+  const summaryLinesStartY = summaryCardY + 56;
+
+  return (
+    <svg
+      id="equipment-alignment-share-card"
+      xmlns="http://www.w3.org/2000/svg"
+      width={SHARE_CARD_WIDTH}
+      height={SHARE_CARD_HEIGHT}
+      viewBox={`0 0 ${SHARE_CARD_WIDTH} ${SHARE_CARD_HEIGHT}`}
+      style={{ fontFamily: "var(--font-geist-sans), Geist, Inter, ui-sans-serif, system-ui, sans-serif" }}
+    >
+      <defs>
+        <clipPath id="qrClip">
+          <rect x="0" y="0" width="112" height="112" rx="14" />
+        </clipPath>
+      </defs>
+      <rect width={SHARE_CARD_WIDTH} height={SHARE_CARD_HEIGHT} fill="#ffffff" />
+
+      <g transform={`translate(${SHARE_CARD_PADDING}, ${SHARE_CARD_PADDING})`}>
+        <circle cx="12" cy="12" r="12" fill="#0f172a" />
+        <path d="M0 7c3-4 9-6 14-2 4 3 6 6 7 10 3-1 7-1 9 1-2 1-4 2-5 3-2 2-4 4-6 6-4 3-9 4-13 3-4-1-7-3-9-6 2 0 4 0 6-1 2-1 4-2 5-4-3 0-5-1-7-3-1-1-2-3-3-5 2 1 4 2 6 2-2-2-3-4-3-7l2 3z" fill="#fff" transform="translate(5 2) scale(0.65)" />
+        <text x="34" y="15" fontSize="18" fontWeight="700" letterSpacing="1" fill="#0f172a">DOVE GOLF™</text>
+        <text x="0" y="46" fontSize="16" fill="#334155">Equipment alignment record</text>
+
+        <text x={contentWidth} y="8" fontSize="13" fill="#475569" textAnchor="end">Certificate ID: {certificateId}</text>
+        <text x={contentWidth} y="29" fontSize="13" fill="#475569" textAnchor="end">Completed: {completedLabel}</text>
+      </g>
+
+      <text x="540" y="170" fontSize="62" fontWeight="600" textAnchor="middle" fill="#020617">{displayName}</text>
+      {(energyTransfer || stabilityRequirement || spinBias) && (
+        <text x="540" y="204" fontSize="15" textAnchor="middle" fill="#64748b">
+          Primary fit identity: {energyTransfer} · {stabilityRequirement} · {spinBias}
+        </text>
+      )}
+
+      <rect x="64" y="228" width="952" height="156" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="258" fontSize="20" fontWeight="600" fill="#0f172a">Swing signature</text>
+      {swingSignature.slice(0, 8).map((line, i) => (
+        <g key={line.label}>
+          <text x={88 + (i % 2) * 470} y={286 + Math.floor(i / 2) * 24} fontSize="14" fill="#64748b">{line.label}</text>
+          <text x={270 + (i % 2) * 470} y={286 + Math.floor(i / 2) * 24} fontSize="14" fill="#0f172a" fontWeight="500">{line.value}</text>
+        </g>
+      ))}
+
+      <rect x="64" y="402" width="952" height="172" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="432" fontSize="20" fontWeight="600" fill="#0f172a">Impact visuals</text>
+      <rect x="88" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
+      <svg x="96" y="456" width="270" height="92" viewBox="0 0 520 160">
+        <BallFlightViz start={modelStart} curve={modelCurve} compact={false} staticRender />
+      </svg>
+      <rect x="397" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
+      <svg x="410" y="454" width="260" height="94" viewBox="0 0 260 120">
+        <LowPointViz lowPoint={a.ironLowPoint} staticRender />
+      </svg>
+      <rect x="706" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
+      <svg x="719" y="454" width="260" height="94" viewBox="0 0 260 120">
+        <FaceStrikeViz strike={a.ironFaceStrike} />
+      </svg>
+
+      <rect x="64" y={recommendationCardY} width="952" height={recommendationCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
+      {recommendationRows.map((group, i) => {
+        const groupY = 640 + recommendationRows.slice(0, i).reduce((acc, rowGroup) => acc + rowGroup.cardHeight + 10, 0);
+        return (
+          <g key={group.title}>
+            <rect x="88" y={groupY} width="904" height={group.cardHeight} rx="12" fill="#ffffff" stroke="#e2e8f0" />
+            <text x="108" y={groupY + 28} fontSize="16" fontWeight="600" fill="#0f172a">
+              {group.title}
+            </text>
+            <line x1="108" y1={groupY + 38} x2="972" y2={groupY + 38} stroke="#e2e8f0" />
+            {group.rows.map((row, rowIndex) => {
+              const rowY = groupY + 58 + group.rows.slice(0, rowIndex).reduce((acc, currentRow) => acc + currentRow.rowHeight, 0);
+              return (
+                <g key={`${group.title}-${row.label}`}>
+                  <text x="108" y={rowY} fontSize="12" fill="#64748b">
+                    {row.wrappedLabel.map((labelLine, labelLineIndex) => (
+                      <tspan key={`${row.label}-label-${labelLineIndex}`} x="108" dy={labelLineIndex === 0 ? 0 : recommendationLineHeight}>
+                        {labelLine}
+                      </tspan>
+                    ))}
+                  </text>
+                  <text x="360" y={rowY} fontSize="12" fill="#0f172a" fontWeight="500">
+                    {row.wrappedValue.map((valueLine, valueLineIndex) => (
+                      <tspan key={`${row.label}-value-${valueLineIndex}`} x="360" dy={valueLineIndex === 0 ? 0 : recommendationLineHeight}>
+                        {valueLine}
+                      </tspan>
+                    ))}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        );
+      })}
+
+      <rect x="64" y={causeCardY} width="952" height={causeCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y={causeTitleY} fontSize="20" fontWeight="600" fill="#0f172a">What drove this fit</text>
+      {causeWrappedItems.map((itemLines, i) => {
+        const lineStartY =
+          causeLinesStartY +
+          causeWrappedItems
+            .slice(0, i)
+            .reduce((acc, lines) => acc + lines.length * 18 + 4, 0);
+        return (
+          <text key={`cause-${i}`} x="104" y={lineStartY} fontSize="13" fill="#334155">
+            {itemLines.map((itemLine, lineIndex) => (
+              <tspan key={`cause-${i}-${lineIndex}`} x={lineIndex === 0 ? 104 : 122} dy={lineIndex === 0 ? 0 : 18}>
+                {lineIndex === 0 ? `• ${itemLine}` : itemLine}
+              </tspan>
+            ))}
+          </text>
+        );
+      })}
+
+      <rect x="64" y={summaryCardY} width="952" height={summaryCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
+      <text x="88" y={summaryTitleY} fontSize="20" fontWeight="600" fill="#0f172a">Summary diagnostic</text>
+      {summaryWrappedItems.map((itemLines, i) => {
+        const lineStartY =
+          summaryLinesStartY +
+          summaryWrappedItems
+            .slice(0, i)
+            .reduce((acc, lines) => acc + lines.length * 18 + 4, 0);
+        return (
+          <text key={`summary-${i}`} x="104" y={lineStartY} fontSize="13" fill="#334155">
+            {itemLines.map((itemLine, lineIndex) => (
+              <tspan key={`summary-${i}-${lineIndex}`} x={lineIndex === 0 ? 104 : 122} dy={lineIndex === 0 ? 0 : 18}>
+                {lineIndex === 0 ? `• ${itemLine}` : itemLine}
+              </tspan>
+            ))}
+          </text>
+        );
+      })}
+
+      <text x="64" y="1840" fontSize="12" fill="#475569">
+        Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
+      </text>
+      <text x="640" y="1840" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
+
+      <rect x="888" y="1758" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <g transform="translate(896 1766)" clipPath="url(#qrClip)">
+        <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
+      </g>
+    </svg>
   );
 }
 
@@ -2002,10 +2749,12 @@ function BallFlightViz({
   start,
   curve,
   compact = true,
+  staticRender = false,
 }: {
   start: StartLine;
   curve: Curve;
   compact?: boolean;
+  staticRender?: boolean;
 }) {
   const w = compact ? 260 : 520;
   const h = compact ? 120 : 160;
@@ -2067,10 +2816,10 @@ function BallFlightViz({
         stroke="rgb(15 23 42)"
         strokeWidth="3"
         strokeLinecap="round"
-        strokeDasharray="900"
-        strokeDashoffset="900"
+        strokeDasharray={staticRender ? undefined : "900"}
+        strokeDashoffset={staticRender ? undefined : "900"}
       >
-        <animate attributeName="stroke-dashoffset" from="900" to="0" dur="0.9s" fill="freeze" />
+        {!staticRender && <animate attributeName="stroke-dashoffset" from="900" to="0" dur="0.9s" fill="freeze" />}
       </path>
 
       <text x={startLabelX} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
@@ -2193,7 +2942,7 @@ function FaceStrikeViz({
  * LowPointViz:
  * - U-shaped divot (dips into ground)
  */
-function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
+function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoint; staticRender?: boolean }) {
   const w = 260;
   const h = 120;
 
@@ -2239,10 +2988,10 @@ function LowPointViz({ lowPoint }: { lowPoint: IronLowPoint }) {
           stroke="rgb(15 23 42)"
           strokeWidth="3"
           strokeLinecap="round"
-          strokeDasharray="200"
-          strokeDashoffset="200"
+          strokeDasharray={staticRender ? undefined : "200"}
+          strokeDashoffset={staticRender ? undefined : "200"}
         >
-          <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />
+          {!staticRender && <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />}
         </path>
       ) : (
         <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
