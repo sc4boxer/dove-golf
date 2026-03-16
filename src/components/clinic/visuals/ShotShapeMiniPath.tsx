@@ -1,4 +1,5 @@
 import { BALL_FLIGHT_SEMANTICS, getBallFlightPathGeometry, type ShotShape } from "@/lib/visual/ballFlightSemantics";
+import { toSvgPath } from "@/lib/visual/shotShapePaths";
 
 type ShotShapeMiniPathProps = {
   targetX?: number;
@@ -15,10 +16,10 @@ export function ShotShapeMiniPath({ targetX = 112, shape }: ShotShapeMiniPathPro
       <line x1={targetX} y1="24" x2={targetX} y2="118" stroke="rgb(148 163 184)" strokeWidth="2" strokeDasharray="5 5" />
       <text x={targetX + 10} y="24" className="fill-slate-500 text-[8px]">target line</text>
 
-      <text x={geometry.startX < targetX ? geometry.startX - 44 : geometry.startX + 6} y="111" className="fill-slate-500 text-[9px]">start {semantics.startSide}</text>
+      <circle cx={geometry.startX} cy={geometry.startY} r="2.5" fill="rgb(30 41 59)" />
 
       <path
-        d={`M ${geometry.startX} ${geometry.startY} C ${geometry.c1x} ${geometry.c1y}, ${geometry.c2x} ${geometry.c2y}, ${geometry.endX} ${geometry.endY}`}
+        d={toSvgPath(geometry)}
         fill="none"
         stroke="rgb(15 23 42)"
         strokeWidth="4"
