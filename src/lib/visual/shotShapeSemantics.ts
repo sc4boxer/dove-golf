@@ -10,7 +10,7 @@ import {
 } from "@/lib/visual/ballFlightSemantics";
 
 export type VisualHandedness = Handedness;
-export type ShotShapeName = ShotShape;
+export type ShotShapeName = Extract<ShotShape, "straight" | "draw" | "fade" | "hook" | "slice">;
 export type StartSide = FlightSide;
 
 export type ShotShapeSemantics = {

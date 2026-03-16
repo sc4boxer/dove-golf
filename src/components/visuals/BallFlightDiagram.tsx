@@ -6,6 +6,7 @@ import {
   type FlightSide,
   type ShotShape,
 } from "@/lib/visual/ballFlightSemantics";
+import { toSvgPath } from "@/lib/visual/shotShapePaths";
 
 type BallFlightDiagramProps = {
   shape: ShotShape;
@@ -17,7 +18,7 @@ type BallFlightDiagramProps = {
   onShapeChange?: (shape: ShotShape) => void;
 };
 
-const SHAPE_OPTIONS: ShotShape[] = ["draw", "fade", "hook", "slice", "straight"];
+const SHAPE_OPTIONS: ShotShape[] = ["straight", "draw", "fade", "hook", "slice", "pull", "push"];
 
 export function BallFlightDiagram({
   shape,
@@ -32,7 +33,7 @@ export function BallFlightDiagram({
   const height = compact ? 120 : 180;
   const targetX = width * 0.5;
   const geometry = getBallFlightPathGeometry({ width, height, shape, startSide });
-  const path = `M ${geometry.startX} ${geometry.startY} C ${geometry.c1x} ${geometry.c1y}, ${geometry.c2x} ${geometry.c2y}, ${geometry.endX} ${geometry.endY}`;
+  const path = toSvgPath(geometry);
 
   return (
     <div className={className}>
@@ -68,6 +69,7 @@ export function BallFlightDiagram({
           className={staticRender ? undefined : "[stroke-dasharray:900] [stroke-dashoffset:900] animate-[dash_0.9s_ease-out_forwards]"}
         />
 
+        <circle cx={geometry.startX} cy={geometry.startY} r={compact ? 2.75 : 3.5} fill="rgb(30 41 59)" />
         <text x={geometry.startX - 14} y={height * 0.96} fontSize="10" fill="rgb(100 116 139)">Start</text>
         <text x={targetX + 10} y={height * 0.12} fontSize="10" fill="rgb(100 116 139)">Target</text>
         <text x={width * 0.08} y={height * 0.14} fontSize="10" fill="rgb(71 85 105)">{BALL_FLIGHT_SEMANTICS[shape].label}</text>
