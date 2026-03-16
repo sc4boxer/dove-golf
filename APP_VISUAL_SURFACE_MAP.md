@@ -1,99 +1,38 @@
 # App Visual Surface Map
 
-This map catalogs user-facing golf visualization surfaces for audit coverage.
-
-## How to Use
-1. Locate each surface in code.
-2. Validate behavior against `VISUAL_SPEC.md`.
-3. Record defects in `VISUALIZATION_BUG_LOG.md`.
-4. Track reusable component opportunities.
-
----
+This map catalogs the actual user-facing golf visualization surfaces found in the codebase and the current audit state.
 
 ## A) Ball Flight + Shot Shape Surfaces
 
-### A1. Ball Flight Path Simulator
-- **Purpose:** Show full trajectory and shape outcome.
-- **Audit Focus:**
-  - Draw/fade/hook/slice direction correctness
-  - Axis orientation consistency
-  - Label-to-path agreement
-- **Common Risk:** Reversed curvature logic.
-- **Reusable Targets:** `ShotPathCanvas`, `ShotShapeLegend`
+| Surface | Component | File | Purpose | Likely Risk Areas | Expected Visual Rules | Reusable Opportunity |
+|---|---|---|---|---|---|---|
+| Learn flight pattern canvas | `BallFlightLibraryViz` | `src/components/learn/BallFlightLibraryViz.tsx` | Core start-line + curvature visualization in the learn explorer | Left/right sign inversion, label/path mismatch | Draw starts right and curves left; Fade starts left and curves right; flight runs bottom→top | Shared shot-path primitive with clinic mini charts |
+| Learn explorer wrapper | `BallFlightLibraryExplorer` | `src/components/learn/BallFlightLibraryExplorer.tsx` | Hosts pattern selector + visual output | Selection labels diverging from rendered geometry | Selected card copy and rendered path must agree | Shared legend component |
 
-### A2. Draw / Fade / Hook / Slice Visualizations
-- **Purpose:** Teach differences between shot shapes.
-- **Audit Focus:**
-  - Semantic correctness of each shape
-  - Degree/intensity representation clarity
-  - Handedness-aware interpretation consistency
-- **Common Risk:** Label and rendered curve mismatch.
-- **Reusable Targets:** `ShotPathCanvas`, `DirectionalArrow`
+## B) Clinic Surfaces
 
----
+| Surface | Component | File | Purpose | Likely Risk Areas | Expected Visual Rules | Reusable Opportunity |
+|---|---|---|---|---|---|---|
+| Clinic module hero mini chart (slice) | `DriverSliceMiniChart` | `src/components/clinic/ClinicHeroMiniCharts.tsx` | Quick directional concept preview | Wrong start side for slice, curvature semantics | Slice starts left and curves right | Shared shot-path primitive |
+| Clinic module hero mini chart (hook) | `PullHookMiniChart` | `src/components/clinic/ClinicHeroMiniCharts.tsx` | Quick directional concept preview | Wrong start side for hook | Hook starts right and curves strongly left | Shared shot-path primitive |
+| Driver slice wizard previews | `ClinicWizard` (`StepPreview`) | `src/components/clinic/ClinicWizard.tsx` | Step-by-step diagnosis visuals | Arrowlessness, mixed semantics between steps | Start-line, curve, strike diagrams remain directionally aligned and readable | Shared step frame / directional arrow |
+| Pull-hook wizard previews | `PullHookWizard` (`StepPreview`) | `src/components/clinic/PullHookWizard.tsx` | Pull-hook specific diagnosis visuals | Semantics drift from slice wizard grammar | Hook conventions and labels must stay consistent | Shared step frame / directional arrow |
+| Pull-hook setup map | `PullHookSetupVisual` | `src/components/clinic/PullHookSetupVisual.tsx` | Top-down setup bias visual | Label density, ambiguous line hierarchy | Aim/start/stance lines remain visually distinct and directional | Shared annotation tokens |
+| Gate drill visual | `RangeTest3GateVisual` | `src/components/clinic/RangeTest3GateVisual.tsx` | Start-line gate success vs miss reference | Arrow style inconsistency with other surfaces | Solid=primary, dashed=reference, direction explicit | Shared directional arrow marker |
+| A/B lever comparison visual | `RangeTest2ABVisual` | `src/components/clinic/RangeTest2ABVisual.tsx` | Compare current vs neutralized delivery | Side-by-side semantics not mirrored clearly | A/B paths should be comparable and direction-consistent | Shared panel scaffold |
+| Range plan visuals | `RangePlan` + `RangeMapPrimitives` | `src/components/clinic/RangePlan.tsx`, `src/components/clinic/visuals/RangeMapPrimitives.tsx` | Reusable drill diagrams for strike/flight tasks | Marker/arrow inconsistencies, repeated stroke semantics | Bottom→top flight, consistent dashed reference behavior | Already partially reusable via `RangeMapPrimitives` |
 
-## B) Instructional and Clinic Surfaces
+## C) Landing + Diagnostic Surfaces
 
-### B1. Clinic Visuals
-- **Purpose:** Support coaching concepts with visual explanation.
-- **Audit Focus:**
-  - One-concept-per-diagram clarity
-  - Annotation readability
-  - Step/sequence comprehension
-- **Common Risk:** Overloaded diagrams with ambiguous direction cues.
-- **Reusable Targets:** `InstructionDiagramFrame`, `DirectionalArrow`
+| Surface | Component | File | Purpose | Likely Risk Areas | Expected Visual Rules | Reusable Opportunity |
+|---|---|---|---|---|---|---|
+| Home hero animation | `Home` SVG sequence | `src/app/page.tsx` | Marketing-level motion trajectory scene | Animation direction mismatch vs labels | Motion must reinforce directional semantics | Shared animation timing tokens |
+| Diagnostic report charts | Multiple embedded SVG components | `src/app/diagnostic/page.tsx` | Result visualization for recommendation output | Chart-specific axis sign errors | Legends/axes/trajectories must agree | Shared chart primitives |
+| Learn article visuals | Inline SVGs in learn pages | `src/app/learn/*/page.tsx` | Educational illustrations (launch, tempo, start-line) | Inconsistent visual grammar | Solid vs dashed semantics match spec | Shared instructional frame |
 
-### B2. Golf Instructional Diagrams
-- **Purpose:** Convey stance, swing path, clubface/path relationships, etc.
-- **Audit Focus:**
-  - Direction and reference line semantics
-  - Label placement and hierarchy
-  - Consistent iconography
-- **Common Risk:** Inconsistent visual grammar across lessons.
-- **Reusable Targets:** `InstructionDiagramFrame`, shared annotation tokens
+## Audit Status (this pass)
 
----
-
-## C) Product/Decision Surfaces
-
-### C1. Fitting Tool Option Cards
-- **Purpose:** Let users compare fitting-related visual options quickly.
-- **Audit Focus:**
-  - Visual hierarchy consistency
-  - Card-to-card icon semantics
-  - Preview graphic comparability
-- **Common Risk:** Card-level inconsistency causing misread options.
-- **Reusable Targets:** `FittingOptionVisualCard`
-
-### C2. Directional Indicators
-- **Purpose:** Show directional outcomes and adjustments.
-- **Audit Focus:**
-  - Arrow orientation consistency
-  - Direction labels and cue clarity
-  - Alignment with shot-shape semantics
-- **Common Risk:** Mixed arrow grammar and orientation mismatch.
-- **Reusable Targets:** `DirectionalArrow`
-
----
-
-## D) Cross-Surface Audit Matrix
-
-Use this matrix in each audit pass.
-
-| Surface | Logic Correctness | Clarity | Visual Grammar | Accessibility | Reusable Component Opportunity |
-|---|---|---|---|---|---|
-| Ball Flight Path Simulator | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Draw/Fade/Hook/Slice Views | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Clinic Visuals | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Fitting Tool Option Cards | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Directional Indicators | ☐ | ☐ | ☐ | ☐ | ☐ |
-| Instructional Diagrams | ☐ | ☐ | ☐ | ☐ | ☐ |
-
----
-
-## E) Audit Completion Criteria
-Audit coverage is complete when:
-- All mapped surfaces have at least one current audit status update.
-- Any reversed draw/fade logic is either ruled out or logged as a defect.
-- Clarity and grammar issues are documented with severity.
-- Reusable component recommendations are documented per surface.
+- **Surfaces found:** 13 major visualization surfaces/components.
+- **Audited in depth this pass:** `BallFlightLibraryViz`, `ClinicHeroMiniCharts`, `ClinicWizard`, `PullHookWizard`, `RangeTest2ABVisual`, `RangeTest3GateVisual`, `PullHookSetupVisual`, `RangeMapPrimitives`.
+- **Highest-risk mismatches fixed:** learn flight direction mapping + clinic hero hook/slice semantics.
+- **Remaining high-risk next targets:** large inline SVGs in `src/app/diagnostic/page.tsx` and animated hero sequence in `src/app/page.tsx`.

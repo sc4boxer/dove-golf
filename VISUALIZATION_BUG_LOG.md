@@ -1,87 +1,56 @@
 # Visualization Bug Log
 
-This log tracks visualization-specific defects and improvement opportunities discovered by the visual agent.
-
-## Usage
-- Add entries after each audit pass.
-- Keep newest entries at the top.
-- Link findings to relevant surfaces in `APP_VISUAL_SURFACE_MAP.md`.
-- Validate expected behavior against `VISUAL_SPEC.md`.
-
-## Entry Template
-
-### [ID: VIS-XXXX] <Short title>
-- **Date:** YYYY-MM-DD
-- **Status:** `Open` | `In Progress` | `Blocked` | `Resolved`
-- **Surface:**
-- **Location (file/module):**
-- **Severity:** `Critical` | `High` | `Medium` | `Low`
-- **Category:** `Logic` | `Clarity` | `Consistency` | `Accessibility` | `Performance` | `Maintainability`
-- **Problem Summary:**
-- **Current Behavior:**
-- **Expected Behavior:**
-- **User Impact:**
-- **Evidence (screenshots/notes):**
-- **Proposed Fix:**
-- **Reusable Component Candidate:** `Yes` | `No`
-- **Owner:**
-- **Related Spec Section:**
-- **Related Surface Map Section:**
+This log tracks visualization-specific defects and improvements discovered during visual-agent audits.
 
 ---
 
-## Seed Findings (Initial Audit Targets)
+### [ID: VIS-0104] Pull-hook hero chart started on the wrong side
+- **Date:** 2026-03-16
+- **Status:** `Resolved`
+- **Component:** `PullHookMiniChart`
+- **Path:** `src/components/clinic/ClinicHeroMiniCharts.tsx`
+- **Bug Type:** Shot-shape semantic mismatch
+- **Severity:** `Critical`
+- **Explanation:** The hook mini chart rendered a left-starting path that curved further left. Per spec for right-handed semantics in this app pass, hook must start right then curve strongly left.
+- **Proposed Fix:** Shift start marker to right of target line and redraw path to bend back left.
+- **Related Spec:** `VISUAL_SPEC.md` §1.2 / §1.3
 
-### [ID: VIS-0001] Verify draw/fade direction semantics
-- **Date:** TBD
-- **Status:** Open
-- **Surface:** Ball flight path simulator + shot-shape visuals
-- **Location (file/module):** TBD during audit
-- **Severity:** Critical
-- **Category:** Logic
-- **Problem Summary:** Potential reversal of draw/fade logic.
-- **Current Behavior:** Unknown until audited.
-- **Expected Behavior:** Draw and fade labels must match actual rendered curvature and directional outcome conventions.
-- **User Impact:** Incorrect instructional guidance and reduced trust.
-- **Evidence (screenshots/notes):** Pending audit.
-- **Proposed Fix:** Validate sign/axis mapping and handedness assumptions; centralize shot-shape mapping if duplicated.
-- **Reusable Component Candidate:** Yes
-- **Owner:** Visual Agent
-- **Related Spec Section:** VISUAL_SPEC.md → Shot Shape Semantics
-- **Related Surface Map Section:** APP_VISUAL_SURFACE_MAP.md → Flight + Shot Shape Surfaces
+### [ID: VIS-0103] Driver-slice hero chart started from the wrong side
+- **Date:** 2026-03-16
+- **Status:** `Resolved`
+- **Component:** `DriverSliceMiniChart`
+- **Path:** `src/components/clinic/ClinicHeroMiniCharts.tsx`
+- **Bug Type:** Shot-shape semantic mismatch
+- **Severity:** `Critical`
+- **Explanation:** The mini chart started right of target and curved right, conflicting with the required convention for this audit pass (slice starts left, then curves right).
+- **Proposed Fix:** Move start marker left of target and redraw trajectory to finish right with clear rightward curvature.
+- **Related Spec:** `VISUAL_SPEC.md` §1.2 / §1.3
 
-### [ID: VIS-0002] Audit diagram clarity for instructional visuals
-- **Date:** TBD
-- **Status:** Open
-- **Surface:** Clinic visuals + instructional diagrams
-- **Location (file/module):** TBD during audit
-- **Severity:** High
-- **Category:** Clarity
-- **Problem Summary:** Some diagrams may be ambiguous without strong directional annotation.
-- **Current Behavior:** Unknown until audited.
-- **Expected Behavior:** Each diagram should communicate a single clear teaching point with readable labels and cues.
-- **User Impact:** Misinterpretation of golf concepts.
-- **Evidence (screenshots/notes):** Pending audit.
-- **Proposed Fix:** Improve labeling hierarchy, add explicit start/end anchors, standardize arrow grammar.
-- **Reusable Component Candidate:** Yes
-- **Owner:** Visual Agent
-- **Related Spec Section:** VISUAL_SPEC.md → Diagram Clarity Standards
-- **Related Surface Map Section:** APP_VISUAL_SURFACE_MAP.md → Instructional Surfaces
+### [ID: VIS-0102] Ball-flight library draw/fade controls were sign-inverted
+- **Date:** 2026-03-16
+- **Status:** `Resolved`
+- **Component:** `BallFlightLibraryViz`
+- **Path:** `src/components/learn/BallFlightLibraryViz.tsx`
+- **Bug Type:** Label/path direction mismatch
+- **Severity:** `Critical`
+- **Explanation:** `startLine` and `curve` maps used inverted x-direction signs, causing right/left starts and draw/fade curvature to render opposite of labels.
+- **Proposed Fix:** Correct `getEndX` and `getControlShift` polarity so right starts render right, left starts render left, and draw/fade bend in the expected directions.
+- **Related Spec:** `VISUAL_SPEC.md` §1.2 / §1.3
 
-### [ID: VIS-0003] Identify inconsistent visual grammar across cards and indicators
-- **Date:** TBD
-- **Status:** Open
-- **Surface:** Fitting tool option cards + directional indicators
-- **Location (file/module):** TBD during audit
-- **Severity:** Medium
-- **Category:** Consistency
-- **Problem Summary:** Potential inconsistency in colors, icons, and directional cues.
-- **Current Behavior:** Unknown until audited.
-- **Expected Behavior:** Shared visual grammar across comparable UI patterns.
-- **User Impact:** Slower comprehension and reduced confidence.
-- **Evidence (screenshots/notes):** Pending audit.
-- **Proposed Fix:** Consolidate tokens/components; apply consistent semantics.
-- **Reusable Component Candidate:** Yes
-- **Owner:** Visual Agent
-- **Related Spec Section:** VISUAL_SPEC.md → Visual Grammar
-- **Related Surface Map Section:** APP_VISUAL_SURFACE_MAP.md → Option Card + Indicator Surfaces
+### [ID: VIS-0101] Clinic step visuals duplicate shot-path grammar without shared primitive
+- **Date:** 2026-03-16
+- **Status:** `Open`
+- **Component:** `ClinicWizard` + `PullHookWizard`
+- **Path:** `src/components/clinic/ClinicWizard.tsx`, `src/components/clinic/PullHookWizard.tsx`
+- **Bug Type:** Reusability / consistency risk
+- **Severity:** `Major`
+- **Explanation:** Both wizards hand-roll similar start-line/curve SVG logic. This increases drift risk (future direction fixes may land in one but not the other).
+- **Proposed Fix:** Introduce a shared lightweight shot-path preview primitive and reuse in both wizard files.
+- **Related Spec:** `VISUAL_SPEC.md` §3.2
+
+---
+
+## This Pass Summary
+- **Bugs identified:** 4
+- **Bugs fixed:** 3
+- **Open bugs:** 1 (reusability refactor)
