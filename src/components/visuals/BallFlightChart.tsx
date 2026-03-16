@@ -18,13 +18,13 @@ type BallFlightChartProps = {
 
 const SHAPE_LABELS: Record<BallFlightChartShape, string> = {
   "pull-draw": "Pull Draw",
-  pull: "Pull",
+  pull: "Pull Straight",
   "pull-fade": "Pull Fade",
   draw: "Draw",
   straight: "Straight",
   fade: "Fade",
   "push-draw": "Push Draw",
-  push: "Push",
+  push: "Push Straight",
   "push-fade": "Push Fade",
 };
 
