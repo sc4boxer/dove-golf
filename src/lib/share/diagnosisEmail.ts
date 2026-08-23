@@ -1,5 +1,5 @@
-import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
-import { decodeBallFlight } from "@/components/tools/ball-flight-decoder/model";
+import { BALL_FLIGHT_PATTERNS } from "../learn/ballFlightPatterns.ts";
+import { decodeBallFlight } from "../../components/tools/ball-flight-decoder/model.ts";
 
 export type DiagnosisInsightLabel =
   | "Impact interpretation"
