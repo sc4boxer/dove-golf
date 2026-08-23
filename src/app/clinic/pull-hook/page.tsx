@@ -184,6 +184,11 @@ export default function PullHookPage() {
                     )
                   : null
               }
+              analyticsContext={{
+                pattern: `${inputs.startLine ?? "unknown"}-${inputs.curveSeverity ?? "unknown"}-left`,
+                strike: inputs.strikeLocation ?? "unknown",
+                category: "pull_hook",
+              }}
             />
 
             <button
