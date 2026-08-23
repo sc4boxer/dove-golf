@@ -1,6 +1,7 @@
 export type EquipmentFitStart = "left" | "straight" | "right";
 export type EquipmentFitCurve = "left" | "straight" | "right";
 export type EquipmentFitStrike = "heel" | "center" | "toe" | "unknown";
+export type EquipmentFitFocus = "driver_woods" | "irons" | "wedges" | "full_bag";
 
 export type EquipmentFitContext = {
   source: "ball-flight-decoder";
@@ -24,20 +25,6 @@ const CURVE_MAP = {
   left: "draw",
   straight: "straight",
   right: "fade",
-} as const;
-
-const DRIVER_STRIKE_MAP = {
-  heel: "heel",
-  center: "center",
-  toe: "toe",
-  unknown: "all_over",
-} as const;
-
-const IRON_STRIKE_MAP = {
-  heel: "heel",
-  center: "center",
-  toe: "toe",
-  unknown: "unsure",
 } as const;
 
 function isStart(value: string | null): value is EquipmentFitStart {
@@ -95,21 +82,46 @@ export function parseEquipmentFitContext(params: URLSearchParams): EquipmentFitC
   };
 }
 
-export function equipmentFitPrefill(context: EquipmentFitContext) {
-  return {
-    driverStartLine: START_LINE_MAP[context.start],
-    driverCurve: CURVE_MAP[context.curve],
-    driverStrike: DRIVER_STRIKE_MAP[context.strike],
-    ironStartLine: START_LINE_MAP[context.start],
-    ironCurve: CURVE_MAP[context.curve],
-    ironFaceStrike: IRON_STRIKE_MAP[context.strike],
+export function equipmentFitPrefill(context: EquipmentFitContext, focus: EquipmentFitFocus) {
+  const flight = {
+    startLine: START_LINE_MAP[context.start],
+    curve: CURVE_MAP[context.curve],
   };
+
+  if (focus === "driver_woods") {
+    return {
+      driverStartLine: flight.startLine,
+      driverCurve: flight.curve,
+      ...(context.strike === "unknown" ? {} : { driverStrike: context.strike }),
+    };
+  }
+
+  if (focus === "irons") {
+    return {
+      ironStartLine: flight.startLine,
+      ironCurve: flight.curve,
+      ...(context.strike === "unknown" ? {} : { ironFaceStrike: context.strike }),
+    };
+  }
+
+  return {};
 }
 
 export function formatEquipmentFitContext(context: EquipmentFitContext): string {
-  const startLabel = context.start === "straight" ? "on target" : context.start;
-  const curveLabel = context.curve === "straight" ? "mostly straight" : context.curve;
-  const strikeLabel = context.strike === "unknown" ? "strike not yet measured" : `${context.strike} strike`;
+  const startLabel = context.start === "straight" ? "On target" : capitalize(context.start);
+  const curveLabel = context.curve === "straight" ? "Mostly straight" : capitalize(context.curve);
+  const strikeLabel = context.strike === "unknown" ? "Not measured" : capitalize(context.strike);
 
-  return `Starts ${startLabel} · curves ${curveLabel} · ${strikeLabel}`;
+  return `Start: ${startLabel} · Curve: ${curveLabel} · Strike: ${strikeLabel}`;
+}
+
+export function formatEquipmentFitPattern(context: EquipmentFitContext): string {
+  return context.pattern
+    .split("-")
+    .map(capitalize)
+    .join(" ");
+}
+
+function capitalize(value: string): string {
+  return value ? value[0].toUpperCase() + value.slice(1) : value;
 }
