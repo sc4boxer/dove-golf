@@ -148,7 +148,7 @@ export default function DriverSlicePage() {
             <RangePlan tests={result.rangePlan} />
 
             <DiagnosisSharePanel
-              miss={`Driver shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} right curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
+              miss={`Driver shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity === "none" ? "no meaningful right curve" : `${inputs.curveSeverity ?? "unknown"} right curve`}, ${inputs.strikeLocation ?? "unknown"} strike.`}
               likelyCause={`${primaryLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
               rangePlan={
                 result.rangePlan[0]?.whatToDo ??
