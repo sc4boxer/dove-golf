@@ -121,7 +121,6 @@ export function BallFlightDecoder() {
           start,
           curve,
           strike,
-          patternSlug: result.patternSlug,
         })
       : "/diagnostic";
 
@@ -273,11 +272,12 @@ export function BallFlightDecoder() {
               </div>
               <TrackLink
                 href={equipmentHref}
-                eventName="dov_decoder_equipment_clicked"
+                eventName="dov_decoder_fit_handoff_clicked"
                 eventParams={{
                   module: "ball_flight_decoder",
                   placement: "decoder_result",
-                  pattern: result.patternSlug,
+                  start,
+                  curve,
                   strike,
                 }}
                 className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 sm:mt-0 sm:w-auto sm:shrink-0"
