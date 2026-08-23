@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import EmailCaptureCard from "./EmailCaptureCard";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
 
 import { recommendDriverWoods, type RecommendDriverWoodsInput } from "@/lib/engine/driver";
 import { recommendIrons, type RecommendIronsInput } from "@/lib/engine/irons";
@@ -1962,6 +1963,31 @@ function ResultsView({
   const showIrons = result.focus === "irons" || result.focus === "full_bag";
   const showWedges = result.focus === "wedges" || result.focus === "full_bag";
 
+  const diagnosisShareMiss = [
+    showDriver
+      ? `Driver/Woods: starts ${a.driverStartLine} and curves ${a.driverCurve}; strike ${a.driverStrike}.`
+      : null,
+    showIrons
+      ? `Irons: starts ${a.ironStartLine} and curves ${a.ironCurve}; face strike ${a.ironFaceStrike}, low point ${a.ironLowPoint.replaceAll("_", " ")}.`
+      : null,
+    showWedges
+      ? `Wedges: ${a.wedgeMiss.replaceAll("_", " ")} miss; ${a.wedgeTurf} turf interaction.`
+      : null,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .join(" ");
+
+  const diagnosisShareCause =
+    (result.cause ?? []).slice(0, 2).join(" ") ||
+    (result.why ?? [])[0] ||
+    "The current fit may be amplifying the reported pattern; a controlled comparison is needed.";
+
+  const diagnosisRangePlan = showDriver
+    ? "Alternate two five-shot sets with the current club and recommended setup. Keep target, tee height, and speed constant; compare strike, start line, curve, and dispersion."
+    : showIrons
+      ? "Alternate two five-shot sets from the same lie. Compare strike, low point, start line, curve, carry, and dispersion before changing another variable."
+      : "Alternate two five-shot sets from the same lie with the current and proposed bounce or sole setup; compare strike, turf entry, carry, and rollout.";
+
   // ✅ FIX #1: only show ball flight model when driver or irons are part of the workflow
   const showBallFlight = showDriver || showIrons;
 
@@ -2383,6 +2409,14 @@ function ResultsView({
             ))}
           </ul>
         </Card>
+
+        <DiagnosisSharePanel
+          miss={diagnosisShareMiss}
+          likelyCause={diagnosisShareCause}
+          rangePlan={diagnosisRangePlan}
+          shareUrl="https://dovegolf.fit/diagnostic"
+          source="equipment_fit"
+        />
 
         <Card title="How to interpret and apply your results (fitter-grade)">
           <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
