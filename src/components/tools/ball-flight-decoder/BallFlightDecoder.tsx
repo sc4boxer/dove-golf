@@ -290,6 +290,11 @@ export function BallFlightDecoder() {
                   start === "straight" ? "center" : start,
                   curve,
                 )}
+                analyticsContext={{
+                  pattern: result.patternSlug,
+                  strike,
+                  category: "ball_flight_decoder",
+                }}
               />
             </div>
 
