@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { TrackLink } from "@/components/analytics/TrackLink";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
 import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
 import { buildEquipmentFitHref } from "@/lib/tools/ballFlightEquipmentBridge";
@@ -254,6 +255,16 @@ export function BallFlightDecoder() {
             <div className="mt-8 border-t border-slate-200 pt-8">
               <h3 className="text-lg font-semibold">Limits of this result</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">{result.caveat}</p>
+            </div>
+
+            <div className="mt-8">
+              <DiagnosisSharePanel
+                miss={pattern.title}
+                likelyCause={`${result.faceSummary} ${result.pathSummary} ${result.strikeSummary}`}
+                rangePlan={result.nextTest}
+                shareUrl="https://dovegolf.fit/tools/ball-flight-decoder"
+                source="ball_flight_decoder"
+              />
             </div>
 
             <div className="mt-8 border-t border-slate-200 pt-8 sm:flex sm:items-end sm:justify-between sm:gap-8">
