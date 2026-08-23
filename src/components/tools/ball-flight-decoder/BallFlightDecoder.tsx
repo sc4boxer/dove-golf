@@ -6,6 +6,7 @@ import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel"
 import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
 import { buildEquipmentFitHref } from "@/lib/tools/ballFlightEquipmentBridge";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
 import { BallFlightResultVisual } from "./BallFlightResultVisual";
 import { ShotEvidenceView } from "./ShotEvidenceView";
 import {
@@ -271,6 +272,24 @@ export function BallFlightDecoder() {
                   curve,
                   strike,
                 }}
+                details={[
+                  {
+                    label: "Start",
+                    value: start === "straight" ? "On target" : start,
+                  },
+                  {
+                    label: "Curve",
+                    value: curve === "straight" ? "Mostly straight" : curve,
+                  },
+                  {
+                    label: "Strike",
+                    value: strike === "unknown" ? "Not measured" : strike,
+                  },
+                ]}
+                flightShape={getBallFlightShapeFromObservation(
+                  start === "straight" ? "center" : start,
+                  curve,
+                )}
               />
             </div>
 
