@@ -255,7 +255,7 @@ export function buildDiagnosisEmailContent(input: DiagnosisEmailInput): Diagnosi
   }
 
   const variantCopy: Record<
-    DiagnosisEmailInput & { kind: "ball_curves_right" }["variantId"],
+    Extract<DiagnosisEmailInput, { kind: "ball_curves_right" }>["variantId"],
     Pick<DiagnosisEmailContent, "miss" | "insight">
   > = {
     "curves-right-center": {
