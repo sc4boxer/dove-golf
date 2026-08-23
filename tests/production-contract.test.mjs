@@ -203,6 +203,19 @@ test("established analytics event names remain available", async () => {
   }
 });
 
+test("canonical flight visuals keep the slow dotted progression and reduced-motion fallback", async () => {
+  const [chart, globals] = await Promise.all([
+    source("src/components/visuals/BallFlightChart.tsx"),
+    source("src/app/globals.css"),
+  ]);
+
+  assert.match(chart, /strokeDasharray="1 9"/);
+  assert.match(chart, /<animateMotion dur="2\.8s"/);
+  assert.match(chart, /className="ball-flight-reveal"/);
+  assert.match(globals, /@keyframes flight-reveal/);
+  assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ball-flight-marker[\s\S]*?display: none/);
+});
+
 test("completed diagnoses keep the distribution loop and safe email handoff", async () => {
   const [component, emailRoute, decoder, equipment, driverSlice, pullHook, curvesRight] = await Promise.all([
     source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
@@ -217,6 +230,7 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
   assert.ok(component.includes("Share my diagnosis"));
   assert.ok(component.includes("Send me my diagnosis and range plan"));
   assert.match(component, /Download result card/);
+  assert.match(component, /files: \[shareFile\]/);
   assert.match(component, /insightLabel/);
   assert.match(emailRoute, /new Resend\(/);
   assert.match(emailRoute, /Cache-Control.*no-store/s);
