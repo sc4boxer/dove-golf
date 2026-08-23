@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import EmailCaptureCard from "./EmailCaptureCard";
 
-import { recommendDriverWoods } from "@/lib/engine/driver";
-import { recommendIrons } from "@/lib/engine/irons";
+import { recommendDriverWoods, type RecommendDriverWoodsInput } from "@/lib/engine/driver";
+import { recommendIrons, type RecommendIronsInput } from "@/lib/engine/irons";
 import { track } from "@/lib/analytics/ga";
 import { BallFlightDiagram } from "@/components/visuals/BallFlightDiagram";
 import { StrikeFaceDiagram } from "@/components/visuals/StrikeFaceDiagram";
@@ -712,11 +713,11 @@ function fallbackIronRec(sevenIronSpeed: number): EngineRec {
   };
 }
 
-function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
+function safeRecommendDriverWoods(args: RecommendDriverWoodsInput, speedMph: number): EngineRec {
   try {
     const rec = recommendDriverWoods(args);
-    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
-      return rec as EngineRec;
+    if (rec.profile?.weightRange && rec.profile?.flex) {
+      return rec;
     }
   } catch {
     // ignore and fall back
@@ -724,11 +725,11 @@ function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
   return fallbackDriverRec(speedMph);
 }
 
-function safeRecommendIrons(args: any, sevenIronSpeed: number): EngineRec {
+function safeRecommendIrons(args: RecommendIronsInput, sevenIronSpeed: number): EngineRec {
   try {
     const rec = recommendIrons(args);
-    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
-      return rec as EngineRec;
+    if (rec.profile?.weightRange && rec.profile?.flex) {
+      return rec;
     }
   } catch {
     // ignore and fall back
@@ -813,7 +814,7 @@ function computeResults(a: Answers) {
             currentShaftWeightG: driverShaftNow,
             currentFlex: "unknown",
             launchFeel: driverLaunchFeel,
-          } as any,
+          },
           driverSpeed
         )
       : null;
@@ -866,7 +867,7 @@ function computeResults(a: Answers) {
             currentShaftWeightG: ironShaftNow,
             currentFlex: "unknown",
             peakHeightFeel: ironPeakFeel,
-          } as any,
+          },
           sevenIronSpeed
         )
       : null;
@@ -1054,6 +1055,8 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("lead_verified");
+      // Local verification is intentionally restored once after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved === "1") setIsVerified(true);
     } catch {
       // ignore
@@ -1077,6 +1080,8 @@ export default function DiagnosticWizard() {
       const carriedContext = hasResumeContext ? null : parseEquipmentFitContext(url.searchParams);
 
       if (carriedContext) {
+        // URL handoff state is intentionally captured once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDecoderContext(carriedContext);
         track("dov_fit_handoff_received", {
           module: "dovefit",
@@ -1185,11 +1190,16 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     if (!pendingJumpToResults) return;
     const s = buildSteps(a.fitFocus);
+    // Resume completion deliberately moves the wizard to its terminal step.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex(s.length - 1);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPendingJumpToResults(false);
   }, [pendingJumpToResults, a.fitFocus]);
 
   useEffect(() => {
+    // A category change can shorten the step list; clamp the current index.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
 
@@ -1304,9 +1314,9 @@ export default function DiagnosticWizard() {
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-2xl px-6 py-10">
         <div className="flex items-center justify-between">
-          <a className="text-sm text-slate-500 hover:text-slate-900" href="/">
+          <Link className="text-sm text-slate-500 hover:text-slate-900" href="/">
             ← Home
-          </a>
+          </Link>
           <span className="text-xs font-medium text-slate-500">Free Diagnostic</span>
         </div>
 
@@ -2008,11 +2018,13 @@ function ResultsView({
 
   const completedLabel = useMemo(
     () =>
-      new Date(completedAt || Date.now()).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
+      completedAt
+        ? new Date(completedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Pending",
     [completedAt]
   );
 
@@ -2027,7 +2039,7 @@ function ResultsView({
     if (!qrSvgMarkup) return;
 
     try {
-      await (document as any).fonts?.ready;
+      await document.fonts?.ready;
     } catch {
       // ignore
     }
@@ -2381,12 +2393,12 @@ function ResultsView({
             Start over
           </button>
 
-          <a
+          <Link
             href="/"
             className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
           >
             Back to home
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -2739,28 +2751,28 @@ function ChoiceChips<T extends string>(
     <div className="grid gap-3 sm:grid-cols-2" data-help-root="1">
       {props.options.map((opt) => {
         const active =
-          props.mode === "single" ? opt.value === props.value : (props.value as T[]).includes(opt.value);
+          props.mode === "single" ? opt.value === props.value : props.value.includes(opt.value);
 
         const disabled =
           props.mode === "multi" &&
-          !(props.value as T[]).includes(opt.value) &&
-          (props.value as T[]).length >= (props as any).maxSelections;
+          !props.value.includes(opt.value) &&
+          props.value.length >= props.maxSelections;
 
         function handleChipClick() {
           if (disabled) return;
 
           if (props.mode === "single") {
-            props.onChange(opt.value as any);
+            props.onChange(opt.value);
             return;
           }
-          const current = props.value as T[];
+          const current = props.value;
           const exists = current.includes(opt.value);
 
           if (exists) {
             props.onChange(current.filter((x) => x !== opt.value));
             return;
           }
-          if (current.length >= (props as any).maxSelections) return;
+          if (current.length >= props.maxSelections) return;
           props.onChange([...current, opt.value]);
         }
 
