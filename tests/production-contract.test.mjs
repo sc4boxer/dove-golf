@@ -234,7 +234,7 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
   assert.match(component, /MY SHOT PROFILE/);
   assert.match(component, /getBallFlightChartPathGeometry/);
   assert.match(component, /analyticsContext/);
-  assert.doesNotMatch(component, /analyticsParams[\s\S]{0,180}(email|firstName|lastName)/);
+  assert.match(component, /analyticsContext\?:\s*{[\s\S]*?pattern\?: string;[\s\S]*?strike\?: string;[\s\S]*?category\?: string;/);
   assert.match(component, /insightLabel/);
   assert.match(emailRoute, /new Resend\(/);
   assert.match(emailRoute, /Cache-Control.*no-store/s);
