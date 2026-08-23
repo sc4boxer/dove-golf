@@ -55,14 +55,14 @@ function ChoiceGroup<T extends string>({
     <fieldset className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <legend className="px-1 text-lg font-semibold tracking-tight">{legend}</legend>
       <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
         {options.map((option, index) => {
           const checked = value === option.value;
           return (
             <label
               key={option.value}
               className={[
-                "flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 font-medium transition",
+                "flex min-h-14 min-w-0 cursor-pointer items-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium leading-5 transition",
                 checked
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50",
@@ -77,8 +77,8 @@ function ChoiceGroup<T extends string>({
                 onChange={() => onChange(option.value)}
                 className="size-4 shrink-0 accent-slate-900"
               />
-              <span>{option.label}</span>
-              {checked ? <span className="ml-auto text-white" aria-hidden>✓</span> : null}
+              <span className="min-w-0 break-words">{option.label}</span>
+              {checked ? <span className="ml-auto shrink-0 text-white" aria-hidden>✓</span> : null}
             </label>
           );
         })}
