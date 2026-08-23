@@ -1,6 +1,7 @@
 // src/app/method/page.tsx
 import React from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
 
 export const metadata: Metadata = {
@@ -545,12 +546,12 @@ export default function MethodPage() {
                   >
                     Learn more
                   </a>
-                  <a
+                  <Link
                     href="/"
                     className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-6 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
                   >
                     Back to Home
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
