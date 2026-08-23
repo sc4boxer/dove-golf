@@ -77,6 +77,24 @@ textarea {
   }
 }
 
+@keyframes evidence-ray {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.evidence-ray {
+  animation: evidence-ray 550ms ease-out both;
+}
+
+.evidence-ray-delay {
+  animation-delay: 120ms;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
