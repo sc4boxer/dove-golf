@@ -12,6 +12,7 @@ import { RangePlanCard } from "@/components/clinic/RangePlanCard";
 import { ResultInterpretationCard } from "@/components/clinic/ResultInterpretationCard";
 import { CAUSE_LIBRARY } from "@/lib/clinic/causeLibrary";
 import { rankBallCurvesRightCauses } from "@/lib/clinic/confidenceScoring";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
 import { BALL_CURVES_RIGHT_MODULE } from "@/lib/clinic/moduleConfigs/ballCurvesRight";
 
 export default function BallCurvesRightPage() {
@@ -120,6 +121,15 @@ export default function BallCurvesRightPage() {
               ? selectedVariant.id
               : "curves-right-from-right",
         }}
+        details={[
+          { label: "Start", value: selectedVariant.startDirection },
+          { label: "Curve", value: `${selectedVariant.curveSeverity} right` },
+          { label: "Pattern", value: selectedVariant.title },
+        ]}
+        flightShape={getBallFlightShapeFromObservation(
+          selectedVariant.startDirection,
+          "right",
+        )}
       />
 
       <ExpandableWhySection
