@@ -80,11 +80,6 @@ function escapeHtml(value: string) {
   );
 }
 
-function maskEmail(email: string) {
-  const [local = "", domain = ""] = email.split("@");
-  return `${local.slice(0, 2)}***@${domain}`;
-}
-
 export async function POST(request: Request) {
   const requestId = crypto.randomUUID();
 
@@ -174,7 +169,12 @@ export async function POST(request: Request) {
       return json({ ok: false, error: "Email is temporarily unavailable." }, 503);
     }
 
-    const diagnosis = normalizeDiagnosisShareData(body.diagnosis);
+    const diagnosis = normalizeDiagnosisShareData({
+      miss: body.diagnosis.miss as string,
+      likelyCause: body.diagnosis.likelyCause as string,
+      rangePlan: body.diagnosis.rangePlan as string,
+      shareUrl: body.diagnosis.shareUrl as string,
+    });
     const safeMiss = escapeHtml(diagnosis.miss);
     const safeCause = escapeHtml(diagnosis.likelyCause);
     const safePlan = escapeHtml(diagnosis.rangePlan);
@@ -234,7 +234,6 @@ export async function POST(request: Request) {
       JSON.stringify({
         event: "diagnosis_email_accepted",
         requestId,
-        recipient: maskEmail(email),
         source: body.source,
       }),
     );
