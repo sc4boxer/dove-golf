@@ -2,6 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 import { track } from "@/lib/analytics/ga";
+import type { DiagnosisEmailInput, DiagnosisInsightLabel } from "@/lib/share/diagnosisEmail";
 import {
   buildDiagnosisShareText,
   normalizeDiagnosisShareData,
@@ -10,6 +11,8 @@ import {
 
 type DiagnosisSharePanelProps = DiagnosisShareData & {
   source: string;
+  insightLabel?: DiagnosisInsightLabel;
+  emailDiagnosis: DiagnosisEmailInput;
 };
 
 type ActionStatus =
@@ -78,7 +81,7 @@ function wrapCanvasText(
   return startY + lines.length * lineHeight;
 }
 
-async function createDiagnosisCard(data: DiagnosisShareData) {
+async function createDiagnosisCard(data: DiagnosisShareData, insightLabel: DiagnosisInsightLabel) {
   try {
     await document.fonts?.ready;
   } catch {
@@ -115,7 +118,7 @@ async function createDiagnosisCard(data: DiagnosisShareData) {
 
   context.fillStyle = "#64748b";
   context.font = `700 16px ${fontFamily}`;
-  context.fillText("LIKELY CAUSE", 96, causeLabelY);
+  context.fillText(insightLabel.toUpperCase(), 96, causeLabelY);
   context.fillStyle = "#334155";
   context.font = `400 28px ${fontFamily}`;
   wrapCanvasText(context, data.likelyCause, 96, causeLabelY + 34, 1008, 40, 3);
@@ -159,12 +162,17 @@ export function DiagnosisSharePanel({
   rangePlan,
   shareUrl,
   source,
+  insightLabel = "Leading hypothesis",
+  emailDiagnosis,
 }: DiagnosisSharePanelProps) {
   const data = useMemo(
     () => normalizeDiagnosisShareData({ miss, likelyCause, rangePlan, shareUrl }),
     [likelyCause, miss, rangePlan, shareUrl],
   );
-  const shareText = useMemo(() => buildDiagnosisShareText(data), [data]);
+  const shareText = useMemo(
+    () => buildDiagnosisShareText(data, insightLabel),
+    [data, insightLabel],
+  );
   const [actionStatus, setActionStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [emailStatus, setEmailStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [email, setEmail] = useState("");
@@ -205,7 +213,7 @@ export function DiagnosisSharePanel({
     setActionStatus({ kind: "idle", message: "" });
 
     try {
-      const blob = await createDiagnosisCard(data);
+      const blob = await createDiagnosisCard(data, insightLabel);
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -234,9 +242,8 @@ export function DiagnosisSharePanel({
         body: JSON.stringify({
           schemaVersion: 1,
           email,
-          source,
           website: "",
-          diagnosis: data,
+          diagnosis: emailDiagnosis,
         }),
       });
       const payload = (await response.json()) as { ok?: boolean; error?: string };
@@ -282,7 +289,7 @@ export function DiagnosisSharePanel({
             </p>
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Likely cause</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insightLabel}</p>
             <p className="mt-2 break-words leading-7 text-slate-700">{data.likelyCause}</p>
           </div>
         </div>
