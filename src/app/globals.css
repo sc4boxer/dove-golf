@@ -77,6 +77,22 @@ textarea {
   }
 }
 
+@keyframes flight-reveal {
+  from {
+    stroke-dashoffset: 100;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.ball-flight-reveal {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: flight-reveal 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 @keyframes evidence-ray {
   from {
     transform: scaleY(0);
@@ -106,5 +122,14 @@ textarea {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .ball-flight-reveal {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+
+  .ball-flight-marker {
+    display: none;
   }
 }
