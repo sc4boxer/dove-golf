@@ -80,5 +80,8 @@ jobs:
       - name: Test Ball Flight Decoder
         run: npm run test:decoder
 
+      - name: Test Equipment Fit logic
+        run: npm run test:equipment
+
       - name: Build production application
         run: npm run build
