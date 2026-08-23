@@ -50,7 +50,7 @@ function ChoiceGroup<T extends string>({
   firstInputRef?: RefObject<HTMLInputElement | null>;
 }) {
   return (
-    <fieldset className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+    <fieldset className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <legend className="px-1 text-lg font-semibold tracking-tight">{legend}</legend>
       <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -60,7 +60,7 @@ function ChoiceGroup<T extends string>({
             <label
               key={option.value}
               className={[
-                "flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 font-semibold transition",
+                "flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 font-medium transition",
                 checked
                   ? "border-slate-900 bg-slate-900 text-white"
                   : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50",
@@ -113,7 +113,7 @@ export function BallFlightDecoder() {
   const pattern = result ? BALL_FLIGHT_PATTERNS[result.patternSlug] : null;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+    <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
       <form onSubmit={handleSubmit} className="grid gap-5" aria-label="Ball flight inputs">
         <ChoiceGroup
           legend="1. Where did the ball start?"
@@ -144,7 +144,7 @@ export function BallFlightDecoder() {
         <button
           type="submit"
           disabled={!complete}
-          className="min-h-14 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-medium text-white transition enabled:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
+          className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition enabled:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
         >
           Decode my shot
         </button>
@@ -155,7 +155,7 @@ export function BallFlightDecoder() {
         tabIndex={-1}
         aria-live="polite"
         aria-labelledby="decoder-result-title"
-        className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm outline-none sm:p-8"
+        className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-8 shadow-sm focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-slate-600"
       >
         {!result || !pattern ? (
           <div className="flex min-h-[24rem] flex-col justify-between">
@@ -220,7 +220,7 @@ export function BallFlightDecoder() {
               </article>
             </div>
 
-            <div className="mt-8 rounded-2xl bg-slate-100 p-5 text-slate-900">
+            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-900">
               <p className="text-xs font-bold uppercase tracking-[0.12em]">Your next range test</p>
               <p className="mt-3 font-medium leading-7">{result.nextTest}</p>
             </div>
@@ -234,7 +234,7 @@ export function BallFlightDecoder() {
               <button
                 type="button"
                 onClick={handleReset}
-                className="min-h-11 rounded-2xl border border-slate-300 px-5 py-2.5 text-sm font-medium transition hover:bg-slate-50"
+                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
               >
                 Decode another shot
               </button>
