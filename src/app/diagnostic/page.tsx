@@ -1978,9 +1978,7 @@ function ResultsView({
     .join(" ");
 
   const diagnosisShareCause =
-    (result.cause ?? []).slice(0, 2).join(" ") ||
-    (result.why ?? [])[0] ||
-    "The current fit may be amplifying the reported pattern; a controlled comparison is needed.";
+    "This fit is a controlled starting point for the reported pattern. Equipment may amplify a miss; these answers do not prove the club caused it.";
 
   const diagnosisRangePlan = showDriver
     ? "Alternate two five-shot sets with the current club and recommended setup. Keep target, tee height, and speed constant; compare strike, start line, curve, and dispersion."
@@ -2416,6 +2414,20 @@ function ResultsView({
           rangePlan={diagnosisRangePlan}
           shareUrl="https://dovegolf.fit/diagnostic"
           source="equipment_fit"
+          insightLabel="Fit rationale"
+          emailDiagnosis={{
+            kind: "equipment_fit",
+            focus: a.fitFocus,
+            driverStart: a.driverStartLine,
+            driverCurve: a.driverCurve,
+            driverStrike: a.driverStrike,
+            ironStart: a.ironStartLine,
+            ironCurve: a.ironCurve,
+            ironStrike: a.ironFaceStrike,
+            ironLowPoint: a.ironLowPoint,
+            wedgeMiss: a.wedgeMiss,
+            wedgeTurf: a.wedgeTurf,
+          }}
         />
 
         <Card title="How to interpret and apply your results (fitter-grade)">
