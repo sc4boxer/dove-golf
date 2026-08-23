@@ -8,6 +8,12 @@ import { recommendIrons } from "@/lib/engine/irons";
 import { track } from "@/lib/analytics/ga";
 import { BallFlightDiagram } from "@/components/visuals/BallFlightDiagram";
 import { StrikeFaceDiagram } from "@/components/visuals/StrikeFaceDiagram";
+import {
+  type EquipmentFitContext,
+  equipmentFitPrefill,
+  formatEquipmentFitContext,
+  parseEquipmentFitContext,
+} from "@/lib/tools/ballFlightEquipmentBridge";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1900;
@@ -1026,6 +1032,7 @@ function computeResults(a: Answers) {
 
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
+  const [decoderContext, setDecoderContext] = useState<EquipmentFitContext | null>(null);
   const viewedStepsRef = useRef<Set<Step>>(new Set());
   const fitStartedTrackedRef = useRef(false);
   const fitResultsTrackedRef = useRef(false);
@@ -1057,6 +1064,25 @@ export default function DiagnosticWizard() {
       const verified = url.searchParams.get("verified") === "1";
       const verifyStatusParam = url.searchParams.get("verifyStatus");
       const wantsResults = url.searchParams.get("step") === "results";
+
+      const carriedContext = parseEquipmentFitContext(url.searchParams);
+      if (carriedContext) {
+        const prefill = equipmentFitPrefill(carriedContext);
+        setA((previous) => ({ ...previous, ...prefill }));
+        setDecoderContext(carriedContext);
+        track("dov_fit_context_received", {
+          module: "dovefit",
+          placement: "diagnostic_focus",
+          source: carriedContext.source,
+          pattern: carriedContext.pattern,
+          version: "v1",
+        });
+
+        for (const key of ["source", "start", "curve", "strike", "pattern"]) {
+          url.searchParams.delete(key);
+        }
+        window.history.replaceState({}, "", url.toString());
+      }
 
       if (
         verifyStatusParam === "verified" ||
@@ -1214,6 +1240,7 @@ export default function DiagnosticWizard() {
 
   function resetAll() {
     setA(DEFAULT_ANSWERS);
+    setDecoderContext(null);
     setStepIndex(0);
     try {
       window.localStorage.removeItem("diagnostic_last_payload");
@@ -1234,6 +1261,17 @@ export default function DiagnosticWizard() {
           </a>
           <span className="text-xs font-medium text-slate-500">Free Diagnostic</span>
         </div>
+
+        {decoderContext ? (
+          <aside className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="Ball flight carried over">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Ball flight carried over</p>
+            <p className="mt-2 font-medium text-slate-900">{formatEquipmentFitContext(decoderContext)}</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Choose the club category you tested. Driver and iron observations are already filled in; wedge fit
+              uses its own questions.
+            </p>
+          </aside>
+        ) : null}
 
         {/* Progress */}
         <div className="mt-6">
