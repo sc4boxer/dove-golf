@@ -26,6 +26,11 @@ type DiagnosisSharePanelProps = DiagnosisShareData & {
   emailDiagnosis: DiagnosisEmailInput;
   details?: DiagnosisShareDetail[];
   flightShape?: BallFlightChartShape | null;
+  analyticsContext?: {
+    pattern?: string;
+    strike?: string;
+    category?: string;
+  };
 };
 
 type ActionStatus =
@@ -254,6 +259,7 @@ export function DiagnosisSharePanel({
   emailDiagnosis,
   details = [],
   flightShape = null,
+  analyticsContext = {},
 }: DiagnosisSharePanelProps) {
   const data = useMemo(
     () => normalizeDiagnosisShareData({ miss, likelyCause, rangePlan, shareUrl }),
@@ -281,6 +287,10 @@ export function DiagnosisSharePanel({
   const [sharing, setSharing] = useState(false);
   const [shareFile, setShareFile] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
+  const analyticsParams = {
+    source,
+    ...analyticsContext,
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -304,7 +314,7 @@ export function DiagnosisSharePanel({
   async function handleShare() {
     setSharing(true);
     setActionStatus({ kind: "idle", message: "" });
-    track("dov_diagnosis_share_opened", { source });
+    track("dov_diagnosis_share_opened", analyticsParams);
 
     try {
       const fileShareData = shareFile
@@ -323,15 +333,15 @@ export function DiagnosisSharePanel({
       ) {
         await navigator.share(fileShareData);
         setActionStatus({ kind: "success", message: "Diagnosis card shared." });
-        track("dov_diagnosis_shared", { source, method: "native_card" });
+        track("dov_diagnosis_shared", { ...analyticsParams, method: "native_card" });
       } else if (navigator.share) {
         await navigator.share({ title: "My DoveGolf diagnosis", text: shareText, url: data.shareUrl });
         setActionStatus({ kind: "success", message: "Diagnosis shared." });
-        track("dov_diagnosis_shared", { source, method: "native_link" });
+        track("dov_diagnosis_shared", { ...analyticsParams, method: "native_link" });
       } else if (navigator.clipboard) {
         await navigator.clipboard.writeText(shareText);
         setActionStatus({ kind: "success", message: "Diagnosis and link copied." });
-        track("dov_diagnosis_shared", { source, method: "clipboard" });
+        track("dov_diagnosis_shared", { ...analyticsParams, method: "clipboard" });
       } else {
         setActionStatus({ kind: "fallback", message: "Copy the diagnosis below." });
       }
@@ -340,7 +350,7 @@ export function DiagnosisSharePanel({
         setActionStatus({ kind: "idle", message: "" });
       } else {
         setActionStatus({ kind: "fallback", message: "Copy the diagnosis below." });
-        track("dov_diagnosis_share_failed", { source, reason_code: "share_unavailable" });
+        track("dov_diagnosis_share_failed", { ...analyticsParams, reason_code: "share_unavailable" });
       }
     } finally {
       setSharing(false);
@@ -360,7 +370,7 @@ export function DiagnosisSharePanel({
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
       setActionStatus({ kind: "success", message: "Diagnosis image downloaded." });
-      track("dov_diagnosis_card_downloaded", { source });
+      track("dov_diagnosis_card_downloaded", analyticsParams);
     } catch {
       setActionStatus({ kind: "error", message: "The image could not be created. Please try again." });
     } finally {
@@ -372,7 +382,7 @@ export function DiagnosisSharePanel({
     event.preventDefault();
     setSending(true);
     setEmailStatus({ kind: "idle", message: "" });
-    track("dov_diagnosis_email_requested", { source });
+    track("dov_diagnosis_email_requested", analyticsParams);
 
     try {
       const response = await fetch("/api/email-results", {
@@ -392,13 +402,13 @@ export function DiagnosisSharePanel({
       }
 
       setEmailStatus({ kind: "success", message: "Your diagnosis and range plan are on the way." });
-      track("dov_diagnosis_email_sent", { source });
+      track("dov_diagnosis_email_sent", analyticsParams);
     } catch {
       setEmailStatus({
         kind: "error",
         message: "We could not send the email right now. Please try again in a few minutes.",
       });
-      track("dov_diagnosis_email_failed", { source, reason_code: "request_failed" });
+      track("dov_diagnosis_email_failed", { ...analyticsParams, reason_code: "request_failed" });
     } finally {
       setSending(false);
     }
