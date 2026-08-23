@@ -1,16 +1,12 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { normalizeDiagnosisShareData } from "@/lib/share/diagnosisShare";
+import {
+  buildDiagnosisEmailContent,
+  parseDiagnosisEmailInput,
+} from "@/lib/share/diagnosisEmail";
 
 const MAX_BODY_BYTES = 8_192;
-const SOURCE_VALUES = new Set([
-  "ball_flight_decoder",
-  "equipment_fit",
-  "driver_slice",
-  "pull_hook",
-  "ball_curves_right",
-]);
 const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const rateBuckets = new Map<string, { count: number; resetAt: number }>();
@@ -33,12 +29,17 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function takeRateLimit(key: string, limit: number, windowMs: number) {
   const now = Date.now();
+  if (rateBuckets.size > 5_000) {
+    for (const [bucketKey, bucket] of rateBuckets) {
+      if (bucket.resetAt <= now) rateBuckets.delete(bucketKey);
+    }
+  }
+
   const existing = rateBuckets.get(key);
   if (!existing || existing.resetAt <= now) {
     rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
     return 0;
   }
-
   if (existing.count >= limit) {
     return Math.max(1, Math.ceil((existing.resetAt - now) / 1000));
   }
@@ -57,7 +58,7 @@ function allowedOrigin(request: Request) {
     try {
       allowed.add(new URL(configured).origin);
     } catch {
-      // Invalid configuration is ignored; the canonical production origin remains allowed.
+      // Invalid optional configuration is ignored.
     }
   }
 
@@ -87,7 +88,6 @@ export async function POST(request: Request) {
     if (!allowedOrigin(request)) {
       return json({ ok: false, error: "Request not allowed." }, 403);
     }
-
     if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
       return json({ ok: false, error: "Invalid request." }, 415);
     }
@@ -106,31 +106,17 @@ export async function POST(request: Request) {
 
     if (
       !isPlainObject(body) ||
-      !hasExactKeys(body, ["schemaVersion", "email", "source", "website", "diagnosis"]) ||
+      !hasExactKeys(body, ["schemaVersion", "email", "website", "diagnosis"]) ||
       body.schemaVersion !== 1 ||
       typeof body.email !== "string" ||
-      typeof body.source !== "string" ||
-      typeof body.website !== "string" ||
-      !isPlainObject(body.diagnosis) ||
-      !hasExactKeys(body.diagnosis, ["miss", "likelyCause", "rangePlan", "shareUrl"])
+      typeof body.website !== "string"
     ) {
       return json({ ok: false, error: "Invalid request." }, 400);
     }
+    if (body.website) return json({ ok: true });
 
-    if (body.website) {
-      return json({ ok: true });
-    }
-
-    const diagnosisValues = Object.values(body.diagnosis);
-    if (
-      !SOURCE_VALUES.has(body.source) ||
-      diagnosisValues.some(
-        (value) =>
-          typeof value !== "string" ||
-          value.length > 500 ||
-          CONTROL_CHARACTERS.test(value),
-      )
-    ) {
+    const diagnosisInput = parseDiagnosisEmailInput(body.diagnosis);
+    if (!diagnosisInput) {
       return json({ ok: false, error: "Invalid request." }, 400);
     }
 
@@ -169,20 +155,16 @@ export async function POST(request: Request) {
       return json({ ok: false, error: "Email is temporarily unavailable." }, 503);
     }
 
-    const diagnosis = normalizeDiagnosisShareData({
-      miss: body.diagnosis.miss as string,
-      likelyCause: body.diagnosis.likelyCause as string,
-      rangePlan: body.diagnosis.rangePlan as string,
-      shareUrl: body.diagnosis.shareUrl as string,
-    });
-    const safeMiss = escapeHtml(diagnosis.miss);
-    const safeCause = escapeHtml(diagnosis.likelyCause);
-    const safePlan = escapeHtml(diagnosis.rangePlan);
-    const safeUrl = escapeHtml(diagnosis.shareUrl);
+    const content = buildDiagnosisEmailContent(diagnosisInput);
+    const safeMiss = escapeHtml(content.miss);
+    const safeLabel = escapeHtml(content.insightLabel);
+    const safeInsight = escapeHtml(content.insight);
+    const safePlan = escapeHtml(content.rangePlan);
+    const safeUrl = escapeHtml(content.shareUrl);
     const resend = new Resend(resendApiKey);
     const idempotencyDigest = crypto
       .createHash("sha256")
-      .update([email, diagnosis.miss, diagnosis.likelyCause, diagnosis.rangePlan].join("|"))
+      .update([email, JSON.stringify(diagnosisInput), content.shareUrl].join("|"))
       .digest("hex")
       .slice(0, 48);
 
@@ -190,19 +172,19 @@ export async function POST(request: Request) {
       {
         from: fromEmail,
         to: [email],
-        subject: `Your DoveGolf diagnosis: ${diagnosis.miss}`,
+        subject: `Your DoveGolf result: ${content.miss}`,
         html: `
           <div style="margin:0;background:#f8fafc;padding:32px 16px;font-family:Arial,sans-serif;color:#0f172a">
             <div style="margin:0 auto;max-width:640px;border:1px solid #e2e8f0;border-radius:24px;background:#ffffff;padding:32px">
-              <p style="margin:0 0 24px;color:#64748b;font-size:12px;font-weight:700;letter-spacing:.12em">DOVE GOLF · YOUR DIAGNOSIS</p>
-              <p style="margin:0;color:#64748b;font-size:12px;font-weight:700">MISS</p>
+              <p style="margin:0 0 24px;color:#64748b;font-size:12px;font-weight:700;letter-spacing:.12em">DOVE GOLF · YOUR RESULT</p>
+              <p style="margin:0;color:#64748b;font-size:12px;font-weight:700">OBSERVED PATTERN</p>
               <h1 style="margin:8px 0 24px;font-size:32px;line-height:1.2">${safeMiss}</h1>
-              <p style="margin:0;color:#64748b;font-size:12px;font-weight:700">LIKELY CAUSE</p>
-              <p style="margin:8px 0 24px;font-size:17px;line-height:1.6;color:#334155">${safeCause}</p>
+              <p style="margin:0;color:#64748b;font-size:12px;font-weight:700">${safeLabel.toUpperCase()}</p>
+              <p style="margin:8px 0 24px;font-size:17px;line-height:1.6;color:#334155">${safeInsight}</p>
               <div style="border-top:1px solid #e2e8f0;padding-top:24px">
                 <p style="margin:0 0 8px;font-weight:700">Your range plan</p>
                 <p style="margin:0 0 24px;line-height:1.6;color:#334155">${safePlan}</p>
-                <a href="${safeUrl}" style="color:#0f172a;font-weight:700">Open this DoveGolf diagnostic</a>
+                <a href="${safeUrl}" style="color:#0f172a;font-weight:700">Open this DoveGolf tool</a>
               </div>
               <p style="margin:24px 0 0;color:#64748b;font-size:12px;line-height:1.5">
                 Educational starting point only. Test with a repeatable shot pattern.
@@ -211,15 +193,15 @@ export async function POST(request: Request) {
           </div>
         `,
         text: [
-          "DoveGolf · Your diagnosis",
+          "DoveGolf · Your result",
           "",
-          `Miss: ${diagnosis.miss}`,
-          `Likely cause: ${diagnosis.likelyCause}`,
+          `Observed pattern: ${content.miss}`,
+          `${content.insightLabel}: ${content.insight}`,
           "",
           "Your range plan",
-          diagnosis.rangePlan,
+          content.rangePlan,
           "",
-          `Open this DoveGolf diagnostic: ${diagnosis.shareUrl}`,
+          `Open this DoveGolf tool: ${content.shareUrl}`,
         ].join("\n"),
       },
       { idempotencyKey: `diagnosis/${idempotencyDigest}` },
@@ -234,7 +216,7 @@ export async function POST(request: Request) {
       JSON.stringify({
         event: "diagnosis_email_accepted",
         requestId,
-        source: body.source,
+        source: diagnosisInput.kind,
       }),
     );
     return json({ ok: true });
