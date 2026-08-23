@@ -50,9 +50,9 @@ function ChoiceGroup<T extends string>({
   firstInputRef?: RefObject<HTMLInputElement | null>;
 }) {
   return (
-    <fieldset className="rounded-3xl border border-[var(--line)] bg-[var(--paper-strong)] p-5 sm:p-7">
-      <legend className="px-1 text-xl font-semibold tracking-[-0.02em]">{legend}</legend>
-      <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{helper}</p>
+    <fieldset className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <legend className="px-1 text-lg font-semibold tracking-tight">{legend}</legend>
+      <p className="mt-2 text-sm leading-6 text-slate-600">{helper}</p>
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         {options.map((option, index) => {
           const checked = value === option.value;
@@ -62,8 +62,8 @@ function ChoiceGroup<T extends string>({
               className={[
                 "flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 font-semibold transition",
                 checked
-                  ? "border-[var(--forest)] bg-[var(--forest)] text-white"
-                  : "border-[var(--line)] bg-white text-[var(--ink)] hover:border-[var(--fairway)]",
+                  ? "border-slate-900 bg-slate-900 text-white"
+                  : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50",
               ].join(" ")}
             >
               <input
@@ -73,10 +73,10 @@ function ChoiceGroup<T extends string>({
                 value={option.value}
                 checked={checked}
                 onChange={() => onChange(option.value)}
-                className="size-4 shrink-0 accent-[var(--lime)]"
+                className="size-4 shrink-0 accent-slate-900"
               />
               <span>{option.label}</span>
-              {checked ? <span className="ml-auto text-[var(--lime)]" aria-hidden>✓</span> : null}
+              {checked ? <span className="ml-auto text-white" aria-hidden>✓</span> : null}
             </label>
           );
         })}
@@ -144,7 +144,7 @@ export function BallFlightDecoder() {
         <button
           type="submit"
           disabled={!complete}
-          className="min-h-14 rounded-full bg-[var(--forest)] px-6 py-3 font-semibold text-white transition enabled:hover:-translate-y-0.5 enabled:hover:bg-[var(--forest-deep)] disabled:cursor-not-allowed disabled:opacity-45"
+          className="min-h-14 rounded-2xl bg-slate-900 px-6 py-3 text-sm font-medium text-white transition enabled:hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-45"
         >
           Decode my shot
         </button>
@@ -155,24 +155,24 @@ export function BallFlightDecoder() {
         tabIndex={-1}
         aria-live="polite"
         aria-labelledby="decoder-result-title"
-        className="min-h-[28rem] rounded-[2rem] border border-[var(--line)] bg-[var(--paper-strong)] p-6 outline-none sm:p-9"
+        className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-6 shadow-sm outline-none sm:p-8"
       >
         {!result || !pattern ? (
           <div className="flex min-h-[24rem] flex-col justify-between">
             <div>
-              <p className="eyebrow">Your result will appear here</p>
-              <h2 id="decoder-result-title" className="mt-5 max-w-xl font-serif text-4xl leading-tight tracking-[-0.04em] sm:text-5xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your result will appear here</p>
+              <h2 id="decoder-result-title" className="mt-5 max-w-xl text-3xl font-semibold leading-tight tracking-[-0.035em] sm:text-4xl">
                 Three observations. One transparent starting point.
               </h2>
-              <p className="mt-5 max-w-xl text-lg leading-8 text-[var(--muted)]">
+              <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
                 We use start direction, curve, and strike together. No confidence theater, hidden score, or
                 automatic equipment prescription.
               </p>
             </div>
             <div className="mt-10 grid grid-cols-3 gap-3" aria-hidden>
               {["Start", "Curve", "Strike"].map((label, index) => (
-                <div key={label} className="rounded-2xl border border-dashed border-[var(--line)] p-4">
-                  <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--muted)]">0{index + 1}</span>
+                <div key={label} className="rounded-2xl border border-dashed border-slate-200 p-4">
+                  <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">0{index + 1}</span>
                   <p className="mt-4 font-semibold">{label}</p>
                 </div>
               ))}
@@ -180,65 +180,65 @@ export function BallFlightDecoder() {
           </div>
         ) : (
           <div>
-            <p className="eyebrow">Your pattern</p>
-            <h2 id="decoder-result-title" className="mt-4 font-serif text-5xl tracking-[-0.045em] sm:text-6xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your pattern</p>
+            <h2 id="decoder-result-title" className="mt-4 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
               {pattern.title}
             </h2>
-            <p className="mt-4 text-lg leading-8 text-[var(--muted)]">{pattern.definition}</p>
-            <p className="mt-3 rounded-xl bg-[var(--mist)]/55 p-4 text-sm leading-6 text-[var(--forest-deep)]">
+            <p className="mt-4 text-lg leading-8 text-slate-600">{pattern.definition}</p>
+            <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
               Because curve size is not collected, “draw/fade” is descriptive; a large curve may commonly be
               called a hook/slice.
             </p>
 
-            <div className="mt-8 border-t border-[var(--line)] pt-8">
+            <div className="mt-8 border-t border-slate-200 pt-8">
               <h3 className="text-xl font-semibold">What the flight tells us</h3>
-              <p className="mt-4 leading-7 text-[var(--muted)]">{result.faceSummary}</p>
-              <p className="mt-3 leading-7 text-[var(--muted)]">{result.pathSummary}</p>
-              <ul className="mt-5 grid gap-2 text-sm text-[var(--forest-deep)]">
+              <p className="mt-4 leading-7 text-slate-600">{result.faceSummary}</p>
+              <p className="mt-3 leading-7 text-slate-600">{result.pathSummary}</p>
+              <ul className="mt-5 grid gap-2 text-sm text-slate-700">
                 {pattern.physicsConstraints.map((constraint) => (
                   <li key={constraint} className="flex gap-3">
-                    <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-[var(--fairway)]" />
+                    <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-slate-400" />
                     <span>{constraint}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="mt-8 border-t border-[var(--line)] pt-8">
+            <div className="mt-8 border-t border-slate-200 pt-8">
               <h3 className="text-xl font-semibold">How strike changes the read</h3>
-              <p className="mt-4 leading-7 text-[var(--muted)]">{result.strikeSummary}</p>
+              <p className="mt-4 leading-7 text-slate-600">{result.strikeSummary}</p>
             </div>
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <article className="rounded-2xl bg-[var(--forest-deep)] p-5 text-white">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--lime)]">Technique first</p>
-                <p className="mt-4 leading-7 text-white/75">{result.techniqueGuidance}</p>
+              <article className="rounded-2xl bg-slate-900 p-5 text-white">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">Technique first</p>
+                <p className="mt-4 leading-7 text-slate-200">{result.techniqueGuidance}</p>
               </article>
-              <article className="rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-5">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--fairway)]">Equipment check</p>
-                <p className="mt-4 leading-7 text-[var(--muted)]">{result.equipmentGuidance}</p>
+              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Equipment check</p>
+                <p className="mt-4 leading-7 text-slate-600">{result.equipmentGuidance}</p>
               </article>
             </div>
 
-            <div className="mt-8 rounded-2xl bg-[var(--lime)] p-5 text-[var(--forest-deep)]">
+            <div className="mt-8 rounded-2xl bg-slate-100 p-5 text-slate-900">
               <p className="text-xs font-bold uppercase tracking-[0.12em]">Your next range test</p>
               <p className="mt-3 font-medium leading-7">{result.nextTest}</p>
             </div>
 
-            <div className="mt-8 border-t border-[var(--line)] pt-8">
+            <div className="mt-8 border-t border-slate-200 pt-8">
               <h3 className="text-lg font-semibold">Limits of this result</h3>
-              <p className="mt-3 text-sm leading-6 text-[var(--muted)]">{result.caveat}</p>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{result.caveat}</p>
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <button
                 type="button"
                 onClick={handleReset}
-                className="min-h-11 rounded-full border border-[var(--ink)] px-5 py-2.5 font-semibold"
+                className="min-h-11 rounded-2xl border border-slate-300 px-5 py-2.5 text-sm font-medium transition hover:bg-slate-50"
               >
                 Decode another shot
               </button>
-              <div className="flex flex-wrap gap-5 text-sm font-semibold">
+              <div className="flex flex-wrap gap-5 text-sm font-medium text-slate-700">
                 <Link href="/learn/start-line-vs-curve">Learn face vs path</Link>
                 <Link href="/method">Read our method</Link>
               </div>
