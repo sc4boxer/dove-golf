@@ -2452,6 +2452,11 @@ function ResultsView({
           }}
           details={diagnosisShareDetails}
           flightShape={diagnosisFlightShape}
+          analyticsContext={{
+            pattern: diagnosisFlightShape ?? "unmeasured",
+            strike: showDriver ? a.driverStrike : showIrons ? a.ironFaceStrike : a.wedgeMiss,
+            category: a.fitFocus,
+          }}
         />
 
         <Card title="How to interpret and apply your results (fitter-grade)">
