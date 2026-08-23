@@ -264,6 +264,13 @@ export function BallFlightDecoder() {
                 rangePlan={result.nextTest}
                 shareUrl="https://dovegolf.fit/tools/ball-flight-decoder"
                 source="ball_flight_decoder"
+                insightLabel="Impact interpretation"
+                emailDiagnosis={{
+                  kind: "ball_flight_decoder",
+                  start,
+                  curve,
+                  strike,
+                }}
               />
             </div>
 
