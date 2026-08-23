@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint, test, and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_GA_ID: G-TEST000000
+      NEXT_PUBLIC_SITE_URL: https://dovegolf.fit
+      RESEND_API_KEY: re_ci_placeholder
+      RESEND_FROM_EMAIL: Dove Golf <noreply@dovegolf.fit>
+      SUPABASE_URL: https://example.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test visual logic
+        run: node --test src/lib/visual/*.test.js
+
+      - name: Build production application
+        run: npm run build
