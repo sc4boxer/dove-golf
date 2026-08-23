@@ -213,8 +213,8 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
     source("src/app/clinic/ball-curves-right/page.tsx"),
   ]);
 
-  assert.match(component, />Share my diagnosis</);
-  assert.match(component, />Send me my diagnosis and range plan</);
+  assert.ok(component.includes("Share my diagnosis"));
+  assert.ok(component.includes("Send me my diagnosis and range plan"));
   assert.match(component, /Download result card/);
   assert.match(component, /Likely cause/);
   assert.match(emailRoute, /new Resend\(/);
