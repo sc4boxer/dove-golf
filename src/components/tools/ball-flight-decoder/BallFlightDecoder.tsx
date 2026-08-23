@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
+import { BallFlightResultVisual } from "./BallFlightResultVisual";
+import { ShotEvidenceView } from "./ShotEvidenceView";
 import {
   type CurveInput,
   type DecoderResult,
@@ -157,7 +159,7 @@ export function BallFlightDecoder() {
         aria-labelledby="decoder-result-title"
         className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-8 shadow-sm focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-slate-600"
       >
-        {!result || !pattern ? (
+        {!result || !pattern || !start || !curve || !strike ? (
           <div className="flex min-h-[24rem] flex-col justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your result will appear here</p>
@@ -190,6 +192,13 @@ export function BallFlightDecoder() {
               called a hook/slice.
             </p>
 
+            <BallFlightResultVisual
+              patternSlug={result.patternSlug}
+              patternTitle={pattern.title}
+              start={start}
+              curve={curve}
+            />
+
             <div className="mt-8 border-t border-slate-200 pt-8">
               <h3 className="text-xl font-semibold">What the flight tells us</h3>
               <p className="mt-4 leading-7 text-slate-600">{result.faceSummary}</p>
@@ -202,6 +211,13 @@ export function BallFlightDecoder() {
                   </li>
                 ))}
               </ul>
+
+              <details className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <summary className="cursor-pointer text-sm font-medium text-slate-900">
+                  See the face, path, and strike relationship
+                </summary>
+                <ShotEvidenceView start={start} curve={curve} strike={strike} />
+              </details>
             </div>
 
             <div className="mt-8 border-t border-slate-200 pt-8">
