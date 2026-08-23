@@ -8,31 +8,36 @@ import {
   parseEquipmentFitContext,
 } from "./ballFlightEquipmentBridge.ts";
 
-test("builds a shareable decoder-to-fit handoff", () => {
-  assert.equal(
-    buildEquipmentFitHref({
-      start: "left",
-      curve: "right",
-      strike: "heel",
-      patternSlug: "pull-fade",
-    }),
-    "/diagnostic?source=ball-flight-decoder&start=left&curve=right&strike=heel&pattern=pull-fade"
-  );
+const decoderStarts = ["left", "straight", "right"];
+const decoderCurves = ["left", "straight", "right"];
+const decoderStrikes = ["heel", "center", "toe", "unknown"];
+
+test("round-trips all 36 decoder observations through the versioned contract", () => {
+  for (const start of decoderStarts) {
+    for (const curve of decoderCurves) {
+      for (const strike of decoderStrikes) {
+        const href = buildEquipmentFitHref({ start, curve, strike });
+        const context = parseEquipmentFitContext(new URL(href, "https://dovegolf.fit").searchParams);
+        assert.ok(context);
+        assert.equal(context.version, "1");
+      }
+    }
+  }
 });
 
-test("parses carried observations without choosing a club category", () => {
-  const context = parseEquipmentFitContext(
-    new URLSearchParams("source=ball-flight-decoder&start=left&curve=right&strike=heel&pattern=pull-fade")
-  );
+test("maps the audited straight-draw example", () => {
+  const href = buildEquipmentFitHref({ start: "straight", curve: "left", strike: "center" });
+  const context = parseEquipmentFitContext(new URL(href, "https://dovegolf.fit").searchParams);
 
   assert.ok(context);
-  assert.equal(formatEquipmentFitPattern(context), "Pull Fade");
-  assert.equal(formatEquipmentFitContext(context), "Start: Left · Curve: Right · Strike: Heel");
+  assert.equal(context.pattern, "straight-draw");
+  assert.equal(formatEquipmentFitPattern(context), "Straight Draw");
+  assert.equal(formatEquipmentFitContext(context), "Start: On target · Curve: Left (draw) · Strike: Center");
 });
 
 test("prefills only the explicitly selected club category", () => {
   const context = parseEquipmentFitContext(
-    new URLSearchParams("source=ball-flight-decoder&start=left&curve=right&strike=heel&pattern=pull-fade")
+    new URLSearchParams("source=ball-flight-decoder&v=1&start=left&curve=fade&strike=heel")
   );
 
   assert.ok(context);
@@ -50,9 +55,9 @@ test("prefills only the explicitly selected club category", () => {
   assert.deepEqual(equipmentFitPrefill(context, "full_bag"), {});
 });
 
-test("does not convert an unknown strike into an observed miss", () => {
+test("does not convert an unsure strike into all-over contact", () => {
   const context = parseEquipmentFitContext(
-    new URLSearchParams("source=ball-flight-decoder&start=straight&curve=straight&strike=unknown")
+    new URLSearchParams("source=ball-flight-decoder&v=1&start=center&curve=straight&strike=unsure")
   );
 
   assert.ok(context);
@@ -64,10 +69,20 @@ test("does not convert an unknown strike into an observed miss", () => {
     ironStartLine: "center",
     ironCurve: "straight",
   });
-  assert.equal(context.pattern, "straight-straight");
 });
 
-test("rejects incomplete or unrelated handoffs", () => {
-  assert.equal(parseEquipmentFitContext(new URLSearchParams("source=other&start=left&curve=right&strike=heel")), null);
-  assert.equal(parseEquipmentFitContext(new URLSearchParams("source=ball-flight-decoder&start=left&curve=up&strike=heel")), null);
+test("rejects missing, invalid, unversioned, and duplicated parameters", () => {
+  const invalid = [
+    "source=other&v=1&start=left&curve=fade&strike=heel",
+    "source=ball-flight-decoder&start=left&curve=fade&strike=heel",
+    "source=ball-flight-decoder&v=2&start=left&curve=fade&strike=heel",
+    "source=ball-flight-decoder&v=1&start=up&curve=fade&strike=heel",
+    "source=ball-flight-decoder&v=1&start=left&curve=hook&strike=heel",
+    "source=ball-flight-decoder&v=1&start=left&curve=fade&strike=all_over",
+    "source=ball-flight-decoder&v=1&start=left&start=right&curve=fade&strike=heel",
+  ];
+
+  for (const query of invalid) {
+    assert.equal(parseEquipmentFitContext(new URLSearchParams(query)), null);
+  }
 });
