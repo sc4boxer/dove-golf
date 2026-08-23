@@ -3,20 +3,8 @@
 import { useState } from "react";
 import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 import type { PatternSlug } from "@/lib/learn/ballFlightPatterns";
-import type { BallFlightChartShape } from "@/lib/visual/ballFlightChartPaths";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
 import type { CurveInput, StartInput } from "./model.ts";
-
-const SHAPE_BY_PATTERN: Record<PatternSlug, BallFlightChartShape> = {
-  "pull-draw": "pull-draw",
-  "pull-straight": "pull",
-  "pull-fade": "pull-fade",
-  "straight-draw": "draw",
-  "straight-straight": "straight",
-  "straight-fade": "fade",
-  "push-draw": "push-draw",
-  "push-straight": "push",
-  "push-fade": "push-fade",
-};
 
 const START_COPY: Record<StartInput, string> = {
   left: "Starts left of target",
@@ -42,7 +30,10 @@ export function BallFlightResultVisual({
   curve: CurveInput;
 }) {
   const [replay, setReplay] = useState(0);
-  const shape = SHAPE_BY_PATTERN[patternSlug];
+  const shape = getBallFlightShapeFromObservation(
+    start === "straight" ? "center" : start,
+    curve,
+  );
 
   return (
     <section
