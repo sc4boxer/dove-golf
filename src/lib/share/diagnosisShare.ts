@@ -48,14 +48,17 @@ export function normalizeDiagnosisShareData(input: Partial<DiagnosisShareData>):
   };
 }
 
-export function buildDiagnosisShareText(input: Partial<DiagnosisShareData>) {
+export function buildDiagnosisShareText(
+  input: Partial<DiagnosisShareData>,
+  insightLabel = "Likely cause",
+) {
   const data = normalizeDiagnosisShareData(input);
 
   return [
     "My DoveGolf diagnosis",
     "",
     `Miss: ${data.miss}`,
-    `Likely cause: ${data.likelyCause}`,
+    `${normalizeShareText(insightLabel, "Likely cause")}: ${data.likelyCause}`,
     "",
     `See the diagnostic: ${data.shareUrl}`,
   ].join("\n");
