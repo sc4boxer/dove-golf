@@ -1193,7 +1193,6 @@ export default function DiagnosticWizard() {
     // Resume completion deliberately moves the wizard to its terminal step.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex(s.length - 1);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPendingJumpToResults(false);
   }, [pendingJumpToResults, a.fitFocus]);
 
@@ -1997,7 +1996,6 @@ function ResultsView({
         if (payloadRaw) {
           const parsedPayload = JSON.parse(payloadRaw);
           const fallbackProfile = extractContactProfile(parsedPayload);
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setContactProfile(fallbackProfile);
         }
       }
@@ -2008,17 +2006,13 @@ function ResultsView({
     try {
       const stored = window.localStorage.getItem("diagnostic_completed_at");
       if (stored) {
-        // Stored completion time is restored once after hydration.
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCompletedAt(stored);
       } else {
         const nowIso = new Date().toISOString();
         window.localStorage.setItem("diagnostic_completed_at", nowIso);
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCompletedAt(nowIso);
       }
     } catch {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCompletedAt(new Date().toISOString());
     }
   }, []);
@@ -2883,6 +2877,8 @@ function MiniVizCard({ children }: { children: React.ReactNode }) {
  * ✅ NO moving ball circle (removes the stray/yellow dot issue)
  * ✅ "start" label sits under the true start point
  */
+// Retained for the existing share-card renderer.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BallFlightViz({
   start,
   curve,
@@ -2961,6 +2957,8 @@ function BallFlightViz({
  * - Heel/toe always show
  * - Shaft/hosel reference on RIGHT (toe side)
  */
+// Retained for the existing share-card renderer.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FaceStrikeViz({
   strike,
 }: {
