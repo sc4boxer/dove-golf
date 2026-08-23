@@ -1971,8 +1971,6 @@ function ResultsView({
   // ✅ FIX #2: only show irons contact profile when irons are part of the workflow
   const showIronContactProfile = showIrons;
 
-  const modelStart = showIrons && !showDriver ? a.ironStartLine : a.driverStartLine;
-  const modelCurve = showIrons && !showDriver ? a.ironCurve : a.driverCurve;
   const certificateId = useMemo(() => buildCertificateId(a, result), [a, result]);
   const alignmentScore = useMemo(() => computeAlignmentScore(result), [result]);
   const verificationUrl = `https://dovegolf.fit/verify/${certificateId}`;
@@ -2432,8 +2430,6 @@ function ResultsView({
           completedLabel={completedLabel}
           verificationUrl={verificationUrl}
           qrSvgMarkup={qrSvgMarkup}
-          modelStart={modelStart}
-          modelCurve={modelCurve}
           showDriver={showDriver}
           showIrons={showIrons}
           firstName={contactProfile.firstName}
@@ -2452,8 +2448,6 @@ function EquipmentAlignmentShareCard({
   completedLabel,
   verificationUrl,
   qrSvgMarkup,
-  modelStart,
-  modelCurve,
   showDriver,
   showIrons,
   firstName,
@@ -2465,8 +2459,6 @@ function EquipmentAlignmentShareCard({
   completedLabel: string;
   verificationUrl: string;
   qrSvgMarkup: string;
-  modelStart: StartLine;
-  modelCurve: Curve;
   showDriver: boolean;
   showIrons: boolean;
   firstName: string | null;
@@ -2479,6 +2471,15 @@ function EquipmentAlignmentShareCard({
   const energyTransfer = a.driverTempo === "quick" ? "Fast Energy" : a.driverTempo === "smooth" ? "Smooth Energy" : "Neutral";
   const stabilityRequirement = result.confidence >= 80 ? "Medium Stability" : result.confidence >= 65 ? "High Stability" : "Low Stability";
   const spinBias = a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid";
+  const driverFlightShape = showDriver
+    ? getEquipmentBallFlightShape(a.driverStartLine, a.driverCurve)
+    : null;
+  const ironFlightShape = showIrons
+    ? getEquipmentBallFlightShape(a.ironStartLine, a.ironCurve)
+    : null;
+  const primaryFlightShape = showDriver ? driverFlightShape : ironFlightShape;
+  const primaryFlightLabel = showDriver ? "Driver + Woods" : showIrons ? "Irons" : "Wedges";
+  const driverShareStrike = a.driverStrike === "all_over" ? "mixed" : a.driverStrike;
 
   const swingSignature = [
     { label: "Club speed", value: `${showDriver ? result.driverSpeedEstimate : result.sevenIronSpeedEstimate} mph` },
@@ -2633,18 +2634,65 @@ function EquipmentAlignmentShareCard({
 
       <rect x="64" y="402" width="952" height="172" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="432" fontSize="20" fontWeight="600" fill="#0f172a">Impact visuals</text>
+
       <rect x="88" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
-      <svg x="96" y="456" width="270" height="92" viewBox="0 0 520 160">
-        <BallFlightDiagram shape={modelCurve === "unsure" ? "straight" : modelCurve} startSide={modelStart === "unsure" ? undefined : modelStart} compact={false} staticRender />
+      <text x="100" y="468" fontSize="12" fontWeight="600" fill="#475569">{primaryFlightLabel}</text>
+      <svg x="96" y="470" width="270" height="78" viewBox="0 0 300 150">
+        {primaryFlightShape ? (
+          <BallFlightChartGlyph shape={primaryFlightShape} width={300} height={150} staticRender />
+        ) : (
+          <text x="150" y="78" textAnchor="middle" fontSize="14" fill="#64748b">Flight not recorded</text>
+        )}
       </svg>
+
       <rect x="397" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
-      <svg x="410" y="454" width="260" height="94" viewBox="0 0 260 120">
-        <LowPointViz lowPoint={a.ironLowPoint} staticRender />
-      </svg>
+      {showDriver && showIrons ? (
+        <>
+          <text x="409" y="468" fontSize="12" fontWeight="600" fill="#475569">Irons</text>
+          <svg x="405" y="470" width="270" height="78" viewBox="0 0 300 150">
+            {ironFlightShape ? (
+              <BallFlightChartGlyph shape={ironFlightShape} width={300} height={150} staticRender />
+            ) : (
+              <text x="150" y="78" textAnchor="middle" fontSize="14" fill="#64748b">Flight not recorded</text>
+            )}
+          </svg>
+        </>
+      ) : showIrons ? (
+        <>
+          <text x="409" y="468" fontSize="12" fontWeight="600" fill="#475569">Iron low point</text>
+          <svg x="410" y="466" width="260" height="86" viewBox="0 0 260 120">
+            <LowPointGlyph lowPoint={a.ironLowPoint} staticRender />
+          </svg>
+        </>
+      ) : showDriver ? (
+        <>
+          <text x="409" y="468" fontSize="12" fontWeight="600" fill="#475569">Driver strike</text>
+          <svg x="410" y="466" width="260" height="86" viewBox="0 0 260 120">
+            <StrikeFaceGlyph strike={driverShareStrike} />
+          </svg>
+        </>
+      ) : (
+        <>
+          <text x="409" y="486" fontSize="12" fontWeight="600" fill="#475569">Wedge turf: {a.wedgeTurf}</text>
+          <text x="409" y="510" fontSize="12" fill="#64748b">Typical miss: {a.wedgeMiss}</text>
+        </>
+      )}
+
       <rect x="706" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
-      <svg x="719" y="454" width="260" height="94" viewBox="0 0 260 120">
-        <StrikeFaceDiagram strike={a.ironFaceStrike} />
-      </svg>
+      {showIrons ? (
+        <>
+          <text x="718" y="468" fontSize="12" fontWeight="600" fill="#475569">Iron strike</text>
+          <svg x="719" y="466" width="260" height="86" viewBox="0 0 260 120">
+            <StrikeFaceGlyph strike={a.ironFaceStrike} />
+          </svg>
+        </>
+      ) : (
+        <>
+          <text x="718" y="486" fontSize="12" fontWeight="600" fill="#475569">Model boundary</text>
+          <text x="718" y="510" fontSize="12" fill="#64748b">Right-handed · illustrative</text>
+          <text x="718" y="532" fontSize="12" fill="#64748b">Not measured launch data</text>
+        </>
+      )}
 
       <rect x="64" y={recommendationCardY} width="952" height={recommendationCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
@@ -2894,10 +2942,15 @@ function MiniVizCard({ children }: { children: React.ReactNode }) {
  * LowPointViz:
  * - U-shaped divot (dips into ground)
  */
-function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoint; staticRender?: boolean }) {
+function LowPointGlyph({
+  lowPoint,
+  staticRender = false,
+}: {
+  lowPoint: IronLowPoint;
+  staticRender?: boolean;
+}) {
   const w = 260;
   const h = 120;
-
   const groundY = h * 0.72;
   const ballX = w * 0.5;
   const ballY = groundY - 10;
@@ -2914,25 +2967,19 @@ function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoin
   } else if (lowPoint === "shallow") {
     divotKind = "shallow";
     divotX = ballX + 18;
-  } else {
-    divotKind = "none";
   }
 
   const depth =
     divotKind === "before" ? 14 : divotKind === "after" ? 16 : divotKind === "shallow" ? 8 : 0;
-
   const divotPath =
     divotKind === "none"
       ? ""
-      : `M ${divotX - 22} ${groundY}
-         Q ${divotX} ${groundY + depth}
-         ${divotX + 22} ${groundY}`;
+      : `M ${divotX - 22} ${groundY} Q ${divotX} ${groundY + depth} ${divotX + 22} ${groundY}`;
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+    <>
       <line x1={w * 0.1} y1={groundY} x2={w * 0.9} y2={groundY} stroke="rgb(226 232 240)" strokeWidth="3" />
       <circle cx={ballX} cy={ballY} r={6} fill="rgb(15 23 42)" />
-
       {divotPath ? (
         <path
           d={divotPath}
@@ -2940,20 +2987,38 @@ function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoin
           stroke="rgb(15 23 42)"
           strokeWidth="3"
           strokeLinecap="round"
-          strokeDasharray={staticRender ? undefined : "200"}
-          strokeDashoffset={staticRender ? undefined : "200"}
-        >
-          {!staticRender && <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />}
-        </path>
+          className={
+            staticRender
+              ? undefined
+              : "[stroke-dasharray:200] [stroke-dashoffset:200] animate-[dash_0.55s_ease-out_forwards] motion-reduce:animate-none motion-reduce:[stroke-dasharray:none] motion-reduce:[stroke-dashoffset:0]"
+          }
+        />
       ) : (
-        <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
-          {lowPoint === "thin" ? "thin contact (no divot)" : "—"}
+        <text x={w * 0.34} y={h * 0.5} fontSize="12" fill="rgb(100 116 139)">
+          {lowPoint === "thin" ? "thin contact (no divot)" : "Not recorded"}
         </text>
       )}
-
-      <text x={w * 0.1} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
+      <text x={w * 0.1} y={h * 0.95} fontSize="12" fill="rgb(100 116 139)">
         ground
       </text>
+    </>
+  );
+}
+
+function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoint; staticRender?: boolean }) {
+  const w = 260;
+  const h = 120;
+
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      className="h-auto w-full"
+      role="img"
+      aria-label={`Iron low-point illustration: ${lowPoint === "unsure" ? "not recorded" : lowPoint}`}
+    >
+      <LowPointGlyph lowPoint={lowPoint} staticRender={staticRender} />
     </svg>
   );
 }
