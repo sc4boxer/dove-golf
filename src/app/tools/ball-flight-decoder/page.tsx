@@ -22,21 +22,24 @@ export default function BallFlightDecoderPage() {
             Dove Golf
           </Link>
 
-          <nav aria-label="Tool navigation" className="flex items-center gap-5 text-sm text-slate-500">
-            <Link className="hidden hover:text-slate-900 sm:inline" href="/learn/start-line-vs-curve">
-              Face vs path
+          <nav aria-label="Primary navigation" className="flex items-center gap-5 text-sm text-slate-500">
+            <Link className="transition hover:text-slate-900" href="/learn">
+              Learn
             </Link>
-            <Link className="hover:text-slate-900" href="/diagnostic">
-              Equipment fit
+            <Link className="transition hover:text-slate-900" href="/method">
+              Method
+            </Link>
+            <Link className="transition hover:text-slate-900" href="/about">
+              About
             </Link>
           </nav>
         </header>
 
-        <section className="mt-16 max-w-3xl sm:mt-20">
+        <section className="mt-20 max-w-3xl sm:mt-28">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
             Free tool · Right-handed model
           </p>
-          <h1 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-[-0.04em] sm:text-5xl">
+          <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl">
             Decode your ball flight.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
