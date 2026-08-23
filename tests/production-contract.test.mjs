@@ -40,6 +40,7 @@ const behaviorSensitiveFiles = [
   "src/app/diagnostic/EmailCaptureCard.tsx",
   "src/components/diagnosis/DiagnosisSharePanel.tsx",
   "src/lib/share/diagnosisShare.ts",
+  "src/lib/share/diagnosisEmail.ts",
   "src/lib/analytics/ga.ts",
   "src/lib/engine/driver.ts",
   "src/lib/engine/driverShaftShortlist.ts",
@@ -216,10 +217,13 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
   assert.ok(component.includes("Share my diagnosis"));
   assert.ok(component.includes("Send me my diagnosis and range plan"));
   assert.match(component, /Download result card/);
-  assert.match(component, /Likely cause/);
+  assert.match(component, /insightLabel/);
   assert.match(emailRoute, /new Resend\(/);
   assert.match(emailRoute, /Cache-Control.*no-store/s);
+  assert.match(emailRoute, /parseDiagnosisEmailInput/);
+  assert.match(emailRoute, /buildDiagnosisEmailContent/);
   assert.doesNotMatch(emailRoute, /console\.log\([^)]*body/);
+  assert.doesNotMatch(emailRoute, /body\.diagnosis\.(miss|likelyCause|rangePlan|shareUrl)/);
 
   for (const resultPage of [decoder, equipment, driverSlice, pullHook, curvesRight]) {
     assert.match(resultPage, /<DiagnosisSharePanel/);
