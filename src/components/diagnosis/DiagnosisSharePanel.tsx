@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics/ga";
 import type { DiagnosisEmailInput, DiagnosisInsightLabel } from "@/lib/share/diagnosisEmail";
 import {
@@ -177,7 +177,27 @@ export function DiagnosisSharePanel({
   const [emailStatus, setEmailStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [email, setEmail] = useState("");
   const [sharing, setSharing] = useState(false);
+  const [shareFile, setShareFile] = useState<File | null>(null);
   const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setShareFile(null);
+
+    createDiagnosisCard(data, insightLabel)
+      .then((blob) => {
+        if (!cancelled) {
+          setShareFile(new File([blob], filenameFor(data.miss), { type: "image/png" }));
+        }
+      })
+      .catch(() => {
+        // Native text sharing and download remain available if pre-generation fails.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [data, insightLabel]);
 
   async function handleShare() {
     setSharing(true);
@@ -185,7 +205,24 @@ export function DiagnosisSharePanel({
     track("dov_diagnosis_share_opened", { source });
 
     try {
-      if (navigator.share) {
+      const fileShareData = shareFile
+        ? {
+            title: "My DoveGolf diagnosis",
+            text: shareText,
+            url: data.shareUrl,
+            files: [shareFile],
+          }
+        : null;
+
+      if (
+        navigator.share &&
+        fileShareData &&
+        (!navigator.canShare || navigator.canShare(fileShareData))
+      ) {
+        await navigator.share(fileShareData);
+        setActionStatus({ kind: "success", message: "Diagnosis card shared." });
+        track("dov_diagnosis_shared", { source, method: "native_card" });
+      } else if (navigator.share) {
         await navigator.share({ title: "My DoveGolf diagnosis", text: shareText, url: data.shareUrl });
         setActionStatus({ kind: "success", message: "Diagnosis shared." });
         track("dov_diagnosis_shared", { source, method: "native_link" });
