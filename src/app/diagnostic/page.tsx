@@ -12,6 +12,7 @@ import {
   type EquipmentFitContext,
   equipmentFitPrefill,
   formatEquipmentFitContext,
+  formatEquipmentFitPattern,
   parseEquipmentFitContext,
 } from "@/lib/tools/ballFlightEquipmentBridge";
 
@@ -1033,7 +1034,9 @@ function computeResults(a: Answers) {
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
   const [decoderContext, setDecoderContext] = useState<EquipmentFitContext | null>(null);
+  const [focusChosen, setFocusChosen] = useState(false);
   const viewedStepsRef = useRef<Set<Step>>(new Set());
+  const carriedAppliedFocusesRef = useRef<Set<FitFocus>>(new Set());
   const fitStartedTrackedRef = useRef(false);
   const fitResultsTrackedRef = useRef(false);
   const fitCompletedTrackedRef = useRef(false);
@@ -1065,20 +1068,30 @@ export default function DiagnosticWizard() {
       const verifyStatusParam = url.searchParams.get("verifyStatus");
       const wantsResults = url.searchParams.get("step") === "results";
 
-      const carriedContext = parseEquipmentFitContext(url.searchParams);
+      const hasResumeContext =
+        verified ||
+        wantsResults ||
+        Boolean(url.searchParams.get("resumeToken")) ||
+        verifyStatusParam === "verified" ||
+        verifyStatusParam === "already_verified";
+      const carriedContext = hasResumeContext ? null : parseEquipmentFitContext(url.searchParams);
+
       if (carriedContext) {
-        const prefill = equipmentFitPrefill(carriedContext);
-        setA((previous) => ({ ...previous, ...prefill }));
         setDecoderContext(carriedContext);
-        track("dov_fit_context_received", {
+        track("dov_fit_handoff_received", {
           module: "dovefit",
           placement: "diagnostic_focus",
           source: carriedContext.source,
-          pattern: carriedContext.pattern,
-          version: "v1",
+          version: carriedContext.version,
+          start: carriedContext.start,
+          curve: carriedContext.curve,
+          strike: carriedContext.strike,
+          validity: "valid",
         });
+      }
 
-        for (const key of ["source", "start", "curve", "strike", "pattern"]) {
+      if (url.searchParams.get("source") === "ball-flight-decoder") {
+        for (const key of ["source", "v", "start", "curve", "strike"]) {
           url.searchParams.delete(key);
         }
         window.history.replaceState({}, "", url.toString());
@@ -1101,6 +1114,7 @@ export default function DiagnosticWizard() {
       if (verified || wantsResults) {
         const hydrateFromPayload = (payload: unknown) => {
           setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(payload) });
+          setFocusChosen(true);
 
           const contact = extractContactProfile(payload);
           if (contact.firstName && contact.lastName && contact.email) {
@@ -1215,8 +1229,10 @@ export default function DiagnosticWizard() {
       step,
       index: stepIndex,
       version: "v1",
+      entry_source: decoderContext ? "ball_flight_decoder" : "direct",
+      carried_context: Boolean(decoderContext),
     });
-  }, [step, stepIndex]);
+  }, [step, stepIndex, decoderContext]);
 
   useEffect(() => {
     try {
@@ -1238,9 +1254,41 @@ export default function DiagnosticWizard() {
     setStepIndex((i) => Math.min(steps.length - 1, i + 1));
   }
 
+  function clearDecoderContext() {
+    const context = decoderContext;
+    if (!context) return;
+
+    setA((previous) => {
+      const next = { ...previous };
+
+      if (carriedAppliedFocusesRef.current.has("driver_woods")) {
+        if (next.driverStartLine === context.start) next.driverStartLine = DEFAULT_ANSWERS.driverStartLine;
+        if (next.driverCurve === context.curve) next.driverCurve = DEFAULT_ANSWERS.driverCurve;
+        if (context.strike !== "unsure" && next.driverStrike === context.strike) {
+          next.driverStrike = DEFAULT_ANSWERS.driverStrike;
+        }
+      }
+
+      if (carriedAppliedFocusesRef.current.has("irons")) {
+        if (next.ironStartLine === context.start) next.ironStartLine = DEFAULT_ANSWERS.ironStartLine;
+        if (next.ironCurve === context.curve) next.ironCurve = DEFAULT_ANSWERS.ironCurve;
+        if (context.strike !== "unsure" && next.ironFaceStrike === context.strike) {
+          next.ironFaceStrike = DEFAULT_ANSWERS.ironFaceStrike;
+        }
+      }
+
+      return next;
+    });
+
+    carriedAppliedFocusesRef.current.clear();
+    setDecoderContext(null);
+  }
+
   function resetAll() {
     setA(DEFAULT_ANSWERS);
     setDecoderContext(null);
+    setFocusChosen(false);
+    carriedAppliedFocusesRef.current.clear();
     setStepIndex(0);
     try {
       window.localStorage.removeItem("diagnostic_last_payload");
@@ -1262,17 +1310,6 @@ export default function DiagnosticWizard() {
           <span className="text-xs font-medium text-slate-500">Free Diagnostic</span>
         </div>
 
-        {decoderContext ? (
-          <aside className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4" aria-label="Ball flight carried over">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Ball flight carried over</p>
-            <p className="mt-2 font-medium text-slate-900">{formatEquipmentFitContext(decoderContext)}</p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              Choose the club category you tested. Driver and iron observations are already filled in; wedge fit
-              uses its own questions.
-            </p>
-          </aside>
-        ) : null}
-
         {/* Progress */}
         <div className="mt-6">
           <div className="h-2 w-full rounded-full bg-slate-100">
@@ -1287,6 +1324,35 @@ export default function DiagnosticWizard() {
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
           {step !== "results" ? (
             <>
+              {step === "focus" && decoderContext ? (
+                <aside
+                  aria-label="Carried ball-flight observations"
+                  className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        From your ball-flight result
+                      </p>
+                      <p className="mt-2 font-semibold text-slate-900">{formatEquipmentFitPattern(decoderContext)}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {formatEquipmentFitContext(decoderContext)}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        We’ll use these observations only where the equipment questions match.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearDecoderContext}
+                      className="inline-flex min-h-11 w-fit shrink-0 items-center text-sm font-medium text-slate-600 hover:text-slate-900"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </aside>
+              ) : null}
+
               <h1 className="text-2xl font-semibold tracking-tight">{meta?.title}</h1>
               <p className="mt-2 text-sm text-slate-600">{meta?.why}</p>
 
@@ -1295,7 +1361,7 @@ export default function DiagnosticWizard() {
                 {step === "focus" && (
                   <ChoiceChips
                     mode="single"
-                    value={a.fitFocus}
+                    value={focusChosen ? a.fitFocus : null}
                     onChange={(v) => {
                       if (!fitStartedTrackedRef.current) {
                         fitStartedTrackedRef.current = true;
@@ -1304,9 +1370,21 @@ export default function DiagnosticWizard() {
                           placement: "diagnostic_focus",
                           step: "focus",
                           version: "v1",
+                          entry_source: decoderContext ? "ball_flight_decoder" : "direct",
+                          carried_context: Boolean(decoderContext),
                         });
                       }
-                      setA((p) => ({ ...p, fitFocus: v }));
+                      const shouldApplyContext =
+                        decoderContext &&
+                        (v === "driver_woods" || v === "irons") &&
+                        !carriedAppliedFocusesRef.current.has(v);
+                      const carriedPrefill: Partial<Answers> = shouldApplyContext
+                        ? equipmentFitPrefill(decoderContext, v)
+                        : {};
+
+                      if (shouldApplyContext) carriedAppliedFocusesRef.current.add(v);
+                      setFocusChosen(true);
+                      setA((p) => ({ ...p, fitFocus: v, ...carriedPrefill }));
                       setStepIndex(1);
                     }}
                     options={[
@@ -1827,7 +1905,8 @@ export default function DiagnosticWizard() {
                 <button
                   type="button"
                   onClick={next}
-                  className="ml-auto rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+                  disabled={step === "focus" && !focusChosen}
+                  className="ml-auto rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next →
                 </button>
@@ -2626,7 +2705,7 @@ type ChipOption<T extends string> = { value: T; label: string; help?: string };
 
 function ChoiceChips<T extends string>(props: {
   mode: "single";
-  value: T;
+  value: T | null;
   onChange: (v: T) => void;
   options: ChipOption<T>[];
 }): React.ReactElement;
@@ -2640,7 +2719,7 @@ function ChoiceChips<T extends string>(props: {
 
 function ChoiceChips<T extends string>(
   props:
-    | { mode: "single"; value: T; onChange: (v: T) => void; options: ChipOption<T>[] }
+    | { mode: "single"; value: T | null; onChange: (v: T) => void; options: ChipOption<T>[] }
     | { mode: "multi"; value: T[]; onChange: (v: T[]) => void; maxSelections: number; options: ChipOption<T>[] }
 ) {
   const [openHelp, setOpenHelp] = React.useState<T | null>(null);
