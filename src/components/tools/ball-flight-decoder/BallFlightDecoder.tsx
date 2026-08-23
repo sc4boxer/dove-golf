@@ -252,13 +252,25 @@ export function BallFlightDecoder() {
               <p className="mt-3 font-medium leading-7">{result.nextTest}</p>
             </div>
 
-            <div className="mt-5 rounded-2xl border border-slate-300 bg-white p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">If the pattern persists</p>
-              <h3 className="mt-3 text-lg font-semibold">Check whether the club is contributing</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Repeat the range test over a comparable shot cluster. If the same pattern remains, carry these
-                observations into the equipment-fit workflow instead of starting over.
-              </p>
+            <div className="mt-8 border-t border-slate-200 pt-8">
+              <h3 className="text-lg font-semibold">Limits of this result</h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{result.caveat}</p>
+            </div>
+
+            <div className="mt-8 border-t border-slate-200 pt-8 sm:flex sm:items-end sm:justify-between sm:gap-8">
+              <div className="max-w-lg">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                  Continue with this result
+                </p>
+                <h3 className="mt-3 text-lg font-semibold">Could your equipment be contributing?</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Carry this shot pattern into the Equipment Fit Check. We’ll use it as context—not proof that your
+                  clubs caused the miss.
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Your start, curve, and strike will come with you.
+                </p>
+              </div>
               <TrackLink
                 href={equipmentHref}
                 eventName="dov_decoder_equipment_clicked"
@@ -268,18 +280,10 @@ export function BallFlightDecoder() {
                   pattern: result.patternSlug,
                   strike,
                 }}
-                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+                className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 sm:mt-0 sm:w-auto sm:shrink-0"
               >
-                Check equipment fit
+                Check my equipment fit →
               </TrackLink>
-              <p className="mt-3 text-xs leading-5 text-slate-500">
-                Equipment is a hypothesis to test, not a diagnosis or purchase recommendation.
-              </p>
-            </div>
-
-            <div className="mt-8 border-t border-slate-200 pt-8">
-              <h3 className="text-lg font-semibold">Limits of this result</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{result.caveat}</p>
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
