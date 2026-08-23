@@ -1,16 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #10221c;
-  --forest: #163d32;
-  --forest-deep: #0b2922;
-  --fairway: #387861;
-  --lime: #d8f06b;
-  --paper: #f5f2e9;
-  --paper-strong: #fffdf7;
-  --mist: #dce6df;
-  --muted: #5c6b65;
-  --line: rgba(16, 34, 28, 0.14);
+  --background: #ffffff;
+  --foreground: #171717;
+  --ink: #0f172a;
+  --forest: #0f172a;
+  --forest-deep: #020617;
+  --fairway: #475569;
+  --lime: #f1f5f9;
+  --paper: #ffffff;
+  --paper-strong: #ffffff;
+  --mist: #f8fafc;
+  --muted: #64748b;
+  --line: rgba(15, 23, 42, 0.12);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 * {
@@ -18,20 +27,20 @@
 }
 
 html {
-  background: var(--paper);
+  background: var(--background);
   scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--background);
+  color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
 
 ::selection {
-  background: var(--lime);
-  color: var(--forest-deep);
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 a,
@@ -43,7 +52,7 @@ textarea {
 }
 
 :focus-visible {
-  outline: 3px solid var(--fairway);
+  outline: 3px solid #475569;
 }
 
 .font-serif {
@@ -51,18 +60,21 @@ textarea {
 }
 
 .eyebrow {
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: var(--fairway);
 }
 
 .golf-grid {
-  background-image:
-    linear-gradient(to right, rgba(16, 34, 28, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(16, 34, 28, 0.045) 1px, transparent 1px);
-  background-size: 32px 32px;
+  background: var(--paper);
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
