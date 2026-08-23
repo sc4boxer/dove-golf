@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
 import { ClinicWizard } from "@/components/clinic/ClinicWizard";
 import { LikelihoodBars } from "@/components/clinic/LikelihoodBars";
 import { RangePlan } from "@/components/clinic/RangePlan";
@@ -145,6 +146,17 @@ export default function DriverSlicePage() {
             </div>
 
             <RangePlan tests={result.rangePlan} />
+
+            <DiagnosisSharePanel
+              miss={`Driver slice: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
+              likelyCause={`${primaryLeverLabel(result.primaryLever)} is the leading hypothesis. ${result.whyLikely}`}
+              rangePlan={
+                result.rangePlan[0]?.whatToDo ??
+                "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."
+              }
+              shareUrl="https://dovegolf.fit/clinic/driver-slice"
+              source="driver_slice"
+            />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
               <p className="text-sm font-medium text-slate-900">Did this help reduce your slice today?</p>
