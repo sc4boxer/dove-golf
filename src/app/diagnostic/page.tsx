@@ -1977,6 +1977,28 @@ function ResultsView({
     .filter((value): value is string => Boolean(value))
     .join(" ");
 
+  const diagnosisFlightShape =
+    (showDriver ? getEquipmentBallFlightShape(a.driverStartLine, a.driverCurve) : null) ??
+    (showIrons ? getEquipmentBallFlightShape(a.ironStartLine, a.ironCurve) : null);
+
+  const diagnosisShareDetails = showDriver
+    ? [
+        { label: "Category", value: a.fitFocus === "full_bag" ? "Full bag" : "Driver + woods" },
+        { label: "Start", value: a.driverStartLine === "center" ? "On target" : a.driverStartLine },
+        { label: "Curve", value: a.driverCurve },
+      ]
+    : showIrons
+      ? [
+          { label: "Category", value: "Irons" },
+          { label: "Strike", value: a.ironFaceStrike },
+          { label: "Low point", value: a.ironLowPoint.replaceAll("_", " ") },
+        ]
+      : [
+          { label: "Category", value: "Wedges" },
+          { label: "Miss", value: a.wedgeMiss.replaceAll("_", " ") },
+          { label: "Turf", value: a.wedgeTurf },
+        ];
+
   const diagnosisShareCause =
     "This fit is a controlled starting point for the reported pattern. Equipment may amplify a miss; these answers do not prove the club caused it.";
 
@@ -2428,6 +2450,8 @@ function ResultsView({
             wedgeMiss: a.wedgeMiss,
             wedgeTurf: a.wedgeTurf,
           }}
+          details={diagnosisShareDetails}
+          flightShape={diagnosisFlightShape}
         />
 
         <Card title="How to interpret and apply your results (fitter-grade)">
