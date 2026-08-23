@@ -23,7 +23,7 @@ export function ShotEvidenceView({
       aria-labelledby="shot-evidence-title"
       className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8"
     >
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
             Player view
@@ -40,7 +40,7 @@ export function ShotEvidenceView({
         </span>
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+      <div className="mt-6 grid gap-6">
         <figure aria-label={visualSummary}>
           <div className="relative h-80 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
             <div className="absolute left-1/2 top-5 -translate-x-1/2 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400">
@@ -74,23 +74,23 @@ export function ShotEvidenceView({
               className="absolute bottom-9 left-1/2 size-6 -translate-x-1/2 rounded-full border-2 border-slate-900 bg-white shadow-sm"
             />
 
-            <div
-              aria-hidden
-              className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-2 text-[10px] font-medium text-slate-500"
-            >
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1">
-                <span className="h-px w-4 border-t border-dashed border-slate-300" />
-                Target line
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1">
-                <span className="h-0.5 w-4 bg-slate-400" />
-                Club path
-              </span>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2 py-1">
-                <span className="h-[3px] w-4 bg-slate-900" />
-                Face direction
-              </span>
-            </div>
+          </div>
+          <div
+            aria-hidden
+            className="mt-3 flex flex-wrap gap-2 text-[10px] font-medium text-slate-500"
+          >
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-1">
+              <span className="h-px w-4 border-t border-dashed border-slate-300" />
+              Target line
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-1">
+              <span className="h-0.5 w-4 bg-slate-400" />
+              Club path
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2 py-1">
+              <span className="h-[3px] w-4 bg-slate-900" />
+              Face direction
+            </span>
           </div>
           <figcaption className="mt-3 text-xs leading-5 text-slate-500">
             This view preserves the relationship implied by your inputs. It does not estimate exact face or path
