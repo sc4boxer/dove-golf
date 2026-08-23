@@ -128,6 +128,17 @@ export function equipmentFitPrefill(
     };
   }
 
+  if (focus === "full_bag") {
+    return {
+      driverStartLine: context.start,
+      driverCurve: context.curve,
+      ...(context.strike === "unsure" ? {} : { driverStrike: context.strike }),
+      ironStartLine: context.start,
+      ironCurve: context.curve,
+      ...(context.strike === "unsure" ? {} : { ironFaceStrike: context.strike }),
+    };
+  }
+
   return {};
 }
 

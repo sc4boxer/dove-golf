@@ -167,7 +167,7 @@ export function BallFlightDecoder() {
         tabIndex={-1}
         aria-live="polite"
         aria-labelledby="decoder-result-title"
-        className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-8 shadow-sm focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-slate-600"
+        className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-5 shadow-sm focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-slate-600 sm:p-8"
       >
         {!result || !pattern || !start || !curve || !strike ? (
           <div className="flex min-h-[24rem] flex-col justify-between">
@@ -181,7 +181,7 @@ export function BallFlightDecoder() {
                 automatic equipment prescription.
               </p>
             </div>
-            <div className="mt-10 grid grid-cols-3 gap-3" aria-hidden>
+            <div className="mt-10 grid gap-3 sm:grid-cols-3" aria-hidden>
               {["Start", "Curve", "Strike"].map((label, index) => (
                 <div key={label} className="rounded-2xl border border-dashed border-slate-200 p-4">
                   <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">0{index + 1}</span>

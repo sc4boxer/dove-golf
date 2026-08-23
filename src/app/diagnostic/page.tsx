@@ -11,6 +11,7 @@ import { BallFlightChartGlyph } from "@/components/visuals/BallFlightChart";
 import { EquipmentBallFlightPreview } from "@/components/visuals/EquipmentBallFlightPreview";
 import { StrikeFaceDiagram, StrikeFaceGlyph } from "@/components/visuals/StrikeFaceDiagram";
 import { getEquipmentBallFlightShape } from "@/lib/visual/equipmentBallFlightShape";
+import { classifyEquipmentFaceControl } from "@/lib/tools/equipmentFaceControl";
 import {
   type EquipmentFitContext,
   equipmentFitPrefill,
@@ -471,18 +472,7 @@ function computeGoalBias(goals: Goal[]): Bias {
 
 /* ---------------- BALL FLIGHT CLASSIFIER ---------------- */
 
-function classifyFaceControl(start: StartLine, curve: Curve) {
-  if (start === "unsure" || curve === "unsure") return { label: "unknown", bias: "neutral" as const };
-
-  const curveLabel = curve === "draw" ? "curves left" : curve === "fade" ? "curves right" : "stays mostly straight";
-  const startLabel = start === "left" ? "starts left" : start === "right" ? "starts right" : "starts on target";
-
-  if (start === "right") return { label: `${startLabel} and ${curveLabel}`, bias: "reduceRight" as const };
-  if (start === "left") return { label: `${startLabel} and ${curveLabel}`, bias: "reduceLeft" as const };
-  if (curve !== "straight") return { label: `${startLabel} and ${curveLabel}`, bias: "stability" as const };
-
-  return { label: "starts on target and stays mostly straight", bias: "neutral" as const };
-}
+const classifyFaceControl = classifyEquipmentFaceControl;
 
 /* ---------------- WEDGE RECOMMENDER (deterministic) ---------------- */
 
@@ -909,7 +899,7 @@ function computeResults(a: Answers) {
       } else if (driverFaceControl.bias === "stability") {
         cause.push(`Because your driver ${driverFaceControl.label}, we prioritize stability while keeping the recommendation neutral to target.`);
       } else {
-        cause.push("Because your driver starts on target and stays mostly straight, we keep the recommendation balanced and tune primarily for speed and feel.");
+        cause.push(`Because your driver ${driverFaceControl.label}, we keep the recommendation balanced and tune primarily for speed and feel.`);
       }
     } else {
       cause.push("Because your driver flight pattern is marked as unsure, we bias neutral and recommend validating start line + curve on the range.");
@@ -933,7 +923,7 @@ function computeResults(a: Answers) {
       } else if (ironFaceControl.bias === "stability") {
         cause.push(`Because your irons ${ironFaceControl.label}, we prioritize stability while keeping the build neutral to target.`);
       } else {
-        cause.push("Because your irons start on target and stay mostly straight, we keep the build balanced and anchor to speed and strike tendencies.");
+        cause.push(`Because your irons ${ironFaceControl.label}, we keep the build balanced and anchor to speed and strike tendencies.`);
       }
     } else {
       cause.push("Because iron start line/curve is marked unsure, we bias a stable baseline and recommend validating on the range.");
@@ -1274,7 +1264,14 @@ export default function DiagnosticWizard() {
     setA((previous) => {
       const next = { ...previous };
 
-      if (carriedAppliedFocusesRef.current.has("driver_woods")) {
+      const driverContextApplied =
+        carriedAppliedFocusesRef.current.has("driver_woods") ||
+        carriedAppliedFocusesRef.current.has("full_bag");
+      const ironContextApplied =
+        carriedAppliedFocusesRef.current.has("irons") ||
+        carriedAppliedFocusesRef.current.has("full_bag");
+
+      if (driverContextApplied) {
         if (next.driverStartLine === context.start) next.driverStartLine = DEFAULT_ANSWERS.driverStartLine;
         if (next.driverCurve === context.curve) next.driverCurve = DEFAULT_ANSWERS.driverCurve;
         if (context.strike !== "unsure" && next.driverStrike === context.strike) {
@@ -1282,7 +1279,7 @@ export default function DiagnosticWizard() {
         }
       }
 
-      if (carriedAppliedFocusesRef.current.has("irons")) {
+      if (ironContextApplied) {
         if (next.ironStartLine === context.start) next.ironStartLine = DEFAULT_ANSWERS.ironStartLine;
         if (next.ironCurve === context.curve) next.ironCurve = DEFAULT_ANSWERS.ironCurve;
         if (context.strike !== "unsure" && next.ironFaceStrike === context.strike) {
@@ -1389,7 +1386,7 @@ export default function DiagnosticWizard() {
                       }
                       const shouldApplyContext =
                         decoderContext &&
-                        (v === "driver_woods" || v === "irons") &&
+                        (v === "driver_woods" || v === "irons" || v === "full_bag") &&
                         !carriedAppliedFocusesRef.current.has(v);
                       const carriedPrefill: Partial<Answers> = shouldApplyContext
                         ? equipmentFitPrefill(decoderContext, v)

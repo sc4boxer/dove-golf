@@ -26,10 +26,6 @@ export type ShortlistItem = {
   debugScore?: number;
 };
 
-function clamp(n: number, lo: number, hi: number) {
-  return Math.max(lo, Math.min(hi, n));
-}
-
 function parseWeightClass(weightRangeLabel: string): WeightClass {
   // Extract midpoint from "60–70g" etc; fallback to 60.
   const m = weightRangeLabel.match(/(\d+)\D+(\d+)/);

@@ -13,16 +13,16 @@ export default function BallFlightDecoderPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-5xl px-6 py-12">
-        <header className="flex items-center justify-between gap-6">
+        <header className="flex items-center justify-between gap-3 sm:gap-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium shadow-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium shadow-sm sm:px-4"
           >
             <span aria-hidden className="size-2 rounded-full bg-slate-900" />
             Dove Golf
           </Link>
 
-          <nav aria-label="Primary navigation" className="flex items-center gap-5 text-sm text-slate-500">
+          <nav aria-label="Primary navigation" className="flex items-center gap-3 text-xs text-slate-500 sm:gap-5 sm:text-sm">
             <Link className="transition hover:text-slate-900" href="/learn">
               Learn
             </Link>
@@ -63,7 +63,7 @@ export default function BallFlightDecoderPage() {
               coach or qualified fitter when the pattern persists.
             </p>
             <nav aria-label="Related resources" className="flex flex-wrap gap-5 md:justify-end">
-              <Link className="hover:text-slate-900" href="/ball-flight-library">
+              <Link className="hover:text-slate-900" href="/learn/ball-flight">
                 Ball flight library
               </Link>
               <Link className="hover:text-slate-900" href="/method">

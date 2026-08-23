@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 
 type Props = {
-  payload: any; // diagnostic answers object (driver/irons/full bag)
+  payload: unknown; // diagnostic answers object (driver/irons/full bag)
   onProfileSaved?: (profile: { firstName: string; lastName: string; email: string }) => void;
 };
 
@@ -74,10 +74,14 @@ export default function EmailCaptureCard({ payload, onProfileSaved }: Props) {
 
       setStatus("sent");
       onProfileSaved?.(profile);
-    } catch (err: any) {
-      console.error("Email verification submit failed", err);
+    } catch (error: unknown) {
+      console.error("Email verification submit failed", error);
       setStatus("error");
-      setErrorMsg(err?.message || "Something went wrong. Please try again.");
+      setErrorMsg(
+        error instanceof Error
+          ? error.message
+          : "Something went wrong. Please try again.",
+      );
     }
   }
 

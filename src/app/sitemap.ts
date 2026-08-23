@@ -11,7 +11,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/clinic/driver-slice",
     "/clinic/ball-curves-right",
     "/clinic/pull-hook",
-    "/ball-flight-library",
     "/tools/ball-flight-decoder",
     "/method",
     "/about",
