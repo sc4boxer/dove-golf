@@ -54,8 +54,8 @@ const FLIGHT_PRESETS: Record<BallFlightChartShape, FlightPreset> = {
   pull: {
     shape: "pull",
     start: { x: 0, y: 0 },
-    c1: { x: -0.14, y: 0.24 },
-    c2: { x: -0.17, y: 0.62 },
+    c1: { x: -0.0522, y: 0.24 },
+    c2: { x: -0.1348, y: 0.62 },
     end: { x: -0.2, y: 0.92 },
   },
   "pull-fade": {
@@ -68,7 +68,7 @@ const FLIGHT_PRESETS: Record<BallFlightChartShape, FlightPreset> = {
   draw: {
     shape: "draw",
     start: { x: 0, y: 0 },
-    c1: { x: -0.06, y: 0.22 },
+    c1: { x: 0, y: 0.22 },
     c2: { x: -0.16, y: 0.62 },
     end: { x: -0.24, y: 0.92 },
   },
@@ -82,7 +82,7 @@ const FLIGHT_PRESETS: Record<BallFlightChartShape, FlightPreset> = {
   fade: {
     shape: "fade",
     start: { x: 0, y: 0 },
-    c1: { x: 0.06, y: 0.22 },
+    c1: { x: 0, y: 0.22 },
     c2: { x: 0.16, y: 0.62 },
     end: { x: 0.24, y: 0.92 },
   },
@@ -96,8 +96,8 @@ const FLIGHT_PRESETS: Record<BallFlightChartShape, FlightPreset> = {
   push: {
     shape: "push",
     start: { x: 0, y: 0 },
-    c1: { x: 0.14, y: 0.24 },
-    c2: { x: 0.17, y: 0.62 },
+    c1: { x: 0.0522, y: 0.24 },
+    c2: { x: 0.1348, y: 0.62 },
     end: { x: 0.2, y: 0.92 },
   },
   "push-fade": {
