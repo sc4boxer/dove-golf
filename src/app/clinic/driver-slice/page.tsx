@@ -148,14 +148,22 @@ export default function DriverSlicePage() {
             <RangePlan tests={result.rangePlan} />
 
             <DiagnosisSharePanel
-              miss={`Driver slice: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
-              likelyCause={`${primaryLeverLabel(result.primaryLever)} is the leading hypothesis. ${result.whyLikely}`}
+              miss={`Driver shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} right curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
+              likelyCause={`${primaryLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
               rangePlan={
                 result.rangePlan[0]?.whatToDo ??
                 "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."
               }
               shareUrl="https://dovegolf.fit/clinic/driver-slice"
               source="driver_slice"
+              insightLabel="Leading hypothesis"
+              emailDiagnosis={{
+                kind: "driver_slice",
+                startLine: inputs.startLine ?? "unsure",
+                curveSeverity: inputs.curveSeverity ?? "none",
+                strikeLocation: inputs.strikeLocation ?? "unsure",
+                primaryLever: result.primaryLever,
+              }}
             />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
