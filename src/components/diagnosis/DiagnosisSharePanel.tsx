@@ -252,15 +252,29 @@ export function DiagnosisSharePanel({
   source,
   insightLabel = "Leading hypothesis",
   emailDiagnosis,
+  details = [],
+  flightShape = null,
 }: DiagnosisSharePanelProps) {
   const data = useMemo(
     () => normalizeDiagnosisShareData({ miss, likelyCause, rangePlan, shareUrl }),
     [likelyCause, miss, rangePlan, shareUrl],
   );
-  const shareText = useMemo(
-    () => buildDiagnosisShareText(data, insightLabel),
-    [data, insightLabel],
+  const normalizedDetails = useMemo(
+    () =>
+      details.slice(0, 3).map((detail) => ({
+        label: normalizeShareText(detail.label, "Observation").slice(0, 28),
+        value: normalizeShareText(detail.value, "Not measured").slice(0, 72),
+      })),
+    [details],
   );
+  const shareText = useMemo(() => {
+    const base = buildDiagnosisShareText(data, insightLabel);
+    if (!normalizedDetails.length) return base;
+    const observations = normalizedDetails
+      .map((detail) => `${detail.label}: ${detail.value}`)
+      .join(" · ");
+    return `${base}\n\nShot profile: ${observations}`;
+  }, [data, insightLabel, normalizedDetails]);
   const [actionStatus, setActionStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [emailStatus, setEmailStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [email, setEmail] = useState("");
@@ -272,7 +286,7 @@ export function DiagnosisSharePanel({
     let cancelled = false;
     setShareFile(null);
 
-    createDiagnosisCard(data, insightLabel)
+    createDiagnosisCard(data, insightLabel, normalizedDetails, flightShape)
       .then((blob) => {
         if (!cancelled) {
           setShareFile(new File([blob], filenameFor(data.miss), { type: "image/png" }));
@@ -285,7 +299,7 @@ export function DiagnosisSharePanel({
     return () => {
       cancelled = true;
     };
-  }, [data, insightLabel]);
+  }, [data, flightShape, insightLabel, normalizedDetails]);
 
   async function handleShare() {
     setSharing(true);
@@ -338,7 +352,7 @@ export function DiagnosisSharePanel({
     setActionStatus({ kind: "idle", message: "" });
 
     try {
-      const blob = await createDiagnosisCard(data, insightLabel);
+      const blob = await createDiagnosisCard(data, insightLabel, normalizedDetails, flightShape);
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -406,17 +420,44 @@ export function DiagnosisSharePanel({
 
       <div className="mt-5 min-h-56 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your diagnosis</p>
-        <div className="mt-6 grid min-w-0 gap-5">
+        <div className={["mt-6 grid min-w-0 gap-6", flightShape ? "md:grid-cols-[1fr_16rem]" : ""].join(" ")}>
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Miss</p>
-            <p className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-              {data.miss}
-            </p>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Observed pattern
+              </p>
+              <p className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                {data.miss}
+              </p>
+            </div>
+
+            {normalizedDetails.length ? (
+              <dl className="mt-5 flex flex-wrap gap-2">
+                {normalizedDetails.map((detail) => (
+                  <div key={`${detail.label}-${detail.value}`} className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs">
+                    <dt className="inline font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      {detail.label}:{" "}
+                    </dt>
+                    <dd className="inline font-medium text-slate-800">{detail.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ) : null}
+
+            <div className="mt-5 min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insightLabel}</p>
+              <p className="mt-2 break-words leading-7 text-slate-700">{data.likelyCause}</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insightLabel}</p>
-            <p className="mt-2 break-words leading-7 text-slate-700">{data.likelyCause}</p>
-          </div>
+
+          {flightShape ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-3">
+              <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Shot shape
+              </p>
+              <BallFlightChart shape={flightShape} compact staticRender className="mt-2" />
+            </div>
+          ) : null}
         </div>
         <a
           href={data.shareUrl}
