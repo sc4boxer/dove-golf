@@ -83,7 +83,7 @@ export default function StartLineVsCurvePage() {
         <section className="mt-14">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">One start, three outcomes</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">Start on target. Then watch the curve.</h2>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">Start near the target line. Then watch the curve.</h2>
             <p className="mt-3 leading-7 text-slate-600">
               These examples share approximately the same start line. The curve changes because the face-to-path
               relationship changes.
@@ -94,7 +94,7 @@ export default function StartLineVsCurvePage() {
             {SAME_START_EXAMPLES.map((example) => (
               <article key={example.shape} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                  <BallFlightChart shape={example.shape} className="mx-auto max-w-sm" />
+                  <BallFlightChart shape={example.shape} compact className="mx-auto max-w-sm" />
                 </div>
                 <h3 className="mt-5 text-xl font-semibold">{example.title}</h3>
                 <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
