@@ -1985,6 +1985,8 @@ function ResultsView({
       const raw = window.localStorage.getItem("lead_contact_profile");
       if (raw) {
         const parsed = JSON.parse(raw);
+        // Stored contact details are restored once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setContactProfile({
           firstName: typeof parsed?.firstName === "string" ? parsed.firstName : null,
           lastName: typeof parsed?.lastName === "string" ? parsed.lastName : null,
@@ -1995,6 +1997,7 @@ function ResultsView({
         if (payloadRaw) {
           const parsedPayload = JSON.parse(payloadRaw);
           const fallbackProfile = extractContactProfile(parsedPayload);
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setContactProfile(fallbackProfile);
         }
       }
@@ -2005,13 +2008,17 @@ function ResultsView({
     try {
       const stored = window.localStorage.getItem("diagnostic_completed_at");
       if (stored) {
+        // Stored completion time is restored once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCompletedAt(stored);
       } else {
         const nowIso = new Date().toISOString();
         window.localStorage.setItem("diagnostic_completed_at", nowIso);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCompletedAt(nowIso);
       }
     } catch {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCompletedAt(new Date().toISOString());
     }
   }, []);
