@@ -31,6 +31,13 @@ export default function BallCurvesRightPage() {
     .map((entry) => CAUSE_LIBRARY[entry.causeId]?.testSuggestions[0])
     .filter((entry): entry is NonNullable<typeof entry> => Boolean(entry));
 
+  const shareInsight =
+    selectedVariant.id === "curves-right-center"
+      ? "The face was likely open relative to a path left of the face. Exact path direction relative to the target is unmeasured."
+      : selectedVariant.id === "curves-right-from-left"
+        ? "The face was left of the target but open relative to an even farther-left path. This describes impact geometry, not a body-motion fault."
+        : "The face was right of the target and open relative to the path. Strike and equipment contributions remain unmeasured.";
+
   return (
     <ClinicModuleShell
       eyebrow="DoveClinic™ pilot module"
@@ -100,10 +107,15 @@ export default function BallCurvesRightPage() {
 
       <DiagnosisSharePanel
         miss={selectedVariant.title}
-        likelyCause={`${CAUSE_LIBRARY[rankedCauses[0].causeId].title}. ${CAUSE_LIBRARY[rankedCauses[0].causeId].summary}`}
+        likelyCause={shareInsight}
         rangePlan={BALL_CURVES_RIGHT_MODULE.rangePlan.join(" · ")}
         shareUrl="https://dovegolf.fit/clinic/ball-curves-right"
         source="ball_curves_right"
+        insightLabel="Leading hypothesis"
+        emailDiagnosis={{
+          kind: "ball_curves_right",
+          variantId: selectedVariant.id,
+        }}
       />
 
       <ExpandableWhySection
