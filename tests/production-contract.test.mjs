@@ -231,6 +231,8 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
   assert.ok(component.includes("Send me my diagnosis and range plan"));
   assert.match(component, /Download result card/);
   assert.match(component, /files: \[shareFile\]/);
+  assert.match(component, /MY SHOT PROFILE/);
+  assert.match(component, /getBallFlightChartPathGeometry/);
   assert.match(component, /insightLabel/);
   assert.match(emailRoute, /new Resend\(/);
   assert.match(emailRoute, /Cache-Control.*no-store/s);
@@ -241,6 +243,8 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
 
   for (const resultPage of [decoder, equipment, driverSlice, pullHook, curvesRight]) {
     assert.match(resultPage, /<DiagnosisSharePanel/);
+    assert.match(resultPage, /details=/);
+    assert.match(resultPage, /flightShape=/);
   }
 });
 
