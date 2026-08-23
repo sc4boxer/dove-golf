@@ -78,7 +78,7 @@ function strikeRead(strike: StrikeInput, curve: CurveInput): Pick<DecoderResult,
     return {
       strikeRole: "ambiguous",
       strikeSummary:
-        `A mostly straight flight despite ${strike} contact may mean face/path and strike effects offset one another. One shot cannot separate them.`,
+        `A mostly straight flight despite ${strike} contact may mean face/path and strike effects offset one another. On a driver or fairway wood, horizontal gear effect may be part of that offset. One shot cannot separate them.`,
     };
   }
 
