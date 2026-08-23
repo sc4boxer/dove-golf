@@ -1,90 +1,174 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { BallFlightChart } from "@/components/visuals/BallFlightChart";
+import type { BallFlightChartShape } from "@/lib/visual/ballFlightChartPaths";
 
 export const metadata: Metadata = {
   title: "Start Line vs Curve in Golf Ball Flight",
   description:
-    "A technical explanation of face angle, path, and curvature, including what equipment can realistically influence.",
+    "Learn the two observations behind a golf ball flight: where it starts and which way it curves. See clear right-handed examples before reading face and path.",
   alternates: { canonical: "/learn/start-line-vs-curve" },
 };
+
+const SAME_START_EXAMPLES: Array<{
+  shape: BallFlightChartShape;
+  title: string;
+  observation: string;
+  relationship: string;
+}> = [
+  {
+    shape: "draw",
+    title: "Curves left",
+    observation: "Starts near the target, then bends left.",
+    relationship: "Likely: the face pointed left of the path at impact.",
+  },
+  {
+    shape: "straight",
+    title: "Stays straight",
+    observation: "Starts near the target with little sideways bend.",
+    relationship: "Likely: the face and path pointed in nearly the same direction.",
+  },
+  {
+    shape: "fade",
+    title: "Curves right",
+    observation: "Starts near the target, then bends right.",
+    relationship: "Likely: the face pointed right of the path at impact.",
+  },
+];
 
 export default function StartLineVsCurvePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-7xl px-6 py-14">
-        <HomeLinkPill />
+      <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+        <div className="flex items-center justify-between gap-4">
+          <HomeLinkPill />
+          <Link href="/learn" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+            Learn library
+          </Link>
+        </div>
 
-        <a href="/learn" className="mt-4 inline-block text-sm font-medium text-slate-500 hover:text-slate-700">
-          ← Back to Learn
-        </a>
-
-        <header className="mt-5 max-w-3xl">
-          <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
-            Start Line vs Curve: What Actually Controls Ball Flight?
+        <header className="mt-12 max-w-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Beginner guide · Right-handed model
+          </p>
+          <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-[-0.04em] sm:text-5xl">
+            Read the shot before you explain it.
           </h1>
-          <p className="mt-4 text-base leading-relaxed text-slate-600">
-            Start direction is primarily a face variable. Curvature emerges from the delta between face and path.
-            These are separate inputs and should be diagnosed separately before changing equipment.
+          <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            Ball flight becomes easier when you separate two observations: where the ball started, then which way
+            it curved. Those observations support a face-and-path relationship—not a verdict about your swing.
           </p>
         </header>
 
-        <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">Impact geometry diagram</h2>
-          <p className="mt-2 text-sm text-slate-600">Face controls start. Path influences curve.</p>
-          <svg viewBox="0 0 640 260" className="mt-4 w-full h-auto" role="img" aria-label="Start line and curve">
-            <line x1="80" y1="210" x2="560" y2="210" stroke="#94a3b8" strokeWidth="2" />
-            <line x1="80" y1="210" x2="80" y2="40" stroke="#94a3b8" strokeWidth="2" />
-            <text x="510" y="238" fill="#64748b" fontSize="13">
-              Start direction
-            </text>
-            <path d="M 90 205 Q 300 120 540 205" fill="none" stroke="#0f172a" strokeWidth="3" />
-            <path d="M 90 205 Q 300 245 540 205" fill="none" stroke="#475569" strokeWidth="3" />
-            <text x="285" y="110" fill="#0f172a" fontSize="13">
-              Draw tendency
-            </text>
-            <text x="285" y="252" fill="#475569" fontSize="13">
-              Fade tendency
-            </text>
-          </svg>
+        <section className="mt-12 grid gap-4 md:grid-cols-2" aria-label="The two-step read">
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">1 · Start line</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Which way did it launch?</h2>
+            <p className="mt-3 leading-7 text-slate-600">
+              Watch the first few yards of flight: left of the target line, on it, or right of it. Ignore where the
+              shot eventually finished.
+            </p>
+          </article>
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">2 · Curve</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Which way did it bend after launch?</h2>
+            <p className="mt-3 leading-7 text-slate-600">
+              After that first direction, did it bend left, stay mostly straight, or bend right? Centered contact
+              makes this clue easier to trust.
+            </p>
+          </article>
         </section>
 
-        <section className="mt-8 space-y-6 max-w-3xl">
-          <ArticleSection
-            title="Face angle dominance at impact"
-            body="Across typical driver speeds, initial start direction is driven mostly by delivered face angle relative to target. Path still matters, but the face contributes the larger share of directional launch. If the ball starts right repeatedly, the first hypothesis is usually an open face, not a path-only issue."
-          />
-          <ArticleSection
-            title="Face-to-path relationship"
-            body="Curvature is better modeled as a differential term. When the face is right of path, the spin axis tilts one way; when face is left of path, it tilts the other. That is why two swings can share similar start lines but bend differently downrange."
-          />
-          <ArticleSection
-            title="Why amateurs misdiagnose curvature"
-            body="Many players watch the final curve and infer a single swing flaw. The better approach is a two-step read: where it started, then how it bent. Without separating those two observations, equipment changes can solve the wrong variable and increase uncertainty."
-          />
-          <ArticleSection
-            title="What equipment can and cannot fix"
-            body="Equipment can influence closure timing, strike stability, and how often face delivery repeats under load. It cannot reliably override a large path error created by mechanics. Use fit to narrow dispersion around your current pattern, then improve motion if directional bias is still excessive."
-          />
+        <section className="mt-14">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">One start, three outcomes</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-[-0.03em]">Start on target. Then watch the curve.</h2>
+            <p className="mt-3 leading-7 text-slate-600">
+              These examples share approximately the same start line. The curve changes because the face-to-path
+              relationship changes.
+            </p>
+          </div>
+
+          <div className="mt-7 grid gap-5 lg:grid-cols-3">
+            {SAME_START_EXAMPLES.map((example) => (
+              <article key={example.shape} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+                <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                  <BallFlightChart shape={example.shape} className="mx-auto max-w-sm" />
+                </div>
+                <h3 className="mt-5 text-xl font-semibold">{example.title}</h3>
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  What you see
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{example.observation}</p>
+                <p className="mt-4 border-t border-slate-200 pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  What it suggests
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-700">{example.relationship}</p>
+              </article>
+            ))}
+          </div>
+
+          <p className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
+            These charts show direction, not severity. Because curve size is not measured here, “curves left” and
+            “curves right” are the safest labels. Golfers often call a smaller curve a draw or fade and a larger
+            curve a hook or slice.
+          </p>
         </section>
 
-        <div className="mt-10 flex flex-wrap gap-3">
-          <a href="/method" className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
-            Read the method
-          </a>
-          <a href="/diagnostic" className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800">
-            Start diagnostic
-          </a>
-        </div>
+        <section className="mt-14 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">What this relationship supports</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">A useful starting hypothesis.</h2>
+            <ul className="mt-5 grid gap-3 text-sm leading-6 text-slate-700">
+              <li>Start line gives a practical clue about delivered face direction.</li>
+              <li>Curve gives a practical clue about face relative to path.</li>
+              <li>Centered contact makes that relationship easier to interpret.</li>
+              <li>A repeated shot cluster is more useful than one swing.</li>
+            </ul>
+          </article>
+
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">What it cannot prove</p>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Not a body-motion diagnosis.</h2>
+            <p className="mt-4 text-sm leading-6 text-slate-600">
+              This relationship cannot identify an exact path angle, a specific body movement, or an equipment
+              change. Strike location, club type, wind, lie, alignment, and timing still matter.
+            </p>
+          </article>
+        </section>
+
+        <section className="mt-14 rounded-3xl bg-slate-900 p-7 text-white sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-8">
+          <div className="max-w-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-300">Try it with your shot</p>
+            <h2 className="mt-3 text-2xl font-semibold">Use the Ball Flight Decoder.</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300">
+              Choose the observed start, curve, and strike. The result will show the flight first, then the
+              qualified relationship and one range test.
+            </p>
+          </div>
+          <Link
+            href="/tools/ball-flight-decoder"
+            className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-medium text-slate-900 sm:mt-0 sm:w-auto sm:shrink-0"
+          >
+            Decode a ball flight →
+          </Link>
+        </section>
+
+        <footer className="mt-12 border-t border-slate-100 pt-7 text-sm text-slate-500">
+          <p>
+            Evidence basis:{" "}
+            <a className="underline underline-offset-4 hover:text-slate-900" href="https://www.trackman.com/blog/what-is-launch-direction">
+              TrackMan on launch direction
+            </a>
+            {" "}and{" "}
+            <a className="underline underline-offset-4 hover:text-slate-900" href="https://www.trackman.com/blog/face-to-path">
+              face-to-path
+            </a>
+            . This guide is educational and assumes a right-handed golfer.
+          </p>
+        </footer>
       </div>
     </main>
-  );
-}
-
-function ArticleSection({ title, body }: { title: string; body: string }) {
-  return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h2>
-      <p className="mt-3 text-sm leading-relaxed text-slate-700">{body}</p>
-    </article>
   );
 }

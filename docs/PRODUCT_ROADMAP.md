@@ -32,15 +32,16 @@ The homepage should stay minimal. Depth belongs inside tools, explanations, and 
 
 ## Phase 2: Make the physics easy to see
 
-Add restrained point-of-view explanations inside the diagnosis result rather than decorative homepage graphics.
+Add restrained ball-flight and point-of-view explanations inside the diagnosis result rather than decorative homepage graphics.
 
 Priority visual modules:
 
-1. Clubface relative to target at impact.
-2. Club path relative to target.
-3. Face-to-path relationship and expected curve direction.
-4. Heel, center, and toe contact with gear-effect caveats.
-5. A comparison view showing the observed pattern and the single variable being tested.
+1. Animated observed ball path, with plain start and curve labels.
+2. Clubface relative to target at impact.
+3. Club path relative to target.
+4. Face-to-path relationship and expected curve direction.
+5. Heel, center, and toe contact with gear-effect caveats.
+6. A comparison view showing the observed pattern and the single variable being tested.
 
 Visuals should use simple lines, arcs, labels, and controlled motion. Every animation needs a static, text-equivalent explanation and reduced-motion behavior.
 

@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { TrackLink } from "@/components/analytics/TrackLink";
 import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
+import { buildEquipmentFitHref } from "@/lib/tools/ballFlightEquipmentBridge";
 import { BallFlightResultVisual } from "./BallFlightResultVisual";
 import { ShotEvidenceView } from "./ShotEvidenceView";
 import {
@@ -113,6 +115,14 @@ export function BallFlightDecoder() {
   }
 
   const pattern = result ? BALL_FLIGHT_PATTERNS[result.patternSlug] : null;
+  const equipmentHref =
+    result && start && curve && strike
+      ? buildEquipmentFitHref({
+          start,
+          curve,
+          strike,
+        })
+      : "/diagnostic";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
@@ -244,6 +254,36 @@ export function BallFlightDecoder() {
             <div className="mt-8 border-t border-slate-200 pt-8">
               <h3 className="text-lg font-semibold">Limits of this result</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">{result.caveat}</p>
+            </div>
+
+            <div className="mt-8 border-t border-slate-200 pt-8 sm:flex sm:items-end sm:justify-between sm:gap-8">
+              <div className="max-w-lg">
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                  Continue with this result
+                </p>
+                <h3 className="mt-3 text-lg font-semibold">Could your equipment be contributing?</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Carry this shot pattern into the Equipment Fit Check. We’ll use it as context—not proof that your
+                  clubs caused the miss.
+                </p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Your start, curve, and strike will come with you.
+                </p>
+              </div>
+              <TrackLink
+                href={equipmentHref}
+                eventName="dov_decoder_fit_handoff_clicked"
+                eventParams={{
+                  module: "ball_flight_decoder",
+                  placement: "decoder_result",
+                  start,
+                  curve,
+                  strike,
+                }}
+                className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 sm:mt-0 sm:w-auto sm:shrink-0"
+              >
+                Check my equipment fit →
+              </TrackLink>
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

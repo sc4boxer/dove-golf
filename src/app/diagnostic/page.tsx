@@ -1,13 +1,21 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import EmailCaptureCard from "./EmailCaptureCard";
 
-import { recommendDriverWoods } from "@/lib/engine/driver";
-import { recommendIrons } from "@/lib/engine/irons";
+import { recommendDriverWoods, type RecommendDriverWoodsInput } from "@/lib/engine/driver";
+import { recommendIrons, type RecommendIronsInput } from "@/lib/engine/irons";
 import { track } from "@/lib/analytics/ga";
 import { BallFlightDiagram } from "@/components/visuals/BallFlightDiagram";
 import { StrikeFaceDiagram } from "@/components/visuals/StrikeFaceDiagram";
+import {
+  type EquipmentFitContext,
+  equipmentFitPrefill,
+  formatEquipmentFitContext,
+  formatEquipmentFitPattern,
+  parseEquipmentFitContext,
+} from "@/lib/tools/ballFlightEquipmentBridge";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1900;
@@ -705,11 +713,11 @@ function fallbackIronRec(sevenIronSpeed: number): EngineRec {
   };
 }
 
-function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
+function safeRecommendDriverWoods(args: RecommendDriverWoodsInput, speedMph: number): EngineRec {
   try {
     const rec = recommendDriverWoods(args);
-    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
-      return rec as EngineRec;
+    if (rec.profile?.weightRange && rec.profile?.flex) {
+      return rec;
     }
   } catch {
     // ignore and fall back
@@ -717,11 +725,11 @@ function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
   return fallbackDriverRec(speedMph);
 }
 
-function safeRecommendIrons(args: any, sevenIronSpeed: number): EngineRec {
+function safeRecommendIrons(args: RecommendIronsInput, sevenIronSpeed: number): EngineRec {
   try {
     const rec = recommendIrons(args);
-    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
-      return rec as EngineRec;
+    if (rec.profile?.weightRange && rec.profile?.flex) {
+      return rec;
     }
   } catch {
     // ignore and fall back
@@ -806,7 +814,7 @@ function computeResults(a: Answers) {
             currentShaftWeightG: driverShaftNow,
             currentFlex: "unknown",
             launchFeel: driverLaunchFeel,
-          } as any,
+          },
           driverSpeed
         )
       : null;
@@ -859,7 +867,7 @@ function computeResults(a: Answers) {
             currentShaftWeightG: ironShaftNow,
             currentFlex: "unknown",
             peakHeightFeel: ironPeakFeel,
-          } as any,
+          },
           sevenIronSpeed
         )
       : null;
@@ -1026,7 +1034,10 @@ function computeResults(a: Answers) {
 
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
+  const [decoderContext, setDecoderContext] = useState<EquipmentFitContext | null>(null);
+  const [focusChosen, setFocusChosen] = useState(false);
   const viewedStepsRef = useRef<Set<Step>>(new Set());
+  const carriedAppliedFocusesRef = useRef<Set<FitFocus>>(new Set());
   const fitStartedTrackedRef = useRef(false);
   const fitResultsTrackedRef = useRef(false);
   const fitCompletedTrackedRef = useRef(false);
@@ -1044,6 +1055,8 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("lead_verified");
+      // Local verification is intentionally restored once after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved === "1") setIsVerified(true);
     } catch {
       // ignore
@@ -1057,6 +1070,37 @@ export default function DiagnosticWizard() {
       const verified = url.searchParams.get("verified") === "1";
       const verifyStatusParam = url.searchParams.get("verifyStatus");
       const wantsResults = url.searchParams.get("step") === "results";
+
+      const hasResumeContext =
+        verified ||
+        wantsResults ||
+        Boolean(url.searchParams.get("resumeToken")) ||
+        verifyStatusParam === "verified" ||
+        verifyStatusParam === "already_verified";
+      const carriedContext = hasResumeContext ? null : parseEquipmentFitContext(url.searchParams);
+
+      if (carriedContext) {
+        // URL handoff state is intentionally captured once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setDecoderContext(carriedContext);
+        track("dov_fit_handoff_received", {
+          module: "dovefit",
+          placement: "diagnostic_focus",
+          source: carriedContext.source,
+          version: carriedContext.version,
+          start: carriedContext.start,
+          curve: carriedContext.curve,
+          strike: carriedContext.strike,
+          validity: "valid",
+        });
+      }
+
+      if (url.searchParams.get("source") === "ball-flight-decoder") {
+        for (const key of ["source", "v", "start", "curve", "strike"]) {
+          url.searchParams.delete(key);
+        }
+        window.history.replaceState({}, "", url.toString());
+      }
 
       if (
         verifyStatusParam === "verified" ||
@@ -1075,6 +1119,7 @@ export default function DiagnosticWizard() {
       if (verified || wantsResults) {
         const hydrateFromPayload = (payload: unknown) => {
           setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(payload) });
+          setFocusChosen(true);
 
           const contact = extractContactProfile(payload);
           if (contact.firstName && contact.lastName && contact.email) {
@@ -1145,11 +1190,15 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     if (!pendingJumpToResults) return;
     const s = buildSteps(a.fitFocus);
+    // Resume completion deliberately moves the wizard to its terminal step.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex(s.length - 1);
     setPendingJumpToResults(false);
   }, [pendingJumpToResults, a.fitFocus]);
 
   useEffect(() => {
+    // A category change can shorten the step list; clamp the current index.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
 
@@ -1189,8 +1238,10 @@ export default function DiagnosticWizard() {
       step,
       index: stepIndex,
       version: "v1",
+      entry_source: decoderContext ? "ball_flight_decoder" : "direct",
+      carried_context: Boolean(decoderContext),
     });
-  }, [step, stepIndex]);
+  }, [step, stepIndex, decoderContext]);
 
   useEffect(() => {
     try {
@@ -1212,8 +1263,41 @@ export default function DiagnosticWizard() {
     setStepIndex((i) => Math.min(steps.length - 1, i + 1));
   }
 
+  function clearDecoderContext() {
+    const context = decoderContext;
+    if (!context) return;
+
+    setA((previous) => {
+      const next = { ...previous };
+
+      if (carriedAppliedFocusesRef.current.has("driver_woods")) {
+        if (next.driverStartLine === context.start) next.driverStartLine = DEFAULT_ANSWERS.driverStartLine;
+        if (next.driverCurve === context.curve) next.driverCurve = DEFAULT_ANSWERS.driverCurve;
+        if (context.strike !== "unsure" && next.driverStrike === context.strike) {
+          next.driverStrike = DEFAULT_ANSWERS.driverStrike;
+        }
+      }
+
+      if (carriedAppliedFocusesRef.current.has("irons")) {
+        if (next.ironStartLine === context.start) next.ironStartLine = DEFAULT_ANSWERS.ironStartLine;
+        if (next.ironCurve === context.curve) next.ironCurve = DEFAULT_ANSWERS.ironCurve;
+        if (context.strike !== "unsure" && next.ironFaceStrike === context.strike) {
+          next.ironFaceStrike = DEFAULT_ANSWERS.ironFaceStrike;
+        }
+      }
+
+      return next;
+    });
+
+    carriedAppliedFocusesRef.current.clear();
+    setDecoderContext(null);
+  }
+
   function resetAll() {
     setA(DEFAULT_ANSWERS);
+    setDecoderContext(null);
+    setFocusChosen(false);
+    carriedAppliedFocusesRef.current.clear();
     setStepIndex(0);
     try {
       window.localStorage.removeItem("diagnostic_last_payload");
@@ -1229,9 +1313,9 @@ export default function DiagnosticWizard() {
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-2xl px-6 py-10">
         <div className="flex items-center justify-between">
-          <a className="text-sm text-slate-500 hover:text-slate-900" href="/">
+          <Link className="text-sm text-slate-500 hover:text-slate-900" href="/">
             ← Home
-          </a>
+          </Link>
           <span className="text-xs font-medium text-slate-500">Free Diagnostic</span>
         </div>
 
@@ -1249,6 +1333,35 @@ export default function DiagnosticWizard() {
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
           {step !== "results" ? (
             <>
+              {step === "focus" && decoderContext ? (
+                <aside
+                  aria-label="Carried ball-flight observations"
+                  className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        From your ball-flight result
+                      </p>
+                      <p className="mt-2 font-semibold text-slate-900">{formatEquipmentFitPattern(decoderContext)}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {formatEquipmentFitContext(decoderContext)}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        We’ll use these observations only where the equipment questions match.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearDecoderContext}
+                      className="inline-flex min-h-11 w-fit shrink-0 items-center text-sm font-medium text-slate-600 hover:text-slate-900"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </aside>
+              ) : null}
+
               <h1 className="text-2xl font-semibold tracking-tight">{meta?.title}</h1>
               <p className="mt-2 text-sm text-slate-600">{meta?.why}</p>
 
@@ -1257,7 +1370,7 @@ export default function DiagnosticWizard() {
                 {step === "focus" && (
                   <ChoiceChips
                     mode="single"
-                    value={a.fitFocus}
+                    value={focusChosen ? a.fitFocus : null}
                     onChange={(v) => {
                       if (!fitStartedTrackedRef.current) {
                         fitStartedTrackedRef.current = true;
@@ -1266,9 +1379,21 @@ export default function DiagnosticWizard() {
                           placement: "diagnostic_focus",
                           step: "focus",
                           version: "v1",
+                          entry_source: decoderContext ? "ball_flight_decoder" : "direct",
+                          carried_context: Boolean(decoderContext),
                         });
                       }
-                      setA((p) => ({ ...p, fitFocus: v }));
+                      const shouldApplyContext =
+                        decoderContext &&
+                        (v === "driver_woods" || v === "irons") &&
+                        !carriedAppliedFocusesRef.current.has(v);
+                      const carriedPrefill: Partial<Answers> = shouldApplyContext
+                        ? equipmentFitPrefill(decoderContext, v)
+                        : {};
+
+                      if (shouldApplyContext) carriedAppliedFocusesRef.current.add(v);
+                      setFocusChosen(true);
+                      setA((p) => ({ ...p, fitFocus: v, ...carriedPrefill }));
                       setStepIndex(1);
                     }}
                     options={[
@@ -1789,7 +1914,8 @@ export default function DiagnosticWizard() {
                 <button
                   type="button"
                   onClick={next}
-                  className="ml-auto rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+                  disabled={step === "focus" && !focusChosen}
+                  className="ml-auto rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next →
                 </button>
@@ -1858,6 +1984,8 @@ function ResultsView({
       const raw = window.localStorage.getItem("lead_contact_profile");
       if (raw) {
         const parsed = JSON.parse(raw);
+        // Stored contact details are restored once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setContactProfile({
           firstName: typeof parsed?.firstName === "string" ? parsed.firstName : null,
           lastName: typeof parsed?.lastName === "string" ? parsed.lastName : null,
@@ -1891,11 +2019,13 @@ function ResultsView({
 
   const completedLabel = useMemo(
     () =>
-      new Date(completedAt || Date.now()).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
+      completedAt
+        ? new Date(completedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Pending",
     [completedAt]
   );
 
@@ -1910,7 +2040,7 @@ function ResultsView({
     if (!qrSvgMarkup) return;
 
     try {
-      await (document as any).fonts?.ready;
+      await document.fonts?.ready;
     } catch {
       // ignore
     }
@@ -2264,12 +2394,12 @@ function ResultsView({
             Start over
           </button>
 
-          <a
+          <Link
             href="/"
             className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
           >
             Back to home
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -2588,7 +2718,7 @@ type ChipOption<T extends string> = { value: T; label: string; help?: string };
 
 function ChoiceChips<T extends string>(props: {
   mode: "single";
-  value: T;
+  value: T | null;
   onChange: (v: T) => void;
   options: ChipOption<T>[];
 }): React.ReactElement;
@@ -2602,7 +2732,7 @@ function ChoiceChips<T extends string>(props: {
 
 function ChoiceChips<T extends string>(
   props:
-    | { mode: "single"; value: T; onChange: (v: T) => void; options: ChipOption<T>[] }
+    | { mode: "single"; value: T | null; onChange: (v: T) => void; options: ChipOption<T>[] }
     | { mode: "multi"; value: T[]; onChange: (v: T[]) => void; maxSelections: number; options: ChipOption<T>[] }
 ) {
   const [openHelp, setOpenHelp] = React.useState<T | null>(null);
@@ -2622,28 +2752,28 @@ function ChoiceChips<T extends string>(
     <div className="grid gap-3 sm:grid-cols-2" data-help-root="1">
       {props.options.map((opt) => {
         const active =
-          props.mode === "single" ? opt.value === props.value : (props.value as T[]).includes(opt.value);
+          props.mode === "single" ? opt.value === props.value : props.value.includes(opt.value);
 
         const disabled =
           props.mode === "multi" &&
-          !(props.value as T[]).includes(opt.value) &&
-          (props.value as T[]).length >= (props as any).maxSelections;
+          !props.value.includes(opt.value) &&
+          props.value.length >= props.maxSelections;
 
         function handleChipClick() {
           if (disabled) return;
 
           if (props.mode === "single") {
-            props.onChange(opt.value as any);
+            props.onChange(opt.value);
             return;
           }
-          const current = props.value as T[];
+          const current = props.value;
           const exists = current.includes(opt.value);
 
           if (exists) {
             props.onChange(current.filter((x) => x !== opt.value));
             return;
           }
-          if (current.length >= (props as any).maxSelections) return;
+          if (current.length >= props.maxSelections) return;
           props.onChange([...current, opt.value]);
         }
 
@@ -2747,6 +2877,8 @@ function MiniVizCard({ children }: { children: React.ReactNode }) {
  * ✅ NO moving ball circle (removes the stray/yellow dot issue)
  * ✅ "start" label sits under the true start point
  */
+// Retained for the existing share-card renderer.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BallFlightViz({
   start,
   curve,
@@ -2825,6 +2957,8 @@ function BallFlightViz({
  * - Heel/toe always show
  * - Shaft/hosel reference on RIGHT (toe side)
  */
+// Retained for the existing share-card renderer.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function FaceStrikeViz({
   strike,
 }: {

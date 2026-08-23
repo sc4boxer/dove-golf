@@ -53,3 +53,30 @@ test("places strike markers in heel, center, and toe order", () => {
   assert.match(heel.strikeNote, /driver or fairway wood/);
   assert.match(toe.strikeNote, /driver or fairway wood/);
 });
+
+test("preserves the face and path relationship across all nine flight families", () => {
+  for (const start of starts) {
+    for (const curve of curves) {
+      const evidence = deriveShotEvidence({ start, curve, strike: "center" });
+
+      if (start === "left") assert.ok(evidence.faceAngle < 0);
+      if (start === "straight") assert.equal(evidence.faceAngle, 0);
+      if (start === "right") assert.ok(evidence.faceAngle > 0);
+
+      if (curve === "left") assert.ok(evidence.pathAngle > evidence.faceAngle);
+      if (curve === "straight") assert.equal(evidence.pathAngle, evidence.faceAngle);
+      if (curve === "right") assert.ok(evidence.pathAngle < evidence.faceAngle);
+    }
+  }
+});
+
+test("audits the on-target center-strike draw example", () => {
+  const evidence = deriveShotEvidence({ start: "straight", curve: "left", strike: "center" });
+
+  assert.equal(evidence.faceAngle, 0);
+  assert.ok(evidence.pathAngle > 0);
+  assert.match(evidence.faceToTarget, /near the target line/);
+  assert.match(evidence.faceToPath, /closed relative to the path/);
+  assert.equal(evidence.strikePosition, 50);
+  assert.match(evidence.strikeNote, /less likely to dominate/);
+});
