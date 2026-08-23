@@ -8,6 +8,7 @@ import { LikelihoodBars } from "@/components/clinic/LikelihoodBars";
 import { PullHookWizard } from "@/components/clinic/PullHookWizard";
 import { RangePlan } from "@/components/clinic/RangePlan";
 import { track } from "@/lib/analytics/ga";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
 import { loadClinicSessions, saveClinicSession } from "@/lib/clinic/storage";
 import { ClinicSession, PullHookInputs } from "@/lib/clinic/types";
 import { evaluatePullHook, pullHookLeverLabel } from "@/lib/clinic/problems/pullHook";
@@ -164,6 +165,25 @@ export default function PullHookPage() {
                 strikeLocation: inputs.strikeLocation ?? "unsure",
                 primaryLever: result.primaryLever,
               }}
+              details={[
+                { label: "Start", value: inputs.startLine ?? "Not measured" },
+                {
+                  label: "Curve",
+                  value:
+                    inputs.curveSeverity === "none"
+                      ? "No meaningful left curve"
+                      : `${inputs.curveSeverity ?? "Unknown"} left`,
+                },
+                { label: "Strike", value: inputs.strikeLocation ?? "Not measured" },
+              ]}
+              flightShape={
+                inputs.startLine && inputs.startLine !== "unsure"
+                  ? getBallFlightShapeFromObservation(
+                      inputs.startLine,
+                      inputs.curveSeverity === "none" ? "straight" : "left",
+                    )
+                  : null
+              }
             />
 
             <button
