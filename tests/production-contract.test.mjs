@@ -38,6 +38,8 @@ const routeHandlers = new Map([
 
 const behaviorSensitiveFiles = [
   "src/app/diagnostic/EmailCaptureCard.tsx",
+  "src/components/diagnosis/DiagnosisSharePanel.tsx",
+  "src/lib/share/diagnosisShare.ts",
   "src/lib/analytics/ga.ts",
   "src/lib/engine/driver.ts",
   "src/lib/engine/driverShaftShortlist.ts",
@@ -96,6 +98,9 @@ const analyticsEvents = [
   "dov_fit_completed",
   "dov_clinic_completed",
   "dov_clinic_recommendation_viewed",
+  "dov_diagnosis_shared",
+  "dov_diagnosis_card_downloaded",
+  "dov_diagnosis_email_sent",
 ];
 
 function absolutePath(relativePath) {
@@ -188,11 +193,36 @@ test("established analytics event names remain available", async () => {
       source("src/app/diagnostic/page.tsx"),
       source("src/app/clinic/driver-slice/page.tsx"),
       source("src/app/clinic/pull-hook/page.tsx"),
+      source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
     ])
   ).join("\n");
 
   for (const eventName of analyticsEvents) {
     assert.ok(analyticsSource.includes(eventName), `${eventName} must remain instrumented`);
+  }
+});
+
+test("completed diagnoses keep the distribution loop and safe email handoff", async () => {
+  const [component, emailRoute, decoder, equipment, driverSlice, pullHook, curvesRight] = await Promise.all([
+    source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
+    source("src/app/api/email-results/route.ts"),
+    source("src/components/tools/ball-flight-decoder/BallFlightDecoder.tsx"),
+    source("src/app/diagnostic/page.tsx"),
+    source("src/app/clinic/driver-slice/page.tsx"),
+    source("src/app/clinic/pull-hook/page.tsx"),
+    source("src/app/clinic/ball-curves-right/page.tsx"),
+  ]);
+
+  assert.match(component, />Share my diagnosis</);
+  assert.match(component, />Send me my diagnosis and range plan</);
+  assert.match(component, /Download result card/);
+  assert.match(component, /Likely cause/);
+  assert.match(emailRoute, /new Resend\(/);
+  assert.match(emailRoute, /Cache-Control.*no-store/s);
+  assert.doesNotMatch(emailRoute, /console\.log\([^)]*body/);
+
+  for (const resultPage of [decoder, equipment, driverSlice, pullHook, curvesRight]) {
+    assert.match(resultPage, /<DiagnosisSharePanel/);
   }
 });
 
