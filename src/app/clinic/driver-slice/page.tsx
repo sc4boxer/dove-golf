@@ -11,6 +11,7 @@ import { evaluateDriverSlice, primaryLeverLabel } from "@/lib/clinic/problems/dr
 import { loadClinicSessions, saveClinicSession, updateClinicSession } from "@/lib/clinic/storage";
 import { ClinicFeedbackOutcome, ClinicResult, ClinicSession, DriverSliceInputs } from "@/lib/clinic/types";
 import { track } from "@/lib/analytics/ga";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
 
 const DISCRIMINATOR_OPTIONS = ["heel", "toe", "center"] as const;
 
@@ -164,6 +165,25 @@ export default function DriverSlicePage() {
                 strikeLocation: inputs.strikeLocation ?? "unsure",
                 primaryLever: result.primaryLever,
               }}
+              details={[
+                { label: "Start", value: inputs.startLine ?? "Not measured" },
+                {
+                  label: "Curve",
+                  value:
+                    inputs.curveSeverity === "none"
+                      ? "No meaningful right curve"
+                      : `${inputs.curveSeverity ?? "Unknown"} right`,
+                },
+                { label: "Strike", value: inputs.strikeLocation ?? "Not measured" },
+              ]}
+              flightShape={
+                inputs.startLine && inputs.startLine !== "unsure"
+                  ? getBallFlightShapeFromObservation(
+                      inputs.startLine,
+                      inputs.curveSeverity === "none" ? "straight" : "right",
+                    )
+                  : null
+              }
             />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
