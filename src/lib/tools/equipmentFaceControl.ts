@@ -1,4 +1,4 @@
-import type { EquipmentCurve, EquipmentStartLine } from "@/lib/visual/equipmentBallFlightShape";
+import type { EquipmentCurve, EquipmentStartLine } from "../visual/equipmentBallFlightShape.ts";
 
 export type EquipmentFaceControlBias = "neutral" | "reduceLeft" | "reduceRight" | "stability";
 
