@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { TrackLink } from "@/components/analytics/TrackLink";
 import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
+import { buildEquipmentFitHref } from "@/lib/tools/ballFlightEquipmentBridge";
 import { BallFlightResultVisual } from "./BallFlightResultVisual";
 import { ShotEvidenceView } from "./ShotEvidenceView";
 import {
@@ -113,6 +115,15 @@ export function BallFlightDecoder() {
   }
 
   const pattern = result ? BALL_FLIGHT_PATTERNS[result.patternSlug] : null;
+  const equipmentHref =
+    result && start && curve && strike
+      ? buildEquipmentFitHref({
+          start,
+          curve,
+          strike,
+          patternSlug: result.patternSlug,
+        })
+      : "/diagnostic";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
@@ -239,6 +250,31 @@ export function BallFlightDecoder() {
             <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-900">
               <p className="text-xs font-bold uppercase tracking-[0.12em]">Your next range test</p>
               <p className="mt-3 font-medium leading-7">{result.nextTest}</p>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-slate-300 bg-white p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">If the pattern persists</p>
+              <h3 className="mt-3 text-lg font-semibold">Check whether the club is contributing</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Repeat the range test over a comparable shot cluster. If the same pattern remains, carry these
+                observations into the equipment-fit workflow instead of starting over.
+              </p>
+              <TrackLink
+                href={equipmentHref}
+                eventName="dov_decoder_equipment_clicked"
+                eventParams={{
+                  module: "ball_flight_decoder",
+                  placement: "decoder_result",
+                  pattern: result.patternSlug,
+                  strike,
+                }}
+                className="mt-5 inline-flex min-h-11 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                Check equipment fit
+              </TrackLink>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                Equipment is a hypothesis to test, not a diagnosis or purchase recommendation.
+              </p>
             </div>
 
             <div className="mt-8 border-t border-slate-200 pt-8">
