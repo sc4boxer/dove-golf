@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useRef, useState } from "react";
+import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
 import {
   type CurveInput,
@@ -47,7 +47,7 @@ function ChoiceGroup<T extends string>({
   options: Choice<T>[];
   value: T | "";
   onChange: (value: T) => void;
-  firstInputRef?: React.RefObject<HTMLInputElement | null>;
+  firstInputRef?: RefObject<HTMLInputElement | null>;
 }) {
   return (
     <fieldset className="rounded-3xl border border-[var(--line)] bg-[var(--paper-strong)] p-5 sm:p-7">
