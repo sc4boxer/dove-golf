@@ -184,6 +184,11 @@ export default function DriverSlicePage() {
                     )
                   : null
               }
+              analyticsContext={{
+                pattern: `${inputs.startLine ?? "unknown"}-${inputs.curveSeverity ?? "unknown"}-right`,
+                strike: inputs.strikeLocation ?? "unknown",
+                category: "driver_slice",
+              }}
             />
 
             <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
