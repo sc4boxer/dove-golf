@@ -130,6 +130,10 @@ export default function BallCurvesRightPage() {
           selectedVariant.startDirection,
           "right",
         )}
+        analyticsContext={{
+          pattern: selectedVariant.id,
+          category: "ball_curves_right",
+        }}
       />
 
       <ExpandableWhySection
