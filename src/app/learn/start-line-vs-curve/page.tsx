@@ -21,19 +21,19 @@ const SAME_START_EXAMPLES: Array<{
     shape: "draw",
     title: "Curves left",
     observation: "Starts near the target, then bends left.",
-    relationship: "The face was likely near the target and closed relative to the path. The path was farther right than the face.",
+    relationship: "Likely: the face pointed left of the path at impact.",
   },
   {
     shape: "straight",
     title: "Stays straight",
     observation: "Starts near the target with little sideways bend.",
-    relationship: "The face was likely near the target and closely matched to the path.",
+    relationship: "Likely: the face and path pointed in nearly the same direction.",
   },
   {
     shape: "fade",
     title: "Curves right",
     observation: "Starts near the target, then bends right.",
-    relationship: "The face was likely near the target and open relative to the path. The path was farther left than the face.",
+    relationship: "Likely: the face pointed right of the path at impact.",
   },
 ];
 
@@ -41,11 +41,12 @@ export default function StartLineVsCurvePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
-        <HomeLinkPill />
-
-        <Link href="/learn" className="mt-5 inline-block text-sm font-medium text-slate-500 hover:text-slate-900">
-          ← Back to Learn
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <HomeLinkPill />
+          <Link href="/learn" className="text-sm font-medium text-slate-500 hover:text-slate-900">
+            Learn library
+          </Link>
+        </div>
 
         <header className="mt-12 max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
@@ -63,18 +64,18 @@ export default function StartLineVsCurvePage() {
         <section className="mt-12 grid gap-4 md:grid-cols-2" aria-label="The two-step read">
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">1 · Start line</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Where did the ball begin?</h2>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Which way did it launch?</h2>
             <p className="mt-3 leading-7 text-slate-600">
-              Left, near the target, or right. The delivered face is usually the largest influence on this first
-              direction, but start line alone cannot reveal an exact face angle.
+              Watch the first few yards of flight: left of the target line, on it, or right of it. Ignore where the
+              shot eventually finished.
             </p>
           </article>
           <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">2 · Curve</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Which way did it bend?</h2>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Which way did it bend after launch?</h2>
             <p className="mt-3 leading-7 text-slate-600">
-              Left, mostly straight, or right. With centered contact, the bend shows whether the face was closed,
-              matched, or open relative to the club path.
+              After that first direction, did it bend left, stay mostly straight, or bend right? Centered contact
+              makes this clue easier to trust.
             </p>
           </article>
         </section>
@@ -93,21 +94,25 @@ export default function StartLineVsCurvePage() {
             {SAME_START_EXAMPLES.map((example) => (
               <article key={example.shape} className="rounded-3xl border border-slate-200 bg-slate-50 p-5">
                 <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                  <BallFlightChart shape={example.shape} className="mx-auto" />
+                  <BallFlightChart shape={example.shape} className="mx-auto max-w-sm" />
                 </div>
                 <h3 className="mt-5 text-xl font-semibold">{example.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{example.observation}</p>
-                <p className="mt-4 border-t border-slate-200 pt-4 text-sm leading-6 text-slate-700">
-                  {example.relationship}
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  What you see
                 </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">{example.observation}</p>
+                <p className="mt-4 border-t border-slate-200 pt-4 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                  What it suggests
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-700">{example.relationship}</p>
               </article>
             ))}
           </div>
 
           <p className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-600">
-            These are direction families, not severity scores. A large left curve may be called a hook; a large
-            right curve may be called a slice. Without measuring curve size, “draw” and “fade” are the clearer
-            educational labels.
+            These charts show direction, not severity. Because curve size is not measured here, “curves left” and
+            “curves right” are the safest labels. Golfers often call a smaller curve a draw or fade and a larger
+            curve a hook or slice.
           </p>
         </section>
 
@@ -123,7 +128,7 @@ export default function StartLineVsCurvePage() {
             </ul>
           </article>
 
-          <article className="rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
+          <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">What it cannot prove</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight">Not a body-motion diagnosis.</h2>
             <p className="mt-4 text-sm leading-6 text-slate-600">
