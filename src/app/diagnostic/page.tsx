@@ -1,13 +1,24 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import EmailCaptureCard from "./EmailCaptureCard";
 
-import { recommendDriverWoods } from "@/lib/engine/driver";
-import { recommendIrons } from "@/lib/engine/irons";
+import { recommendDriverWoods, type RecommendDriverWoodsInput } from "@/lib/engine/driver";
+import { recommendIrons, type RecommendIronsInput } from "@/lib/engine/irons";
 import { track } from "@/lib/analytics/ga";
-import { BallFlightDiagram } from "@/components/visuals/BallFlightDiagram";
-import { StrikeFaceDiagram } from "@/components/visuals/StrikeFaceDiagram";
+import { BallFlightChartGlyph } from "@/components/visuals/BallFlightChart";
+import { EquipmentBallFlightPreview } from "@/components/visuals/EquipmentBallFlightPreview";
+import { StrikeFaceDiagram, StrikeFaceGlyph } from "@/components/visuals/StrikeFaceDiagram";
+import { getEquipmentBallFlightShape } from "@/lib/visual/equipmentBallFlightShape";
+import { classifyEquipmentFaceControl } from "@/lib/tools/equipmentFaceControl";
+import {
+  type EquipmentFitContext,
+  equipmentFitPrefill,
+  formatEquipmentFitContext,
+  formatEquipmentFitPattern,
+  parseEquipmentFitContext,
+} from "@/lib/tools/ballFlightEquipmentBridge";
 
 const SHARE_CARD_WIDTH = 1080;
 const SHARE_CARD_HEIGHT = 1900;
@@ -461,20 +472,7 @@ function computeGoalBias(goals: Goal[]): Bias {
 
 /* ---------------- BALL FLIGHT CLASSIFIER ---------------- */
 
-function classifyFaceControl(start: StartLine, curve: Curve) {
-  if (start === "unsure" || curve === "unsure") return { label: "unknown", bias: "neutral" as const };
-
-  if (start === "right" && curve === "fade") return { label: "starts right + fades", bias: "reduceRight" as const };
-  if (start === "right" && curve === "straight") return { label: "starts right (no curve)", bias: "reduceRight" as const };
-
-  if (start === "left" && curve === "draw") return { label: "starts left + draws", bias: "reduceLeft" as const };
-  if (start === "left" && curve === "straight") return { label: "starts left (no curve)", bias: "reduceLeft" as const };
-
-  if (start === "center" && curve === "fade") return { label: "starts center + fades", bias: "stability" as const };
-  if (start === "center" && curve === "draw") return { label: "starts center + draws", bias: "stability" as const };
-
-  return { label: "neutral", bias: "neutral" as const };
-}
+const classifyFaceControl = classifyEquipmentFaceControl;
 
 /* ---------------- WEDGE RECOMMENDER (deterministic) ---------------- */
 
@@ -705,11 +703,11 @@ function fallbackIronRec(sevenIronSpeed: number): EngineRec {
   };
 }
 
-function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
+function safeRecommendDriverWoods(args: RecommendDriverWoodsInput, speedMph: number): EngineRec {
   try {
     const rec = recommendDriverWoods(args);
-    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
-      return rec as EngineRec;
+    if (rec.profile?.weightRange && rec.profile?.flex) {
+      return rec;
     }
   } catch {
     // ignore and fall back
@@ -717,11 +715,11 @@ function safeRecommendDriverWoods(args: any, speedMph: number): EngineRec {
   return fallbackDriverRec(speedMph);
 }
 
-function safeRecommendIrons(args: any, sevenIronSpeed: number): EngineRec {
+function safeRecommendIrons(args: RecommendIronsInput, sevenIronSpeed: number): EngineRec {
   try {
     const rec = recommendIrons(args);
-    if (rec && typeof rec === "object" && (rec as any).profile?.weightRange && (rec as any).profile?.flex) {
-      return rec as EngineRec;
+    if (rec.profile?.weightRange && rec.profile?.flex) {
+      return rec;
     }
   } catch {
     // ignore and fall back
@@ -806,7 +804,7 @@ function computeResults(a: Answers) {
             currentShaftWeightG: driverShaftNow,
             currentFlex: "unknown",
             launchFeel: driverLaunchFeel,
-          } as any,
+          },
           driverSpeed
         )
       : null;
@@ -859,7 +857,7 @@ function computeResults(a: Answers) {
             currentShaftWeightG: ironShaftNow,
             currentFlex: "unknown",
             peakHeightFeel: ironPeakFeel,
-          } as any,
+          },
           sevenIronSpeed
         )
       : null;
@@ -895,11 +893,13 @@ function computeResults(a: Answers) {
   if (driverRec) {
     if (a.driverStartLine !== "unsure" && a.driverCurve !== "unsure") {
       if (driverFaceControl.bias === "reduceRight") {
-        cause.push("Because your driver starts right and fades, we prioritize face-control stability to reduce right-side misses.");
+        cause.push(`Because your driver ${driverFaceControl.label}, we prioritize face-control stability to reduce right-side misses.`);
       } else if (driverFaceControl.bias === "reduceLeft") {
-        cause.push("Because your driver starts left (with left bias), we bias toward anti-left stability (tip-stable / lower torque directionally).");
+        cause.push(`Because your driver ${driverFaceControl.label}, we bias toward anti-left stability directionally.`);
+      } else if (driverFaceControl.bias === "stability") {
+        cause.push(`Because your driver ${driverFaceControl.label}, we prioritize stability while keeping the recommendation neutral to target.`);
       } else {
-        cause.push("Because your driver pattern is relatively neutral, we keep the recommendation balanced and tune primarily for your speed + feel.");
+        cause.push(`Because your driver ${driverFaceControl.label}, we keep the recommendation balanced and tune primarily for speed and feel.`);
       }
     } else {
       cause.push("Because your driver flight pattern is marked as unsure, we bias neutral and recommend validating start line + curve on the range.");
@@ -917,11 +917,13 @@ function computeResults(a: Answers) {
 
     if (a.ironStartLine !== "unsure" && a.ironCurve !== "unsure") {
       if (ironFaceControl.bias === "reduceRight") {
-        cause.push("Because your irons start right with fade bias, we prioritize stability to help square the face more consistently.");
+        cause.push(`Because your irons ${ironFaceControl.label}, we prioritize stability to reduce right-side misses.`);
       } else if (ironFaceControl.bias === "reduceLeft") {
-        cause.push("Because your irons show left bias, we favor anti-left stability so the face doesn’t over-close.");
+        cause.push(`Because your irons ${ironFaceControl.label}, we favor anti-left stability directionally.`);
+      } else if (ironFaceControl.bias === "stability") {
+        cause.push(`Because your irons ${ironFaceControl.label}, we prioritize stability while keeping the build neutral to target.`);
       } else {
-        cause.push("Because your iron pattern is relatively neutral, we keep the build balanced and anchor to speed + strike tendencies.");
+        cause.push(`Because your irons ${ironFaceControl.label}, we keep the build balanced and anchor to speed and strike tendencies.`);
       }
     } else {
       cause.push("Because iron start line/curve is marked unsure, we bias a stable baseline and recommend validating on the range.");
@@ -1026,7 +1028,10 @@ function computeResults(a: Answers) {
 
 export default function DiagnosticWizard() {
   const [a, setA] = useState<Answers>(DEFAULT_ANSWERS);
+  const [decoderContext, setDecoderContext] = useState<EquipmentFitContext | null>(null);
+  const [focusChosen, setFocusChosen] = useState(false);
   const viewedStepsRef = useRef<Set<Step>>(new Set());
+  const carriedAppliedFocusesRef = useRef<Set<FitFocus>>(new Set());
   const fitStartedTrackedRef = useRef(false);
   const fitResultsTrackedRef = useRef(false);
   const fitCompletedTrackedRef = useRef(false);
@@ -1044,6 +1049,8 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("lead_verified");
+      // Local verification is intentionally restored once after hydration.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved === "1") setIsVerified(true);
     } catch {
       // ignore
@@ -1057,6 +1064,37 @@ export default function DiagnosticWizard() {
       const verified = url.searchParams.get("verified") === "1";
       const verifyStatusParam = url.searchParams.get("verifyStatus");
       const wantsResults = url.searchParams.get("step") === "results";
+
+      const hasResumeContext =
+        verified ||
+        wantsResults ||
+        Boolean(url.searchParams.get("resumeToken")) ||
+        verifyStatusParam === "verified" ||
+        verifyStatusParam === "already_verified";
+      const carriedContext = hasResumeContext ? null : parseEquipmentFitContext(url.searchParams);
+
+      if (carriedContext) {
+        // URL handoff state is intentionally captured once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setDecoderContext(carriedContext);
+        track("dov_fit_handoff_received", {
+          module: "dovefit",
+          placement: "diagnostic_focus",
+          source: carriedContext.source,
+          version: carriedContext.version,
+          start: carriedContext.start,
+          curve: carriedContext.curve,
+          strike: carriedContext.strike,
+          validity: "valid",
+        });
+      }
+
+      if (url.searchParams.get("source") === "ball-flight-decoder") {
+        for (const key of ["source", "v", "start", "curve", "strike"]) {
+          url.searchParams.delete(key);
+        }
+        window.history.replaceState({}, "", url.toString());
+      }
 
       if (
         verifyStatusParam === "verified" ||
@@ -1075,6 +1113,7 @@ export default function DiagnosticWizard() {
       if (verified || wantsResults) {
         const hydrateFromPayload = (payload: unknown) => {
           setA({ ...DEFAULT_ANSWERS, ...sanitizeStoredAnswers(payload) });
+          setFocusChosen(true);
 
           const contact = extractContactProfile(payload);
           if (contact.firstName && contact.lastName && contact.email) {
@@ -1145,11 +1184,15 @@ export default function DiagnosticWizard() {
   useEffect(() => {
     if (!pendingJumpToResults) return;
     const s = buildSteps(a.fitFocus);
+    // Resume completion deliberately moves the wizard to its terminal step.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex(s.length - 1);
     setPendingJumpToResults(false);
   }, [pendingJumpToResults, a.fitFocus]);
 
   useEffect(() => {
+    // A category change can shorten the step list; clamp the current index.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStepIndex((i) => Math.min(i, steps.length - 1));
   }, [steps.length]);
 
@@ -1189,8 +1232,10 @@ export default function DiagnosticWizard() {
       step,
       index: stepIndex,
       version: "v1",
+      entry_source: decoderContext ? "ball_flight_decoder" : "direct",
+      carried_context: Boolean(decoderContext),
     });
-  }, [step, stepIndex]);
+  }, [step, stepIndex, decoderContext]);
 
   useEffect(() => {
     try {
@@ -1212,8 +1257,48 @@ export default function DiagnosticWizard() {
     setStepIndex((i) => Math.min(steps.length - 1, i + 1));
   }
 
+  function clearDecoderContext() {
+    const context = decoderContext;
+    if (!context) return;
+
+    setA((previous) => {
+      const next = { ...previous };
+
+      const driverContextApplied =
+        carriedAppliedFocusesRef.current.has("driver_woods") ||
+        carriedAppliedFocusesRef.current.has("full_bag");
+      const ironContextApplied =
+        carriedAppliedFocusesRef.current.has("irons") ||
+        carriedAppliedFocusesRef.current.has("full_bag");
+
+      if (driverContextApplied) {
+        if (next.driverStartLine === context.start) next.driverStartLine = DEFAULT_ANSWERS.driverStartLine;
+        if (next.driverCurve === context.curve) next.driverCurve = DEFAULT_ANSWERS.driverCurve;
+        if (context.strike !== "unsure" && next.driverStrike === context.strike) {
+          next.driverStrike = DEFAULT_ANSWERS.driverStrike;
+        }
+      }
+
+      if (ironContextApplied) {
+        if (next.ironStartLine === context.start) next.ironStartLine = DEFAULT_ANSWERS.ironStartLine;
+        if (next.ironCurve === context.curve) next.ironCurve = DEFAULT_ANSWERS.ironCurve;
+        if (context.strike !== "unsure" && next.ironFaceStrike === context.strike) {
+          next.ironFaceStrike = DEFAULT_ANSWERS.ironFaceStrike;
+        }
+      }
+
+      return next;
+    });
+
+    carriedAppliedFocusesRef.current.clear();
+    setDecoderContext(null);
+  }
+
   function resetAll() {
     setA(DEFAULT_ANSWERS);
+    setDecoderContext(null);
+    setFocusChosen(false);
+    carriedAppliedFocusesRef.current.clear();
     setStepIndex(0);
     try {
       window.localStorage.removeItem("diagnostic_last_payload");
@@ -1229,9 +1314,9 @@ export default function DiagnosticWizard() {
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-2xl px-6 py-10">
         <div className="flex items-center justify-between">
-          <a className="text-sm text-slate-500 hover:text-slate-900" href="/">
+          <Link className="text-sm text-slate-500 hover:text-slate-900" href="/">
             ← Home
-          </a>
+          </Link>
           <span className="text-xs font-medium text-slate-500">Free Diagnostic</span>
         </div>
 
@@ -1249,6 +1334,35 @@ export default function DiagnosticWizard() {
         <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
           {step !== "results" ? (
             <>
+              {step === "focus" && decoderContext ? (
+                <aside
+                  aria-label="Carried ball-flight observations"
+                  className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        From your ball-flight result
+                      </p>
+                      <p className="mt-2 font-semibold text-slate-900">{formatEquipmentFitPattern(decoderContext)}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {formatEquipmentFitContext(decoderContext)}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        We’ll use these observations only where the equipment questions match.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={clearDecoderContext}
+                      className="inline-flex min-h-11 w-fit shrink-0 items-center text-sm font-medium text-slate-600 hover:text-slate-900"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </aside>
+              ) : null}
+
               <h1 className="text-2xl font-semibold tracking-tight">{meta?.title}</h1>
               <p className="mt-2 text-sm text-slate-600">{meta?.why}</p>
 
@@ -1257,7 +1371,7 @@ export default function DiagnosticWizard() {
                 {step === "focus" && (
                   <ChoiceChips
                     mode="single"
-                    value={a.fitFocus}
+                    value={focusChosen ? a.fitFocus : null}
                     onChange={(v) => {
                       if (!fitStartedTrackedRef.current) {
                         fitStartedTrackedRef.current = true;
@@ -1266,9 +1380,21 @@ export default function DiagnosticWizard() {
                           placement: "diagnostic_focus",
                           step: "focus",
                           version: "v1",
+                          entry_source: decoderContext ? "ball_flight_decoder" : "direct",
+                          carried_context: Boolean(decoderContext),
                         });
                       }
-                      setA((p) => ({ ...p, fitFocus: v }));
+                      const shouldApplyContext =
+                        decoderContext &&
+                        (v === "driver_woods" || v === "irons" || v === "full_bag") &&
+                        !carriedAppliedFocusesRef.current.has(v);
+                      const carriedPrefill: Partial<Answers> = shouldApplyContext
+                        ? equipmentFitPrefill(decoderContext, v)
+                        : {};
+
+                      if (shouldApplyContext) carriedAppliedFocusesRef.current.add(v);
+                      setFocusChosen(true);
+                      setA((p) => ({ ...p, fitFocus: v, ...carriedPrefill }));
                       setStepIndex(1);
                     }}
                     options={[
@@ -1413,7 +1539,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightDiagram shape="straight" startSide={a.driverStartLine === "unsure" ? undefined : a.driverStartLine} />
+                      <EquipmentBallFlightPreview start={a.driverStartLine} curve="unsure" startOnly />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1432,7 +1558,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightDiagram shape={a.driverCurve === "unsure" ? "straight" : a.driverCurve} startSide={a.driverStartLine === "unsure" ? undefined : a.driverStartLine} />
+                      <EquipmentBallFlightPreview start={a.driverStartLine} curve={a.driverCurve} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1563,7 +1689,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightDiagram shape="straight" startSide={a.ironStartLine === "unsure" ? undefined : a.ironStartLine} />
+                      <EquipmentBallFlightPreview start={a.ironStartLine} curve="unsure" startOnly />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1582,7 +1708,7 @@ export default function DiagnosticWizard() {
                       ]}
                     />
                     <MiniVizCard>
-                      <BallFlightDiagram shape={a.ironCurve === "unsure" ? "straight" : a.ironCurve} startSide={a.ironStartLine === "unsure" ? undefined : a.ironStartLine} />
+                      <EquipmentBallFlightPreview start={a.ironStartLine} curve={a.ironCurve} />
                     </MiniVizCard>
                   </div>
                 )}
@@ -1789,7 +1915,8 @@ export default function DiagnosticWizard() {
                 <button
                   type="button"
                   onClick={next}
-                  className="ml-auto rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800"
+                  disabled={step === "focus" && !focusChosen}
+                  className="ml-auto rounded-2xl bg-slate-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next →
                 </button>
@@ -1841,8 +1968,6 @@ function ResultsView({
   // ✅ FIX #2: only show irons contact profile when irons are part of the workflow
   const showIronContactProfile = showIrons;
 
-  const modelStart = showIrons && !showDriver ? a.ironStartLine : a.driverStartLine;
-  const modelCurve = showIrons && !showDriver ? a.ironCurve : a.driverCurve;
   const certificateId = useMemo(() => buildCertificateId(a, result), [a, result]);
   const alignmentScore = useMemo(() => computeAlignmentScore(result), [result]);
   const verificationUrl = `https://dovegolf.fit/verify/${certificateId}`;
@@ -1858,6 +1983,8 @@ function ResultsView({
       const raw = window.localStorage.getItem("lead_contact_profile");
       if (raw) {
         const parsed = JSON.parse(raw);
+        // Stored contact details are restored once after hydration.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setContactProfile({
           firstName: typeof parsed?.firstName === "string" ? parsed.firstName : null,
           lastName: typeof parsed?.lastName === "string" ? parsed.lastName : null,
@@ -1891,11 +2018,13 @@ function ResultsView({
 
   const completedLabel = useMemo(
     () =>
-      new Date(completedAt || Date.now()).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
+      completedAt
+        ? new Date(completedAt).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Pending",
     [completedAt]
   );
 
@@ -1910,7 +2039,7 @@ function ResultsView({
     if (!qrSvgMarkup) return;
 
     try {
-      await (document as any).fonts?.ready;
+      await document.fonts?.ready;
     } catch {
       // ignore
     }
@@ -2081,14 +2210,31 @@ function ResultsView({
 
         {showBallFlight && (
           <Card title="Your ball flight model">
-            <div className="grid gap-3">
-              <div className="text-sm text-slate-600">
-                {showIrons && !showDriver ? "Irons" : "Driver"}:{" "}
-                <span className="font-medium text-slate-900">
-                  {modelStart} / {modelCurve}
-                </span>
-              </div>
-              <BallFlightDiagram shape={modelCurve === "unsure" ? "straight" : modelCurve} startSide={modelStart === "unsure" ? undefined : modelStart} compact={false} />
+            <div className={["grid gap-4", showDriver && showIrons ? "md:grid-cols-2" : ""].join(" ")}>
+              {showDriver ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Driver + Woods
+                  </p>
+                  <EquipmentBallFlightPreview
+                    start={a.driverStartLine}
+                    curve={a.driverCurve}
+                    compact={false}
+                  />
+                </div>
+              ) : null}
+              {showIrons ? (
+                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    Irons
+                  </p>
+                  <EquipmentBallFlightPreview
+                    start={a.ironStartLine}
+                    curve={a.ironCurve}
+                    compact={false}
+                  />
+                </div>
+              ) : null}
             </div>
           </Card>
         )}
@@ -2264,12 +2410,12 @@ function ResultsView({
             Start over
           </button>
 
-          <a
+          <Link
             href="/"
             className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
           >
             Back to home
-          </a>
+          </Link>
         </div>
       </div>
 
@@ -2281,8 +2427,6 @@ function ResultsView({
           completedLabel={completedLabel}
           verificationUrl={verificationUrl}
           qrSvgMarkup={qrSvgMarkup}
-          modelStart={modelStart}
-          modelCurve={modelCurve}
           showDriver={showDriver}
           showIrons={showIrons}
           firstName={contactProfile.firstName}
@@ -2301,8 +2445,6 @@ function EquipmentAlignmentShareCard({
   completedLabel,
   verificationUrl,
   qrSvgMarkup,
-  modelStart,
-  modelCurve,
   showDriver,
   showIrons,
   firstName,
@@ -2314,8 +2456,6 @@ function EquipmentAlignmentShareCard({
   completedLabel: string;
   verificationUrl: string;
   qrSvgMarkup: string;
-  modelStart: StartLine;
-  modelCurve: Curve;
   showDriver: boolean;
   showIrons: boolean;
   firstName: string | null;
@@ -2328,6 +2468,15 @@ function EquipmentAlignmentShareCard({
   const energyTransfer = a.driverTempo === "quick" ? "Fast Energy" : a.driverTempo === "smooth" ? "Smooth Energy" : "Neutral";
   const stabilityRequirement = result.confidence >= 80 ? "Medium Stability" : result.confidence >= 65 ? "High Stability" : "Low Stability";
   const spinBias = a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid";
+  const driverFlightShape = showDriver
+    ? getEquipmentBallFlightShape(a.driverStartLine, a.driverCurve)
+    : null;
+  const ironFlightShape = showIrons
+    ? getEquipmentBallFlightShape(a.ironStartLine, a.ironCurve)
+    : null;
+  const primaryFlightShape = showDriver ? driverFlightShape : ironFlightShape;
+  const primaryFlightLabel = showDriver ? "Driver + Woods" : showIrons ? "Irons" : "Wedges";
+  const driverShareStrike = a.driverStrike === "all_over" ? "mixed" : a.driverStrike;
 
   const swingSignature = [
     { label: "Club speed", value: `${showDriver ? result.driverSpeedEstimate : result.sevenIronSpeedEstimate} mph` },
@@ -2482,18 +2631,65 @@ function EquipmentAlignmentShareCard({
 
       <rect x="64" y="402" width="952" height="172" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="432" fontSize="20" fontWeight="600" fill="#0f172a">Impact visuals</text>
+
       <rect x="88" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
-      <svg x="96" y="456" width="270" height="92" viewBox="0 0 520 160">
-        <BallFlightDiagram shape={modelCurve === "unsure" ? "straight" : modelCurve} startSide={modelStart === "unsure" ? undefined : modelStart} compact={false} staticRender />
+      <text x="100" y="468" fontSize="12" fontWeight="600" fill="#475569">{primaryFlightLabel}</text>
+      <svg x="96" y="470" width="270" height="78" viewBox="0 0 300 150">
+        {primaryFlightShape ? (
+          <BallFlightChartGlyph shape={primaryFlightShape} width={300} height={150} staticRender />
+        ) : (
+          <text x="150" y="78" textAnchor="middle" fontSize="14" fill="#64748b">Flight not recorded</text>
+        )}
       </svg>
+
       <rect x="397" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
-      <svg x="410" y="454" width="260" height="94" viewBox="0 0 260 120">
-        <LowPointViz lowPoint={a.ironLowPoint} staticRender />
-      </svg>
+      {showDriver && showIrons ? (
+        <>
+          <text x="409" y="468" fontSize="12" fontWeight="600" fill="#475569">Irons</text>
+          <svg x="405" y="470" width="270" height="78" viewBox="0 0 300 150">
+            {ironFlightShape ? (
+              <BallFlightChartGlyph shape={ironFlightShape} width={300} height={150} staticRender />
+            ) : (
+              <text x="150" y="78" textAnchor="middle" fontSize="14" fill="#64748b">Flight not recorded</text>
+            )}
+          </svg>
+        </>
+      ) : showIrons ? (
+        <>
+          <text x="409" y="468" fontSize="12" fontWeight="600" fill="#475569">Iron low point</text>
+          <svg x="410" y="466" width="260" height="86" viewBox="0 0 260 120">
+            <LowPointGlyph lowPoint={a.ironLowPoint} staticRender />
+          </svg>
+        </>
+      ) : showDriver ? (
+        <>
+          <text x="409" y="468" fontSize="12" fontWeight="600" fill="#475569">Driver strike</text>
+          <svg x="410" y="466" width="260" height="86" viewBox="0 0 260 120">
+            <StrikeFaceGlyph strike={driverShareStrike} />
+          </svg>
+        </>
+      ) : (
+        <>
+          <text x="409" y="486" fontSize="12" fontWeight="600" fill="#475569">Wedge turf: {a.wedgeTurf}</text>
+          <text x="409" y="510" fontSize="12" fill="#64748b">Typical miss: {a.wedgeMiss}</text>
+        </>
+      )}
+
       <rect x="706" y="448" width="286" height="108" rx="12" fill="#ffffff" stroke="#e2e8f0" />
-      <svg x="719" y="454" width="260" height="94" viewBox="0 0 260 120">
-        <StrikeFaceDiagram strike={a.ironFaceStrike} />
-      </svg>
+      {showIrons ? (
+        <>
+          <text x="718" y="468" fontSize="12" fontWeight="600" fill="#475569">Iron strike</text>
+          <svg x="719" y="466" width="260" height="86" viewBox="0 0 260 120">
+            <StrikeFaceGlyph strike={a.ironFaceStrike} />
+          </svg>
+        </>
+      ) : (
+        <>
+          <text x="718" y="486" fontSize="12" fontWeight="600" fill="#475569">Model boundary</text>
+          <text x="718" y="510" fontSize="12" fill="#64748b">Right-handed · illustrative</text>
+          <text x="718" y="532" fontSize="12" fill="#64748b">Not measured launch data</text>
+        </>
+      )}
 
       <rect x="64" y={recommendationCardY} width="952" height={recommendationCardHeight} rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="620" fontSize="20" fontWeight="600" fill="#0f172a">Equipment recommendations</text>
@@ -2588,7 +2784,7 @@ type ChipOption<T extends string> = { value: T; label: string; help?: string };
 
 function ChoiceChips<T extends string>(props: {
   mode: "single";
-  value: T;
+  value: T | null;
   onChange: (v: T) => void;
   options: ChipOption<T>[];
 }): React.ReactElement;
@@ -2602,7 +2798,7 @@ function ChoiceChips<T extends string>(props: {
 
 function ChoiceChips<T extends string>(
   props:
-    | { mode: "single"; value: T; onChange: (v: T) => void; options: ChipOption<T>[] }
+    | { mode: "single"; value: T | null; onChange: (v: T) => void; options: ChipOption<T>[] }
     | { mode: "multi"; value: T[]; onChange: (v: T[]) => void; maxSelections: number; options: ChipOption<T>[] }
 ) {
   const [openHelp, setOpenHelp] = React.useState<T | null>(null);
@@ -2622,28 +2818,28 @@ function ChoiceChips<T extends string>(
     <div className="grid gap-3 sm:grid-cols-2" data-help-root="1">
       {props.options.map((opt) => {
         const active =
-          props.mode === "single" ? opt.value === props.value : (props.value as T[]).includes(opt.value);
+          props.mode === "single" ? opt.value === props.value : props.value.includes(opt.value);
 
         const disabled =
           props.mode === "multi" &&
-          !(props.value as T[]).includes(opt.value) &&
-          (props.value as T[]).length >= (props as any).maxSelections;
+          !props.value.includes(opt.value) &&
+          props.value.length >= props.maxSelections;
 
         function handleChipClick() {
           if (disabled) return;
 
           if (props.mode === "single") {
-            props.onChange(opt.value as any);
+            props.onChange(opt.value);
             return;
           }
-          const current = props.value as T[];
+          const current = props.value;
           const exists = current.includes(opt.value);
 
           if (exists) {
             props.onChange(current.filter((x) => x !== opt.value));
             return;
           }
-          if (current.length >= (props as any).maxSelections) return;
+          if (current.length >= props.maxSelections) return;
           props.onChange([...current, opt.value]);
         }
 
@@ -2740,200 +2936,18 @@ function MiniVizCard({ children }: { children: React.ReactNode }) {
 /* ---------------- MICRO-VISUALS (SVG) ---------------- */
 
 /**
- * BallFlightViz:
- * ✅ Start point is LEFT/CENTER/RIGHT of target line (true start)
- * ✅ End point ALWAYS lands on target line (center)
- * ✅ Draw = curves LEFT toward target, Fade = curves RIGHT toward target
- * ✅ NO moving ball circle (removes the stray/yellow dot issue)
- * ✅ "start" label sits under the true start point
- */
-function BallFlightViz({
-  start,
-  curve,
-  compact = true,
-}: {
-  start: StartLine;
-  curve: Curve;
-  compact?: boolean;
-}) {
-  const w = compact ? 260 : 520;
-  const h = compact ? 120 : 160;
-
-  const groundY = h * 0.78;
-  const targetX = w * 0.5;
-  const sx = targetX;
-  const sy = groundY;
-  const ey = h * 0.18;
-
-  const startOffset =
-    start === "left" ? -w * 0.1 : start === "right" ? w * 0.1 : 0;
-  const curveOffset =
-    curve === "draw" ? -w * 0.05 : curve === "fade" ? w * 0.05 : 0;
-
-  const ex = targetX + startOffset + curveOffset;
-  const c1x = targetX + startOffset * 0.8;
-  const c1y = h * 0.6;
-  const c2x = targetX + startOffset + curveOffset * 1.25;
-  const c2y = h * 0.3;
-  const path = `M ${sx} ${sy} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${ex} ${ey}`;
-
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-      <line
-        x1={w * 0.1}
-        y1={groundY}
-        x2={w * 0.9}
-        y2={groundY}
-        stroke="rgb(226 232 240)"
-        strokeWidth="2"
-      />
-
-      <line
-        x1={targetX}
-        y1={groundY}
-        x2={targetX}
-        y2={h * 0.12}
-        stroke="rgb(203 213 225)"
-        strokeWidth="2"
-        strokeDasharray="6 6"
-      />
-
-      <path
-        d={path}
-        fill="none"
-        stroke="rgb(15 23 42)"
-        strokeWidth="3"
-        strokeLinecap="round"
-        strokeDasharray="900"
-        strokeDashoffset="900"
-      >
-        <animate attributeName="stroke-dashoffset" from="900" to="0" dur="0.9s" fill="freeze" />
-      </path>
-
-      <text x={targetX - 18} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
-        origin
-      </text>
-      <text x={targetX + 10} y={h * 0.16} fontSize="10" fill="rgb(100 116 139)">
-        target line
-      </text>
-    </svg>
-  );
-}
-
-/**
- * FaceStrikeViz:
- * - Heel/toe always show
- * - Shaft/hosel reference on RIGHT (toe side)
- */
-function FaceStrikeViz({
-  strike,
-}: {
-  strike: "heel" | "center" | "toe" | "mixed" | "unsure" | "all_over";
-}) {
-  const w = 260;
-  const h = 120;
-
-  const faceX = w * 0.22;
-  const faceY = h * 0.30;
-  const faceW = w * 0.56;
-  const faceH = h * 0.50;
-
-  const hoselX = faceX + faceW + 6;
-  const hoselY = faceY + faceH * 0.25;
-  const hoselW = 10;
-  const hoselH = faceH * 0.55;
-
-  const shaftX1 = hoselX + hoselW * 0.65;
-  const shaftY1 = hoselY + hoselH * 0.15;
-  const shaftX2 = shaftX1 + 22;
-  const shaftY2 = shaftY1 - 26;
-
-  const y = faceY + faceH * 0.55;
-  const heelX = faceX + faceW * 0.25;
-  const centerX = faceX + faceW * 0.50;
-  const toeX = faceX + faceW * 0.75;
-
-  const normalized = strike === "all_over" ? "mixed" : strike;
-
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
-      <rect
-        x={faceX}
-        y={faceY}
-        width={faceW}
-        height={faceH}
-        rx="18"
-        fill="rgb(248 250 252)"
-        stroke="rgb(226 232 240)"
-        strokeWidth="2"
-      />
-
-      {Array.from({ length: 6 }).map((_, i) => (
-        <line
-          key={i}
-          x1={faceX + faceW * 0.06}
-          x2={faceX + faceW * 0.94}
-          y1={faceY + faceH * (0.18 + i * 0.12)}
-          y2={faceY + faceH * (0.18 + i * 0.12)}
-          stroke="rgb(226 232 240)"
-          strokeWidth="2"
-        />
-      ))}
-
-      <rect
-        x={hoselX}
-        y={hoselY}
-        width={hoselW}
-        height={hoselH}
-        rx="6"
-        fill="rgb(241 245 249)"
-        stroke="rgb(226 232 240)"
-        strokeWidth="2"
-      />
-      <line
-        x1={shaftX1}
-        y1={shaftY1}
-        x2={shaftX2}
-        y2={shaftY2}
-        stroke="rgb(226 232 240)"
-        strokeWidth="4"
-        strokeLinecap="round"
-      />
-
-      {normalized === "mixed" && (
-        <>
-          <circle cx={heelX} cy={y} r={4} fill="rgb(148 163 184)" />
-          <circle cx={centerX} cy={y} r={5} fill="rgb(100 116 139)" />
-          <circle cx={toeX} cy={y} r={4} fill="rgb(148 163 184)" />
-        </>
-      )}
-
-      {normalized === "center" && <circle cx={centerX} cy={y} r={7} fill="rgb(15 23 42)" />}
-      {normalized === "heel" && <circle cx={heelX} cy={y} r={6} fill="rgb(148 163 184)" />}
-      {normalized === "toe" && <circle cx={toeX} cy={y} r={6} fill="rgb(148 163 184)" />}
-      {normalized === "unsure" && <circle cx={centerX} cy={y} r={5} fill="rgb(203 213 225)" />}
-
-      <text x={faceX} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
-        heel
-      </text>
-      <text x={faceX + faceW - 22} y={faceY + faceH + 16} fontSize="10" fill="rgb(100 116 139)">
-        toe
-      </text>
-      <text x={hoselX - 2} y={faceY - 6} fontSize="10" fill="rgb(100 116 139)">
-        shaft
-      </text>
-    </svg>
-  );
-}
-
-/**
  * LowPointViz:
  * - U-shaped divot (dips into ground)
  */
-function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoint; staticRender?: boolean }) {
+function LowPointGlyph({
+  lowPoint,
+  staticRender = false,
+}: {
+  lowPoint: IronLowPoint;
+  staticRender?: boolean;
+}) {
   const w = 260;
   const h = 120;
-
   const groundY = h * 0.72;
   const ballX = w * 0.5;
   const ballY = groundY - 10;
@@ -2950,25 +2964,19 @@ function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoin
   } else if (lowPoint === "shallow") {
     divotKind = "shallow";
     divotX = ballX + 18;
-  } else {
-    divotKind = "none";
   }
 
   const depth =
     divotKind === "before" ? 14 : divotKind === "after" ? 16 : divotKind === "shallow" ? 8 : 0;
-
   const divotPath =
     divotKind === "none"
       ? ""
-      : `M ${divotX - 22} ${groundY}
-         Q ${divotX} ${groundY + depth}
-         ${divotX + 22} ${groundY}`;
+      : `M ${divotX - 22} ${groundY} Q ${divotX} ${groundY + depth} ${divotX + 22} ${groundY}`;
 
   return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="w-full">
+    <>
       <line x1={w * 0.1} y1={groundY} x2={w * 0.9} y2={groundY} stroke="rgb(226 232 240)" strokeWidth="3" />
       <circle cx={ballX} cy={ballY} r={6} fill="rgb(15 23 42)" />
-
       {divotPath ? (
         <path
           d={divotPath}
@@ -2976,20 +2984,38 @@ function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoin
           stroke="rgb(15 23 42)"
           strokeWidth="3"
           strokeLinecap="round"
-          strokeDasharray={staticRender ? undefined : "200"}
-          strokeDashoffset={staticRender ? undefined : "200"}
-        >
-          {!staticRender && <animate attributeName="stroke-dashoffset" from="200" to="0" dur="0.55s" fill="freeze" />}
-        </path>
+          className={
+            staticRender
+              ? undefined
+              : "[stroke-dasharray:200] [stroke-dashoffset:200] animate-[dash_0.55s_ease-out_forwards] motion-reduce:animate-none motion-reduce:[stroke-dasharray:none] motion-reduce:[stroke-dashoffset:0]"
+          }
+        />
       ) : (
-        <text x={w * 0.34} y={h * 0.5} fontSize="11" fill="rgb(100 116 139)">
-          {lowPoint === "thin" ? "thin contact (no divot)" : "—"}
+        <text x={w * 0.34} y={h * 0.5} fontSize="12" fill="rgb(100 116 139)">
+          {lowPoint === "thin" ? "thin contact (no divot)" : "Not recorded"}
         </text>
       )}
-
-      <text x={w * 0.1} y={h * 0.95} fontSize="10" fill="rgb(100 116 139)">
+      <text x={w * 0.1} y={h * 0.95} fontSize="12" fill="rgb(100 116 139)">
         ground
       </text>
+    </>
+  );
+}
+
+function LowPointViz({ lowPoint, staticRender = false }: { lowPoint: IronLowPoint; staticRender?: boolean }) {
+  const w = 260;
+  const h = 120;
+
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      className="h-auto w-full"
+      role="img"
+      aria-label={`Iron low-point illustration: ${lowPoint === "unsure" ? "not recorded" : lowPoint}`}
+    >
+      <LowPointGlyph lowPoint={lowPoint} staticRender={staticRender} />
     </svg>
   );
 }

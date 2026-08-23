@@ -5,7 +5,7 @@ import {
   type CanonicalShotShape,
   type FlightSide,
   type ShotPathGeometry,
-} from "./shotShapeModel";
+} from "./shotShapeModel.ts";
 
 export type { FlightSide, ShotPathGeometry };
 

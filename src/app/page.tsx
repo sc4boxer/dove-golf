@@ -3,202 +3,165 @@ import Link from "next/link";
 import { TrackLink } from "@/components/analytics/TrackLink";
 
 export const metadata: Metadata = {
-  title: "DoveGolf | Visual Golf Diagnosis with DoveClinic",
+  title: "DoveGolf | Read the shot. Test the cause.",
   description:
-    "DoveClinic helps golfers diagnose visible ball-flight symptoms, test likely causes, and build straighter, more solid shots.",
-  alternates: {
-    canonical: "/",
-  },
+    "Free, data-guided golf tools that turn observable ball flight, strike, and equipment clues into one practical next test.",
+  alternates: { canonical: "/" },
 };
+
+const tools = [
+  {
+    label: "BALL FLIGHT",
+    title: "Ball Flight Decoder",
+    description:
+      "Tell us where the ball started, how it curved, and where it met the face. We will show what that evidence suggests, what it cannot prove, and one variable to test next.",
+    href: "/tools/ball-flight-decoder",
+    action: "Decode my ball flight",
+    meta: "About 2 minutes",
+  },
+  {
+    label: "EQUIPMENT",
+    title: "Equipment Fit Check",
+    description:
+      "Compare your tempo, speed, launch tendencies, and current setup before deciding whether a club or shaft change deserves attention.",
+    href: "/diagnostic",
+    action: "Check my equipment fit",
+    meta: "Brand-neutral",
+  },
+];
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
-        <section className="rounded-3xl border border-slate-200 bg-slate-50 p-8 sm:p-12">
-          <p className="text-xs font-medium tracking-wide text-slate-500">DoveGolf platform</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-6xl">Fix your miss with clarity.</h1>
-          <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-600 sm:text-lg">
-            DoveClinic helps you understand your ball flight, test likely causes, and work toward straighter,
-            more solid shots.
+      <div className="mx-auto max-w-5xl px-6 py-12">
+        <header className="flex items-center justify-between gap-3 sm:gap-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium shadow-sm sm:px-4"
+          >
+            <span aria-hidden className="size-2 rounded-full bg-slate-900" />
+            Dove Golf
+          </Link>
+
+          <nav aria-label="Primary navigation" className="flex items-center gap-3 text-xs text-slate-500 sm:gap-5 sm:text-sm">
+            <Link className="hover:text-slate-900" href="/learn">
+              Learn
+            </Link>
+            <Link className="hover:text-slate-900" href="/method">
+              Method
+            </Link>
+            <Link className="hover:text-slate-900" href="/about">
+              About
+            </Link>
+          </nav>
+        </header>
+
+        <section className="mt-20 max-w-3xl sm:mt-28">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Data-guided golf tools
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl">
+            Read the shot.
+            <span className="block text-slate-500">Test the cause.</span>
+          </h1>
+          <p className="mt-7 max-w-2xl text-lg leading-relaxed text-slate-700">
+            Ball flight is evidence. Dove Golf uses the shot, strike, and equipment clues you can observe to
+            give you a clearer starting point—not another swing opinion.
+          </p>
+
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <TrackLink
-              href="/clinic/ball-curves-right"
-              eventParams={{ module: "doveclinic", placement: "home_hero_primary", version: "v3" }}
-              className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800"
+              href="/tools/ball-flight-decoder"
+              eventParams={{ module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" }}
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
             >
-              Start DoveClinic
+              Decode my ball flight →
             </TrackLink>
             <TrackLink
               href="/diagnostic"
-              eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "v3" }}
-              className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-800 hover:bg-slate-100"
+              eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
             >
-              Explore DoveFit
+              Check my equipment fit →
             </TrackLink>
-            <span className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-500">
-              DoveLab coming soon
-            </span>
+          </div>
+
+          <div className="mt-7 flex flex-wrap gap-3">
+            {["Free to use", "No account", "Brand-neutral", "Explainable logic"].map((item) => (
+              <span key={item} className="rounded-full border border-slate-200 px-4 py-1.5 text-sm text-slate-600">
+                {item}
+              </span>
+            ))}
           </div>
         </section>
 
-        <section className="mt-8 rounded-3xl border border-slate-200 bg-slate-50 p-6 sm:p-8">
-          <TrajectoryHeroViz />
-          <p className="mt-4 text-sm text-slate-600">
-            Different swings → different trajectories. Smart diagnosis helps you improve your default flight.
-          </p>
-        </section>
-
-
-        <section className="mt-10 grid gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
-          <article className="rounded-3xl border border-slate-900 bg-slate-900 p-6 text-white">
-            <p className="text-sm font-medium tracking-wide text-slate-300">Primary product</p>
-            <h2 className="mt-2 text-2xl font-semibold">DoveClinic</h2>
-            <p className="mt-2 text-sm text-slate-200">
-              Diagnose ball-flight and strike symptoms with visual cause-and-effect logic.
-            </p>
-            <ul className="mt-4 space-y-2 text-sm text-slate-200">
-              <li>• Match the shot shape you actually see</li>
-              <li>• Get ranked likely causes</li>
-              <li>• Test one change at a time</li>
-            </ul>
-            <TrackLink
-              href="/clinic"
-              eventParams={{ module: "doveclinic", placement: "home_product_card", version: "v3" }}
-              className="mt-5 inline-flex rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-900"
-            >
-              Open DoveClinic
-            </TrackLink>
-          </article>
-
-          <article className="rounded-3xl border border-slate-200 bg-white p-6">
-            <p className="text-sm font-medium tracking-wide text-slate-500">Equipment engine</p>
-            <h2 className="mt-2 text-2xl font-semibold">DoveFit</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Evaluate whether your equipment is helping or hurting your delivery.
-            </p>
-            <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li>• Shaft weight and flex guidance</li>
-              <li>• Launch and bias recommendation logic</li>
-              <li>• Practical testing checklist</li>
-            </ul>
-            <TrackLink
-              href="/diagnostic"
-              eventParams={{ module: "dovefit", placement: "home_product_card", version: "v3" }}
-              className="mt-5 inline-flex rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-800"
-            >
-              Open DoveFit
-            </TrackLink>
-          </article>
-
-          <article className="rounded-3xl border border-slate-200 bg-white p-6">
-            <p className="text-sm font-medium tracking-wide text-slate-500">Advanced layer</p>
-            <h2 className="mt-2 text-2xl font-semibold">DoveLab</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Future deeper analysis tools for testing, learning, and advanced diagnostics.
-            </p>
-            <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li>• Variable interaction studies</li>
-              <li>• Expanded visual analytics</li>
-              <li>• Experimental modules</li>
-            </ul>
-            <div className="mt-5 inline-flex rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-500">
-              Coming soon
+        <section className="mt-16" aria-labelledby="start-heading">
+          <div className="flex items-end justify-between gap-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Start here</p>
+              <h2 id="start-heading" className="mt-3 text-2xl font-semibold tracking-tight">
+                Choose the evidence you already have.
+              </h2>
             </div>
-          </article>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {tools.map((tool) => (
+              <Link
+                key={tool.title}
+                href={tool.href}
+                className="group flex min-h-72 flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/50"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-xs font-semibold tracking-[0.14em] text-slate-500">{tool.label}</p>
+                  <span className="text-xs text-slate-400">{tool.meta}</span>
+                </div>
+                <h3 className="mt-8 text-2xl font-semibold tracking-tight">{tool.title}</h3>
+                <p className="mt-4 leading-relaxed text-slate-600">{tool.description}</p>
+                <p className="mt-auto pt-8 text-sm font-medium text-slate-900">
+                  {tool.action} <span aria-hidden className="transition group-hover:ml-1">→</span>
+                </p>
+              </Link>
+            ))}
+          </div>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 text-base text-slate-700">
-          For golfers who care about cause and effect — and want clear, data-driven reasoning behind equipment
-          decisions.
+        <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:p-8">
+          <p className="text-sm font-semibold">What every Dove Golf result should tell you</p>
+          <div className="mt-5 grid gap-5 text-sm leading-6 text-slate-600 sm:grid-cols-3">
+            <p>
+              <span className="block font-medium text-slate-900">What the evidence supports</span>
+              The relationship we can reasonably read from your inputs.
+            </p>
+            <p>
+              <span className="block font-medium text-slate-900">What remains uncertain</span>
+              The limits of the data, stated without false confidence.
+            </p>
+            <p>
+              <span className="block font-medium text-slate-900">What to test next</span>
+              One practical change you can compare with real shots.
+            </p>
+          </div>
         </section>
 
-        <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <TrackLink
-            href="/learn/ball-flight"
-            eventParams={{ module: "learn", placement: "home_support_card", version: "v3" }}
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm transition hover:border-slate-300"
-          >
-            <p className="text-2xl font-semibold tracking-tight text-slate-900">Ball Flight Library</p>
-            <p className="mt-2 text-lg text-slate-600">Curve → probable causes → what to test.</p>
-          </TrackLink>
-
-          <Link
-            href="/method"
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm transition hover:border-slate-300"
-          >
-            <p className="text-2xl font-semibold tracking-tight text-slate-900">How it works</p>
-            <p className="mt-2 text-lg text-slate-600">See the fitting logic before you run the workflow.</p>
-          </Link>
-
-          <Link
-            href="/about"
-            className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-sm transition hover:border-slate-300"
-          >
-            <p className="text-2xl font-semibold tracking-tight text-slate-900">About DoveGolf™</p>
-            <p className="mt-2 text-lg text-slate-600">Engineered cause and effect.</p>
-          </Link>
-        </section>
+        <footer className="mt-16 border-t border-slate-100 pt-8">
+          <div className="flex flex-col justify-between gap-5 text-sm text-slate-500 sm:flex-row">
+            <p>© {new Date().getFullYear()} · Dove Golf</p>
+            <div className="flex gap-5">
+              <Link className="hover:text-slate-900" href="/faq">
+                FAQ
+              </Link>
+              <Link className="hover:text-slate-900" href="/learn/ball-flight">
+                Ball flight library
+              </Link>
+            </div>
+          </div>
+          <p className="mt-5 max-w-2xl text-xs leading-5 text-slate-400">
+            Educational guidance only. Results are starting points to test, not guaranteed diagnoses or
+            performance outcomes.
+          </p>
+        </footer>
       </div>
     </main>
-  );
-}
-
-function TrajectoryHeroViz() {
-  const baseAnim = "dash 1.4s ease forwards";
-
-  return (
-    <svg viewBox="0 0 760 240" className="w-full" aria-hidden>
-      <line x1="52" y1="190" x2="708" y2="190" stroke="#cbd5e1" strokeWidth="2" />
-      <line x1="52" y1="24" x2="52" y2="190" stroke="#cbd5e1" strokeWidth="2" />
-
-      {[128, 95, 62].map((y) => (
-        <line key={y} x1="52" y1={y} x2="708" y2={y} stroke="#e2e8f0" strokeWidth="1" />
-      ))}
-
-      {[130, 210, 290, 370, 450, 530, 610].map((x) => (
-        <line key={x} x1={x} y1="24" x2={x} y2="190" stroke="#e2e8f0" strokeWidth="1" />
-      ))}
-
-      <path
-        d="M 52 190 C 170 36, 320 34, 455 190"
-        fill="none"
-        stroke="#94a3b8"
-        strokeWidth="3"
-        strokeDasharray="12 12"
-        strokeLinecap="round"
-        pathLength={1}
-        style={{ strokeDashoffset: 1, animation: `${baseAnim} 0.2s` }}
-      />
-
-      <path
-        d="M 52 190 C 195 148, 435 110, 560 190"
-        fill="none"
-        stroke="#94a3b8"
-        strokeWidth="3"
-        strokeDasharray="12 12"
-        strokeLinecap="round"
-        pathLength={1}
-        style={{ strokeDashoffset: 1, animation: `${baseAnim} 0.7s` }}
-      />
-
-      <path
-        d="M 52 190 C 220 88, 500 66, 655 190"
-        fill="none"
-        stroke="#0f172a"
-        strokeWidth="4"
-        strokeLinecap="round"
-        pathLength={1}
-        style={{ strokeDashoffset: 1, animation: `${baseAnim} 1.2s` }}
-      />
-
-      <text x="60" y="36" fill="#475569" fontSize="14">
-        Height
-      </text>
-      <text x="642" y="216" fill="#475569" fontSize="14">
-        Distance
-      </text>
-    </svg>
   );
 }
