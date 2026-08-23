@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { BallFlightOptionCard } from "@/components/clinic/BallFlightOptionCard";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
 import { CauseTestCard } from "@/components/clinic/CauseTestCard";
 import { ClinicModuleShell } from "@/components/clinic/ClinicModuleShell";
 import { ClinicSymptomHero } from "@/components/clinic/ClinicSymptomHero";
@@ -96,6 +97,14 @@ export default function BallCurvesRightPage() {
       </section>
 
       <RangePlanCard steps={BALL_CURVES_RIGHT_MODULE.rangePlan} />
+
+      <DiagnosisSharePanel
+        miss={selectedVariant.title}
+        likelyCause={`${CAUSE_LIBRARY[rankedCauses[0].causeId].title}. ${CAUSE_LIBRARY[rankedCauses[0].causeId].summary}`}
+        rangePlan={BALL_CURVES_RIGHT_MODULE.rangePlan.join(" · ")}
+        shareUrl="https://dovegolf.fit/clinic/ball-curves-right"
+        source="ball_curves_right"
+      />
 
       <ExpandableWhySection
         points={[
