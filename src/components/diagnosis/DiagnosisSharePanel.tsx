@@ -30,11 +30,23 @@ function wrapCanvasText(
   lineHeight: number,
   maxLines: number,
 ) {
-  const words = text.split(/\s+/);
+  const fitToken = (token: string, width: number) => {
+    if (context.measureText(token).width <= width) return token;
+    let fitted = "";
+    for (const character of Array.from(token)) {
+      if (context.measureText(`${fitted}${character}…`).width > width) break;
+      fitted += character;
+    }
+    return `${fitted}…`;
+  };
+
+  const words = text.split(/\s+/).map((word) => fitToken(word, maxWidth));
   const lines: string[] = [];
   let line = "";
+  let truncated = false;
 
-  for (const word of words) {
+  for (let index = 0; index < words.length; index += 1) {
+    const word = words[index];
     const candidate = line ? `${line} ${word}` : word;
     if (context.measureText(candidate).width <= maxWidth) {
       line = candidate;
@@ -42,15 +54,24 @@ function wrapCanvasText(
     }
 
     if (line) lines.push(line);
+    if (lines.length === maxLines) {
+      truncated = true;
+      break;
+    }
     line = word;
-    if (lines.length === maxLines - 1) break;
+    if (index === words.length - 1) continue;
+    if (lines.length === maxLines - 1) {
+      truncated = true;
+      break;
+    }
   }
 
   if (line && lines.length < maxLines) lines.push(line);
-  const consumedWords = lines.join(" ").split(/\s+/).length;
-  if (consumedWords < words.length) {
-    const finalIndex = lines.length - 1;
-    lines[finalIndex] = `${lines[finalIndex].replace(/[.,;:]?$/, "")}…`;
+  if (truncated && lines.length) {
+    lines[lines.length - 1] = fitToken(
+      `${lines[lines.length - 1].replace(/…?$/, "")}…`,
+      maxWidth,
+    );
   }
 
   lines.forEach((entry, index) => context.fillText(entry, x, startY + index * lineHeight));
@@ -58,6 +79,12 @@ function wrapCanvasText(
 }
 
 async function createDiagnosisCard(data: DiagnosisShareData) {
+  try {
+    await document.fonts?.ready;
+  } catch {
+    // Continue with the browser's resolved fallback font.
+  }
+  const fontFamily = getComputedStyle(document.body).fontFamily || "Arial, sans-serif";
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
@@ -76,21 +103,21 @@ async function createDiagnosisCard(data: DiagnosisShareData) {
 
   context.textBaseline = "top";
   context.fillStyle = "#64748b";
-  context.font = "600 20px Arial, sans-serif";
+  context.font = `600 20px ${fontFamily}`;
   context.fillText("DOVE GOLF · YOUR DIAGNOSIS", 96, 92);
 
   context.fillStyle = "#64748b";
-  context.font = "700 16px Arial, sans-serif";
+  context.font = `700 16px ${fontFamily}`;
   context.fillText("MISS", 96, 156);
   context.fillStyle = "#0f172a";
-  context.font = "700 48px Arial, sans-serif";
+  context.font = `700 48px ${fontFamily}`;
   const causeLabelY = wrapCanvasText(context, data.miss, 96, 188, 1008, 58, 2) + 28;
 
   context.fillStyle = "#64748b";
-  context.font = "700 16px Arial, sans-serif";
+  context.font = `700 16px ${fontFamily}`;
   context.fillText("LIKELY CAUSE", 96, causeLabelY);
   context.fillStyle = "#334155";
-  context.font = "400 28px Arial, sans-serif";
+  context.font = `400 28px ${fontFamily}`;
   wrapCanvasText(context, data.likelyCause, 96, causeLabelY + 34, 1008, 40, 3);
 
   context.strokeStyle = "#e2e8f0";
@@ -100,10 +127,10 @@ async function createDiagnosisCard(data: DiagnosisShareData) {
   context.stroke();
 
   context.fillStyle = "#0f172a";
-  context.font = "700 22px Arial, sans-serif";
+  context.font = `700 22px ${fontFamily}`;
   context.fillText("dovegolf.fit", 96, 528);
   context.fillStyle = "#64748b";
-  context.font = "400 18px Arial, sans-serif";
+  context.font = `400 18px ${fontFamily}`;
   context.textAlign = "right";
   context.fillText("Observe · test · improve", 1104, 531);
   context.textAlign = "left";
@@ -150,15 +177,7 @@ export function DiagnosisSharePanel({
     track("dov_diagnosis_share_opened", { source });
 
     try {
-      const blob = await createDiagnosisCard(data);
-      const file = new File([blob], filenameFor(data.miss), { type: "image/png" });
-      const shareData = { title: "My DoveGolf diagnosis", text: shareText, url: data.shareUrl, files: [file] };
-
-      if (navigator.share && (!navigator.canShare || navigator.canShare(shareData))) {
-        await navigator.share(shareData);
-        setActionStatus({ kind: "success", message: "Diagnosis shared." });
-        track("dov_diagnosis_shared", { source, method: "native_card" });
-      } else if (navigator.share) {
+      if (navigator.share) {
         await navigator.share({ title: "My DoveGolf diagnosis", text: shareText, url: data.shareUrl });
         setActionStatus({ kind: "success", message: "Diagnosis shared." });
         track("dov_diagnosis_shared", { source, method: "native_link" });
@@ -253,7 +272,7 @@ export function DiagnosisSharePanel({
         </h3>
       </div>
 
-      <div className="mt-5 min-h-56 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:aspect-[40/21] sm:min-h-0 sm:p-7">
+      <div className="mt-5 min-h-56 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:p-7">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your diagnosis</p>
         <div className="mt-6 grid min-w-0 gap-5">
           <div className="min-w-0">
@@ -269,7 +288,7 @@ export function DiagnosisSharePanel({
         </div>
         <a
           href={data.shareUrl}
-          className="mt-7 inline-flex text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4"
+          className="mt-7 block max-w-full break-all text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4"
         >
           {displayUrl}
         </a>
