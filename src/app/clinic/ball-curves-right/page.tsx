@@ -114,7 +114,11 @@ export default function BallCurvesRightPage() {
         insightLabel="Leading hypothesis"
         emailDiagnosis={{
           kind: "ball_curves_right",
-          variantId: selectedVariant.id,
+          variantId:
+            selectedVariant.id === "curves-right-center" ||
+            selectedVariant.id === "curves-right-from-left"
+              ? selectedVariant.id
+              : "curves-right-from-right",
         }}
       />
 
