@@ -4,6 +4,7 @@ import {
   buildEquipmentFitHref,
   equipmentFitPrefill,
   formatEquipmentFitContext,
+  formatEquipmentFitPattern,
   parseEquipmentFitContext,
 } from "./ballFlightEquipmentBridge.ts";
 
@@ -19,36 +20,49 @@ test("builds a shareable decoder-to-fit handoff", () => {
   );
 });
 
-test("parses and maps carried observations without choosing a club category", () => {
+test("parses carried observations without choosing a club category", () => {
   const context = parseEquipmentFitContext(
     new URLSearchParams("source=ball-flight-decoder&start=left&curve=right&strike=heel&pattern=pull-fade")
   );
 
   assert.ok(context);
-  assert.deepEqual(equipmentFitPrefill(context), {
+  assert.equal(formatEquipmentFitPattern(context), "Pull Fade");
+  assert.equal(formatEquipmentFitContext(context), "Start: Left · Curve: Right · Strike: Heel");
+});
+
+test("prefills only the explicitly selected club category", () => {
+  const context = parseEquipmentFitContext(
+    new URLSearchParams("source=ball-flight-decoder&start=left&curve=right&strike=heel&pattern=pull-fade")
+  );
+
+  assert.ok(context);
+  assert.deepEqual(equipmentFitPrefill(context, "driver_woods"), {
     driverStartLine: "left",
     driverCurve: "fade",
     driverStrike: "heel",
+  });
+  assert.deepEqual(equipmentFitPrefill(context, "irons"), {
     ironStartLine: "left",
     ironCurve: "fade",
     ironFaceStrike: "heel",
   });
-  assert.equal(formatEquipmentFitContext(context), "Starts left · curves right · heel strike");
+  assert.deepEqual(equipmentFitPrefill(context, "wedges"), {});
+  assert.deepEqual(equipmentFitPrefill(context, "full_bag"), {});
 });
 
-test("maps uncertain strike conservatively", () => {
+test("does not convert an unknown strike into an observed miss", () => {
   const context = parseEquipmentFitContext(
     new URLSearchParams("source=ball-flight-decoder&start=straight&curve=straight&strike=unknown")
   );
 
   assert.ok(context);
-  assert.deepEqual(equipmentFitPrefill(context), {
+  assert.deepEqual(equipmentFitPrefill(context, "driver_woods"), {
     driverStartLine: "center",
     driverCurve: "straight",
-    driverStrike: "all_over",
+  });
+  assert.deepEqual(equipmentFitPrefill(context, "irons"), {
     ironStartLine: "center",
     ironCurve: "straight",
-    ironFaceStrike: "unsure",
   });
   assert.equal(context.pattern, "straight-straight");
 });
