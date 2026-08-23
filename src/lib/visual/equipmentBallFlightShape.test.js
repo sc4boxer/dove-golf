@@ -69,3 +69,15 @@ test("within each start family, draw bends left and fade bends right of straight
     assert.ok(fade.endX > straight.endX);
   }
 });
+
+test("no-curve pull, straight, and push paths stay on one launch ray", () => {
+  for (const shape of ["pull", "straight", "push"]) {
+    const path = getBallFlightChartPathGeometry({ shape, width: 520, height: 210 });
+    const dx = path.endX - path.startX;
+    const dy = path.endY - path.startY;
+    const cross1 = (path.cp1X - path.startX) * dy - (path.cp1Y - path.startY) * dx;
+    const cross2 = (path.cp2X - path.startX) * dy - (path.cp2Y - path.startY) * dx;
+    assert.ok(Math.abs(cross1) < 0.1, `${shape} first control point must stay on its ray`);
+    assert.ok(Math.abs(cross2) < 0.1, `${shape} second control point must stay on its ray`);
+  }
+});
