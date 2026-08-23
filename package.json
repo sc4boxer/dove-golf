@@ -10,7 +10,8 @@
     "test:contract": "node --test tests/production-contract.test.mjs",
     "test:visual": "node --test src/lib/visual/*.test.js",
     "test:decoder": "node --test src/components/tools/ball-flight-decoder/*.test.js",
-    "test": "npm run test:contract && npm run test:visual && npm run test:decoder",
+    "test:equipment": "node --test src/lib/tools/*.test.js",
+    "test": "npm run test:contract && npm run test:visual && npm run test:decoder && npm run test:equipment",
     "check": "npm run test && npm run build"
   },
   "dependencies": {
