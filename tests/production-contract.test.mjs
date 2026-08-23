@@ -233,6 +233,8 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
   assert.match(component, /files: \[shareFile\]/);
   assert.match(component, /MY SHOT PROFILE/);
   assert.match(component, /getBallFlightChartPathGeometry/);
+  assert.match(component, /analyticsContext/);
+  assert.doesNotMatch(component, /analyticsParams[\s\S]{0,180}(email|firstName|lastName)/);
   assert.match(component, /insightLabel/);
   assert.match(emailRoute, /new Resend\(/);
   assert.match(emailRoute, /Cache-Control.*no-store/s);
@@ -245,6 +247,7 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
     assert.match(resultPage, /<DiagnosisSharePanel/);
     assert.match(resultPage, /details=/);
     assert.match(resultPage, /flightShape=/);
+    assert.match(resultPage, /analyticsContext=/);
   }
 });
 
