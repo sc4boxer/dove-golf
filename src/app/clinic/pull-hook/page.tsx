@@ -148,7 +148,7 @@ export default function PullHookPage() {
             <RangePlan tests={result.rangePlan} />
 
             <DiagnosisSharePanel
-              miss={`Observed shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} left curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
+              miss={`Observed shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity === "none" ? "no meaningful left curve" : `${inputs.curveSeverity ?? "unknown"} left curve`}, ${inputs.strikeLocation ?? "unknown"} strike.`}
               likelyCause={`${pullHookLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
               rangePlan={
                 result.rangePlan[0]?.whatToDo ||
