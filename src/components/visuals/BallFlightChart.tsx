@@ -113,7 +113,7 @@ export function BallFlightChartGlyph({
       </text>
       <text
         x={singlePathGeometry.startX + 8}
-        y={singlePathGeometry.startY + 12}
+        y={Math.min(singlePathGeometry.startY + 12, height - 8)}
         fontSize="12"
         fill="rgb(100 116 139)"
       >
