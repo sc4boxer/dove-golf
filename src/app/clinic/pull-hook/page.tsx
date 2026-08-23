@@ -148,15 +148,22 @@ export default function PullHookPage() {
             <RangePlan tests={result.rangePlan} />
 
             <DiagnosisSharePanel
-              miss={`Pull hook: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
-              likelyCause={`${pullHookLeverLabel(result.primaryLever)} is the leading hypothesis. ${result.whyLikely}`}
+              miss={`Observed shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} left curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
+              likelyCause={`${pullHookLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
               rangePlan={
-                result.rangeValidationTest ||
                 result.rangePlan[0]?.whatToDo ||
                 "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."
               }
               shareUrl="https://dovegolf.fit/clinic/pull-hook"
               source="pull_hook"
+              insightLabel="Leading hypothesis"
+              emailDiagnosis={{
+                kind: "pull_hook",
+                startLine: inputs.startLine ?? "unsure",
+                curveSeverity: inputs.curveSeverity ?? "none",
+                strikeLocation: inputs.strikeLocation ?? "unsure",
+                primaryLever: result.primaryLever,
+              }}
             />
 
             <button
