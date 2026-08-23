@@ -35,7 +35,7 @@ test("maps the audited straight-draw example", () => {
   assert.equal(formatEquipmentFitContext(context), "Start: On target · Curve: Left (draw) · Strike: Center");
 });
 
-test("prefills only the explicitly selected club category", () => {
+test("prefills the explicitly selected club category and both full-bag profiles", () => {
   const context = parseEquipmentFitContext(
     new URLSearchParams("source=ball-flight-decoder&v=1&start=left&curve=fade&strike=heel")
   );
@@ -52,7 +52,14 @@ test("prefills only the explicitly selected club category", () => {
     ironFaceStrike: "heel",
   });
   assert.deepEqual(equipmentFitPrefill(context, "wedges"), {});
-  assert.deepEqual(equipmentFitPrefill(context, "full_bag"), {});
+  assert.deepEqual(equipmentFitPrefill(context, "full_bag"), {
+    driverStartLine: "left",
+    driverCurve: "fade",
+    driverStrike: "heel",
+    ironStartLine: "left",
+    ironCurve: "fade",
+    ironFaceStrike: "heel",
+  });
 });
 
 test("does not convert an unsure strike into all-over contact", () => {
@@ -66,6 +73,12 @@ test("does not convert an unsure strike into all-over contact", () => {
     driverCurve: "straight",
   });
   assert.deepEqual(equipmentFitPrefill(context, "irons"), {
+    ironStartLine: "center",
+    ironCurve: "straight",
+  });
+  assert.deepEqual(equipmentFitPrefill(context, "full_bag"), {
+    driverStartLine: "center",
+    driverCurve: "straight",
     ironStartLine: "center",
     ironCurve: "straight",
   });
