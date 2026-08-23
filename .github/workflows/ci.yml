@@ -86,5 +86,8 @@ jobs:
       - name: Test Equipment Fit logic
         run: npm run test:equipment
 
+      - name: Test diagnosis sharing
+        run: npm run test:sharing
+
       - name: Build production application
         run: npm run build
