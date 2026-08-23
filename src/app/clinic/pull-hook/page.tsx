@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
 import { LikelihoodBars } from "@/components/clinic/LikelihoodBars";
 import { PullHookWizard } from "@/components/clinic/PullHookWizard";
 import { RangePlan } from "@/components/clinic/RangePlan";
@@ -145,6 +146,18 @@ export default function PullHookPage() {
             </section>
 
             <RangePlan tests={result.rangePlan} />
+
+            <DiagnosisSharePanel
+              miss={`Pull hook: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity ?? "unknown"} curve, ${inputs.strikeLocation ?? "unknown"} strike.`}
+              likelyCause={`${pullHookLeverLabel(result.primaryLever)} is the leading hypothesis. ${result.whyLikely}`}
+              rangePlan={
+                result.rangeValidationTest ||
+                result.rangePlan[0]?.whatToDo ||
+                "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."
+              }
+              shareUrl="https://dovegolf.fit/clinic/pull-hook"
+              source="pull_hook"
+            />
 
             <button
               type="button"
