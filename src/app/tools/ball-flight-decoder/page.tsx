@@ -11,66 +11,68 @@ export const metadata: Metadata = {
 
 export default function BallFlightDecoderPage() {
   return (
-    <main className="min-h-screen bg-[var(--paper)] text-[var(--ink)]">
-      <header className="border-b border-[var(--line)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
-          <Link href="/" className="flex items-center gap-3 rounded-md font-semibold">
-            <span
-              aria-hidden
-              className="grid size-9 place-items-center rounded-full bg-[var(--forest)] text-sm font-bold text-[var(--lime)]"
-            >
-              D
-            </span>
-            DoveGolf
+    <main className="min-h-screen bg-white text-slate-900">
+      <div className="mx-auto max-w-5xl px-6 py-12">
+        <header className="flex items-center justify-between gap-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium shadow-sm"
+          >
+            <span aria-hidden className="size-2 rounded-full bg-slate-900" />
+            Dove Golf
           </Link>
-          <nav aria-label="Tool navigation" className="flex items-center gap-5 text-sm font-semibold">
-            <Link className="hidden sm:inline" href="/learn/start-line-vs-curve">Face vs path</Link>
-            <Link href="/diagnostic">Equipment fit</Link>
+
+          <nav aria-label="Tool navigation" className="flex items-center gap-5 text-sm text-slate-500">
+            <Link className="hidden hover:text-slate-900 sm:inline" href="/learn/start-line-vs-curve">
+              Face vs path
+            </Link>
+            <Link className="hover:text-slate-900" href="/diagnostic">
+              Equipment fit
+            </Link>
           </nav>
-        </div>
-      </header>
+        </header>
 
-      <section className="golf-grid border-b border-[var(--line)]">
-        <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 sm:py-20 lg:px-12">
-          <p className="eyebrow">Free tool · Right-handed model</p>
-          <div className="mt-5 grid gap-7 lg:grid-cols-[1fr_0.7fr] lg:items-end">
-            <div>
-              <h1 className="font-serif text-[clamp(3.2rem,7vw,6.5rem)] leading-[0.92] tracking-[-0.055em]">
-                Decode your ball flight.
-              </h1>
-              <p className="mt-6 max-w-3xl text-lg leading-8 text-[var(--muted)] sm:text-xl">
-                Tell us where the ball started, how it curved, and where you struck the face. We’ll translate
-                the pattern—not guess your swing.
-              </p>
-            </div>
-            <aside className="rounded-2xl border border-[var(--line)] bg-[var(--paper-strong)] p-5 text-sm leading-6 text-[var(--muted)]">
-              <strong className="block text-[var(--ink)]">Handedness assumption</strong>
-              <span className="mt-2 block">
-                This version describes a right-handed golfer. Left-handed pattern names and curve relationships
-                reverse.
-              </span>
-            </aside>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-5 py-12 sm:px-8 sm:py-16 lg:px-12">
-        <BallFlightDecoder />
-      </section>
-
-      <section className="border-t border-[var(--line)]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 text-sm text-[var(--muted)] sm:px-8 md:grid-cols-2 lg:px-12">
-          <p>
-            This tool is educational. Use a repeatable shot cluster and compare the result with an in-person
-            coach or qualified fitter when the pattern persists.
+        <section className="mt-16 max-w-3xl sm:mt-20">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            Free tool · Right-handed model
           </p>
-          <nav aria-label="Related resources" className="flex flex-wrap gap-5 font-semibold text-[var(--ink)] md:justify-end">
-            <Link href="/ball-flight-library">Ball flight library</Link>
-            <Link href="/method">Method</Link>
-            <Link href="/">Home</Link>
-          </nav>
-        </div>
-      </section>
+          <h1 className="mt-5 text-4xl font-semibold leading-[1.02] tracking-[-0.04em] sm:text-5xl">
+            Decode your ball flight.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
+            Tell us where the ball started, how it curved, and where you struck the face. We will translate
+            the pattern—not guess your swing.
+          </p>
+          <div className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-6 text-slate-600">
+            <span className="font-medium text-slate-900">Right-handed assumption. </span>
+            Left-handed pattern names and curve relationships reverse.
+          </div>
+        </section>
+
+        <section className="mt-12 sm:mt-16">
+          <BallFlightDecoder />
+        </section>
+
+        <footer className="mt-16 border-t border-slate-100 pt-8">
+          <div className="grid gap-6 text-sm text-slate-500 md:grid-cols-2">
+            <p>
+              This tool is educational. Use a repeatable shot cluster and compare the result with an in-person
+              coach or qualified fitter when the pattern persists.
+            </p>
+            <nav aria-label="Related resources" className="flex flex-wrap gap-5 md:justify-end">
+              <Link className="hover:text-slate-900" href="/ball-flight-library">
+                Ball flight library
+              </Link>
+              <Link className="hover:text-slate-900" href="/method">
+                Method
+              </Link>
+              <Link className="hover:text-slate-900" href="/">
+                Home
+              </Link>
+            </nav>
+          </div>
+        </footer>
+      </div>
     </main>
   );
 }
