@@ -153,25 +153,22 @@ export function DiagnosisStoryDeck({
         className="mt-5 touch-pan-y rounded-3xl bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-slate-600"
         aria-label="Diagnosis result. Swipe horizontally, use chapter buttons, or press Left Arrow, Right Arrow, Home, or End to change cards."
       >
-        {slides.map((slide, index) => (
-          <article
-            key={slide.id}
-            hidden={index !== activeIndex}
-            aria-labelledby={`${titleId}-${slide.id}`}
-            className="min-h-[32rem] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:min-h-[34rem] sm:p-8"
+        <article
+          key={activeSlide.id}
+          aria-labelledby={`${titleId}-${activeSlide.id}`}
+          className="min-h-[32rem] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:min-h-[34rem] sm:p-8"
+        >
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            {activeSlide.eyebrow}
+          </p>
+          <h3
+            id={`${titleId}-${activeSlide.id}`}
+            className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              {slide.eyebrow}
-            </p>
-            <h3
-              id={`${titleId}-${slide.id}`}
-              className="mt-3 max-w-3xl text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl"
-            >
-              {slide.title}
-            </h3>
-            <div className="mt-6 min-w-0">{slide.content}</div>
-          </article>
-        ))}
+            {activeSlide.title}
+          </h3>
+          <div className="mt-6 min-w-0">{activeSlide.content}</div>
+        </article>
       </div>
 
       <p className="sr-only" aria-live="polite">
