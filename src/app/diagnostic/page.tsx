@@ -874,7 +874,7 @@ function computeResults(a: Answers) {
           wedgeUse: a.wedgeUse,
           wedgeTurf: a.wedgeTurf,
           wedgeMiss: a.wedgeMiss,
-          wedgeTrajectory: a.wedgeTrajectory,
+          wedgeTrajectory: a.wedgeTrajectoryectory,
           wedgeSpin: a.wedgeSpin,
           wedgeShaftPref: a.wedgeShaftPref,
         })
