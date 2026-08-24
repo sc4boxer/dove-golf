@@ -110,6 +110,7 @@ async function createDiagnosisCard(
   } catch {
     // Continue with the browser's resolved fallback font.
   }
+
   const fontFamily = getComputedStyle(document.body).fontFamily || "Arial, sans-serif";
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH;
@@ -117,66 +118,64 @@ async function createDiagnosisCard(
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Unable to create the result card.");
 
-  context.fillStyle = "#f8fafc";
+  context.fillStyle = "#f1f5f9";
   context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
   context.fillStyle = "#ffffff";
-  context.strokeStyle = "#e2e8f0";
+  context.strokeStyle = "#dbe3ec";
   context.lineWidth = 2;
   context.beginPath();
-  context.roundRect(48, 48, CARD_WIDTH - 96, CARD_HEIGHT - 96, 32);
+  context.roundRect(42, 42, CARD_WIDTH - 84, CARD_HEIGHT - 84, 34);
   context.fill();
   context.stroke();
 
   context.textBaseline = "top";
   context.fillStyle = "#64748b";
-  context.font = `600 18px ${fontFamily}`;
-  context.fillText("DOVE GOLF · MY SHOT PROFILE", 96, 84);
+  context.font = `700 17px ${fontFamily}`;
+  context.fillText("DOVE GOLF · SHOT PROFILE", 82, 76);
+  context.textAlign = "right";
+  context.fillText("DOVEGOLF.FIT", 1118, 76);
+  context.textAlign = "left";
 
-  const textWidth = flightShape ? 610 : 1008;
-  context.fillStyle = "#64748b";
-  context.font = `700 14px ${fontFamily}`;
-  context.fillText("OBSERVED PATTERN", 96, 132);
   context.fillStyle = "#0f172a";
-  context.font = `700 42px ${fontFamily}`;
-  const detailsY = wrapCanvasText(context, data.miss, 96, 158, textWidth, 50, 2) + 18;
+  context.font = `700 46px ${fontFamily}`;
+  wrapCanvasText(context, data.miss, 82, 119, 1036, 52, 2);
 
-  let detailX = 96;
-  context.font = `600 15px ${fontFamily}`;
+  const detailsY = 222;
+  let detailX = 82;
+  context.font = `600 14px ${fontFamily}`;
   for (const detail of details.slice(0, 3)) {
     const detailText = `${detail.label.toUpperCase()}: ${detail.value}`;
-    const pillWidth = Math.min(context.measureText(detailText).width + 28, textWidth - (detailX - 96));
-    if (pillWidth < 80) break;
+    const availableWidth = 1036 - (detailX - 82);
+    const pillWidth = Math.min(context.measureText(detailText).width + 28, availableWidth);
+    if (pillWidth < 96) break;
     context.fillStyle = "#f1f5f9";
     context.beginPath();
-    context.roundRect(detailX, detailsY, pillWidth, 36, 18);
+    context.roundRect(detailX, detailsY, pillWidth, 34, 17);
     context.fill();
     context.fillStyle = "#475569";
-    context.fillText(detailText, detailX + 14, detailsY + 9);
+    context.fillText(detailText, detailX + 14, detailsY + 8);
     detailX += pillWidth + 10;
   }
 
-  const insightY = detailsY + (details.length ? 58 : 10);
-  context.fillStyle = "#64748b";
-  context.font = `700 14px ${fontFamily}`;
-  context.fillText(insightLabel.toUpperCase(), 96, insightY);
-  context.fillStyle = "#334155";
-  context.font = `400 23px ${fontFamily}`;
-  wrapCanvasText(context, data.likelyCause, 96, insightY + 28, textWidth, 33, 3);
+  const chartX = 76;
+  const chartY = 276;
+  const chartWidth = flightShape ? 560 : 0;
+  const chartHeight = 238;
 
   if (flightShape) {
-    const chartX = 762;
-    const chartY = 118;
-    const chartWidth = 330;
-    const chartHeight = 300;
     const geometry = getBallFlightChartPathGeometry({
       shape: flightShape,
       width: chartWidth,
       height: chartHeight,
     });
 
-    context.fillStyle = "#64748b";
-    context.font = `700 14px ${fontFamily}`;
-    context.fillText("SHOT SHAPE", chartX, 84);
+    context.fillStyle = "#f8fafc";
+    context.strokeStyle = "#e2e8f0";
+    context.lineWidth = 2;
+    context.beginPath();
+    context.roundRect(chartX, chartY, chartWidth, chartHeight, 24);
+    context.fill();
+    context.stroke();
 
     context.save();
     context.translate(chartX, chartY);
@@ -189,8 +188,8 @@ async function createDiagnosisCard(
     context.stroke();
 
     context.strokeStyle = "#0f172a";
-    context.lineWidth = 4;
-    context.setLineDash([2, 10]);
+    context.lineWidth = 5;
+    context.setLineDash([2, 12]);
     context.lineCap = "round";
     context.beginPath();
     context.moveTo(geometry.startX, geometry.startY);
@@ -209,26 +208,52 @@ async function createDiagnosisCard(
     context.strokeStyle = "#0f172a";
     context.lineWidth = 3;
     context.beginPath();
-    context.arc(geometry.endX, geometry.endY, 7, 0, Math.PI * 2);
+    context.arc(geometry.endX, geometry.endY, 9, 0, Math.PI * 2);
     context.fill();
     context.stroke();
     context.restore();
   }
 
+  const insightX = flightShape ? 674 : 82;
+  const insightY = 276;
+  const insightWidth = flightShape ? 444 : 1036;
+  context.fillStyle = flightShape ? "#ffffff" : "#f8fafc";
   context.strokeStyle = "#e2e8f0";
   context.lineWidth = 2;
   context.beginPath();
-  context.moveTo(96, 486);
-  context.lineTo(1104, 486);
+  context.roundRect(insightX, insightY, insightWidth, chartHeight, 24);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "#64748b";
+  context.font = `700 14px ${fontFamily}`;
+  context.fillText(insightLabel.toUpperCase(), insightX + 26, insightY + 24);
+  context.fillStyle = "#1e293b";
+  context.font = `500 22px ${fontFamily}`;
+  wrapCanvasText(
+    context,
+    data.likelyCause,
+    insightX + 26,
+    insightY + 56,
+    insightWidth - 52,
+    31,
+    flightShape ? 5 : 4,
+  );
+
+  context.strokeStyle = "#e2e8f0";
+  context.lineWidth = 2;
+  context.beginPath();
+  context.moveTo(82, 542);
+  context.lineTo(1118, 542);
   context.stroke();
 
   context.fillStyle = "#0f172a";
-  context.font = `700 21px ${fontFamily}`;
-  context.fillText("dovegolf.fit", 96, 514);
+  context.font = `700 18px ${fontFamily}`;
+  context.fillText("Decode the pattern. Test one change.", 82, 562);
   context.fillStyle = "#64748b";
-  context.font = `400 17px ${fontFamily}`;
+  context.font = `500 16px ${fontFamily}`;
   context.textAlign = "right";
-  context.fillText("Decode your shot · Share your pattern", 1104, 516);
+  context.fillText("Share your shot at dovegolf.fit", 1118, 564);
   context.textAlign = "left";
 
   return new Promise<Blob>((resolve, reject) => {
@@ -428,55 +453,67 @@ export function DiagnosisSharePanel({
         </h3>
       </div>
 
-      <div className="mt-5 min-h-56 rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your diagnosis</p>
-        <div className={["mt-6 grid min-w-0 gap-6", flightShape ? "md:grid-cols-[1fr_16rem]" : ""].join(" ")}>
-          <div className="min-w-0">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Observed pattern
-              </p>
-              <p className="mt-2 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
-                {data.miss}
-              </p>
+      <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+        <div
+          className={[
+            "grid min-w-0",
+            flightShape ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]" : "",
+          ].join(" ")}
+        >
+          {flightShape ? (
+            <div className="min-h-72 border-b border-slate-200 bg-white p-5 sm:p-7 lg:min-h-[25rem] lg:border-b-0 lg:border-r">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Your shot shape
+                </p>
+                <p className="text-xs font-medium text-slate-400">Right-handed view</p>
+              </div>
+              <BallFlightChart shape={flightShape} staticRender className="mx-auto mt-5 w-full max-w-2xl" />
             </div>
+          ) : null}
+
+          <div className="min-w-0 p-5 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Observed pattern
+            </p>
+            <p className="mt-3 break-words text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">
+              {data.miss}
+            </p>
 
             {normalizedDetails.length ? (
-              <dl className="mt-5 flex flex-wrap gap-2">
+              <dl className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
                 {normalizedDetails.map((detail) => (
-                  <div key={`${detail.label}-${detail.value}`} className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs">
-                    <dt className="inline font-semibold uppercase tracking-[0.08em] text-slate-500">
-                      {detail.label}:{" "}
+                  <div
+                    key={`${detail.label}-${detail.value}`}
+                    className="min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3"
+                  >
+                    <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      {detail.label}
                     </dt>
-                    <dd className="inline font-medium text-slate-800">{detail.value}</dd>
+                    <dd className="mt-1 break-words text-sm font-semibold text-slate-900">{detail.value}</dd>
                   </div>
                 ))}
               </dl>
             ) : null}
 
-            <div className="mt-5 min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{insightLabel}</p>
-              <p className="mt-2 break-words leading-7 text-slate-700">{data.likelyCause}</p>
-            </div>
-          </div>
-
-          {flightShape ? (
-            <div className="rounded-2xl border border-slate-200 bg-white p-3">
-              <p className="px-1 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Shot shape
+            <div className="mt-6 border-t border-slate-200 pt-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                {insightLabel}
               </p>
-              <BallFlightChart shape={flightShape} compact staticRender className="mt-2" />
+              <p className="mt-2 break-words text-base leading-7 text-slate-700 sm:text-lg">
+                {data.likelyCause}
+              </p>
             </div>
-          ) : null}
-        </div>
-        <a
-          href={data.shareUrl}
-          className="mt-7 block max-w-full break-all text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4"
-        >
-          {displayUrl}
-        </a>
-      </div>
 
+            <a
+              href={data.shareUrl}
+              className="mt-6 block max-w-full break-all text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4"
+            >
+              {displayUrl}
+            </a>
+          </div>
+        </div>
+      </div>
       <div className="mt-5 flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
