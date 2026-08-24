@@ -262,7 +262,7 @@ async function createDiagnosisCard(
   );
 
   if (recommendation) {
-    const recommendationY = Math.max(insightEndY + 9, contentY + contentHeight - 62);
+    const recommendationY = Math.max(insightEndY + 9, contentY + contentHeight - 74);
     context.fillStyle = "#f1f5f9";
     context.beginPath();
     context.roundRect(insightX + 16, recommendationY, insightWidth - 32, 48, 14);
@@ -287,15 +287,15 @@ async function createDiagnosisCard(
 
   context.strokeStyle = "#e2e8f0";
   context.beginPath();
-  context.moveTo(78, 526);
-  context.lineTo(1122, 526);
+  context.moveTo(78, 516);
+  context.lineTo(1122, 516);
   context.stroke();
   context.fillStyle = "#64748b";
   context.font = `700 11px ${fontFamily}`;
-  context.fillText("NEXT RANGE TEST", 78, 544);
+  context.fillText("NEXT RANGE TEST", 78, 532);
   context.fillStyle = "#334155";
   context.font = `500 15px ${fontFamily}`;
-  wrapCanvasText(context, data.rangePlan, 78, 562, 1044, 18, 1);
+  wrapCanvasText(context, data.rangePlan, 78, 550, 1044, 17, 2);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -553,7 +553,7 @@ export function DiagnosisSharePanel({
             : !cardReady
               ? "Building your share card…"
               : shareFile
-                ? "Share my result to social apps"
+                ? "Share my diagnosis to social apps"
                 : "Share my result link"}
         </button>
         <p className="mt-2 text-xs leading-5 text-slate-500">
@@ -635,7 +635,7 @@ export function DiagnosisSharePanel({
           disabled={sharing}
           className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-slate-900 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
         >
-          Send me my result and range plan
+          Send me my diagnosis and range plan
         </button>
         <p className="mt-2 text-xs leading-5 text-slate-500">
           Opens your device share sheet; choose Mail or Messages. No marketing signup.
