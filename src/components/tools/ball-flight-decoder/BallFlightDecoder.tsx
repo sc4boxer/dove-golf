@@ -285,6 +285,7 @@ export function BallFlightDecoder() {
                 content: (
                   <div>
                     <DiagnosisSharePanel
+                      embedded
                       miss={pattern.title}
                       likelyCause={`${result.faceSummary} ${result.pathSummary} ${result.strikeSummary}`}
                       rangePlan={result.nextTest}
