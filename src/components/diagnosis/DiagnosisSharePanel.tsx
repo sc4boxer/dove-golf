@@ -538,7 +538,7 @@ export function DiagnosisSharePanel({
           aria-busy={sharing}
           className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50 sm:w-auto"
         >
-          {sharing ? "Preparing…" : "Share to social apps"}
+          {sharing ? "Preparing…" : "Share my diagnosis to social apps"}
         </button>
         <p className="mt-2 text-xs leading-5 text-slate-500">
           Choose Instagram, TikTok, Facebook, Messages, or any installed app from your device share sheet.
