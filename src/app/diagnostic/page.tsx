@@ -2519,34 +2519,7 @@ function ResultsView({
                       />
                     ) : null}
                   </div>
-                </details>                    {shareCardUrl && isVerified ? (
-                      <div className="flex flex-wrap gap-2 text-xs text-slate-700">
-                        <button type="button" onClick={generateShareCard} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
-                          Download detailed record
-                        </button>
-                        <button type="button" onClick={copyVerificationLink} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
-                          Copy verification link{copyState === "link" ? " · Link copied." : ""}
-                        </button>
-                        <button type="button" onClick={copyCaption} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
-                          Copy caption{copyState === "caption" ? " · Caption copied." : ""}
-                        </button>
-                      </div>
-                    ) : null}
-                  </div>
-                </Card>
-
-                {!isVerified ? (
-                  <EmailCaptureCard
-                    payload={a}
-                    onProfileSaved={(profile) => {
-                      setContactProfile({
-                        firstName: profile.firstName,
-                        lastName: profile.lastName,
-                        email: profile.email,
-                      });
-                    }}
-                  />
-                ) : null}
+                </details>
               </div>
             ),
           },
