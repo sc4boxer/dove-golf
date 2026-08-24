@@ -141,7 +141,7 @@ export default function DriverSlicePage() {
                 id: "pattern",
                 label: "Your pattern",
                 eyebrow: "Observed shot",
-                title={`${inputs.startLine ?? "Unknown"} start · ${inputs.curveSeverity ?? "Unknown"} right curve`},
+                title: `${inputs.startLine ?? "Unknown"} start · ${inputs.curveSeverity ?? "Unknown"} right curve`,
                 content: (
                   <div>
                     <dl className="grid gap-3 sm:grid-cols-3">
@@ -168,7 +168,7 @@ export default function DriverSlicePage() {
                 id: "why",
                 label: "What it suggests",
                 eyebrow: "Leading hypothesis",
-                title={primaryLeverLabel(result.primaryLever)},
+                title: primaryLeverLabel(result.primaryLever),
                 content: (
                   <div>
                     <p className="max-w-2xl text-lg leading-8 text-slate-700">{result.whyLikely}</p>
