@@ -102,13 +102,24 @@ export function DiagnosisStoryDeck({
             {title}
           </h2>
         </div>
-        <p className="text-sm font-medium text-slate-500">
-          {activeIndex + 1} of {slides.length}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-medium text-slate-500">
+            {activeIndex + 1} of {slides.length}
+          </p>
+          {activeIndex !== slides.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => showStep(slides.length - 1)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            >
+              Share result
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <nav aria-label="Diagnosis result chapters" className="mt-5">
-        <ol className="grid gap-2 sm:grid-cols-4">
+        <ol className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {slides.map((slide, index) => (
             <li key={slide.id}>
               <button
@@ -138,15 +149,16 @@ export function DiagnosisStoryDeck({
         onKeyDown={handleKeyDown}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={() => { touchStart.current = null; }}
         className="mt-5 touch-pan-y rounded-3xl bg-slate-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-slate-600"
-        aria-label="Diagnosis result. Swipe horizontally or use the chapter buttons to change cards."
+        aria-label="Diagnosis result. Swipe horizontally, use chapter buttons, or press Left Arrow, Right Arrow, Home, or End to change cards."
       >
         {slides.map((slide, index) => (
           <article
             key={slide.id}
             hidden={index !== activeIndex}
             aria-labelledby={`${titleId}-${slide.id}`}
-            className="min-h-[32rem] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-5 sm:min-h-[34rem] sm:p-8"
+            className="min-h-[32rem] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 p-4 sm:min-h-[34rem] sm:p-8"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               {slide.eyebrow}
