@@ -131,7 +131,7 @@ async function createDiagnosisCard(
   context.textBaseline = "top";
   context.fillStyle = "#64748b";
   context.font = `700 17px ${fontFamily}`;
-  context.fillText("DOVE GOLF · SHOT PROFILE", 82, 76);
+  context.fillText("DOVE GOLF · MY SHOT PROFILE", 82, 76);
   context.textAlign = "right";
   context.fillText("DOVEGOLF.FIT", 1118, 76);
   context.textAlign = "left";
