@@ -306,6 +306,11 @@ export function BallFlightDecoder() {
                         start === "straight" ? "center" : start,
                         curve,
                       )}
+                      recommendation={{
+                        label: "What to work on first",
+                        value: result.techniqueGuidance,
+                        supporting: "Use the range test before changing equipment.",
+                      }}
                       analyticsContext={{
                         pattern: result.patternSlug,
                         strike,
