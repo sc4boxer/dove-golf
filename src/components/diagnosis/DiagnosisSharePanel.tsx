@@ -49,6 +49,7 @@ type ActionStatus =
 
 const CARD_WIDTH = 1200;
 const CARD_HEIGHT = 630;
+const DEFAULT_PROFILE_LABEL = "MY SHOT PROFILE";
 
 function wrapCanvasText(
   context: CanvasRenderingContext2D,
@@ -322,7 +323,7 @@ export function DiagnosisSharePanel({
   emailDiagnosis,
   details = [],
   flightShape = null,
-  profileLabel = "My shot profile",
+  profileLabel = DEFAULT_PROFILE_LABEL,
   recommendation = null,
   analyticsContext = {},
 }: DiagnosisSharePanelProps) {
