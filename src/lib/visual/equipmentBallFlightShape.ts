@@ -1,26 +1,39 @@
 import type { BallFlightChartShape } from "./ballFlightChartPaths.ts";
+import {
+  getBallFlightShapeFromObservation,
+  type ObservedCurveDirection,
+} from "./ballFlightObservationShape.ts";
 
 export type EquipmentStartLine = "left" | "center" | "right" | "unsure";
 export type EquipmentCurve = "draw" | "straight" | "fade" | "unsure";
+
+const EQUIPMENT_CURVE_TO_OBSERVED: Record<
+  Exclude<EquipmentCurve, "unsure">,
+  ObservedCurveDirection
+> = {
+  draw: "left",
+  straight: "straight",
+  fade: "right",
+};
 
 export const EQUIPMENT_BALL_FLIGHT_SHAPES: Record<
   Exclude<EquipmentStartLine, "unsure">,
   Record<Exclude<EquipmentCurve, "unsure">, BallFlightChartShape>
 > = {
   left: {
-    draw: "pull-draw",
-    straight: "pull",
-    fade: "pull-fade",
+    draw: getBallFlightShapeFromObservation("left", "left"),
+    straight: getBallFlightShapeFromObservation("left", "straight"),
+    fade: getBallFlightShapeFromObservation("left", "right"),
   },
   center: {
-    draw: "draw",
-    straight: "straight",
-    fade: "fade",
+    draw: getBallFlightShapeFromObservation("center", "left"),
+    straight: getBallFlightShapeFromObservation("center", "straight"),
+    fade: getBallFlightShapeFromObservation("center", "right"),
   },
   right: {
-    draw: "push-draw",
-    straight: "push",
-    fade: "push-fade",
+    draw: getBallFlightShapeFromObservation("right", "left"),
+    straight: getBallFlightShapeFromObservation("right", "straight"),
+    fade: getBallFlightShapeFromObservation("right", "right"),
   },
 };
 
@@ -41,7 +54,7 @@ export function getEquipmentBallFlightShape(
   curve: EquipmentCurve,
 ): BallFlightChartShape | null {
   if (start === "unsure" || curve === "unsure") return null;
-  return EQUIPMENT_BALL_FLIGHT_SHAPES[start][curve];
+  return getBallFlightShapeFromObservation(start, EQUIPMENT_CURVE_TO_OBSERVED[curve]);
 }
 
 export function getEquipmentBallFlightLabel(

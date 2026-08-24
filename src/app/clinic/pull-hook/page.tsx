@@ -3,10 +3,14 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
+import { DiagnosisStoryDeck } from "@/components/diagnosis/DiagnosisStoryDeck";
 import { LikelihoodBars } from "@/components/clinic/LikelihoodBars";
 import { PullHookWizard } from "@/components/clinic/PullHookWizard";
 import { RangePlan } from "@/components/clinic/RangePlan";
 import { track } from "@/lib/analytics/ga";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
+import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 import { loadClinicSessions, saveClinicSession } from "@/lib/clinic/storage";
 import { ClinicSession, PullHookInputs } from "@/lib/clinic/types";
 import { evaluatePullHook, pullHookLeverLabel } from "@/lib/clinic/problems/pullHook";
@@ -53,6 +57,14 @@ export default function PullHookPage() {
       .map(([key]) => ({ key, text: result.bucketExplanations[key as keyof typeof result.bucketExplanations] }));
   }, [result]);
 
+  const flightShape =
+    inputs.startLine && inputs.startLine !== "unsure"
+      ? getBallFlightShapeFromObservation(
+          inputs.startLine,
+          inputs.curveSeverity === "none" ? "straight" : "left",
+        )
+      : null;
+
   const handleComplete = () => {
     const full = inputs as PullHookInputs;
     const evaluation = evaluatePullHook(full);
@@ -86,78 +98,139 @@ export default function PullHookPage() {
         {!result ? (
           <PullHookWizard value={inputs} onChange={(patch) => setInputs((prev) => ({ ...prev, ...patch }))} onComplete={handleComplete} />
         ) : (
-          <section className="space-y-5">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <h2 className="text-xl font-semibold">Likelihood split</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Primary lever: <span className="font-medium text-slate-900">{pullHookLeverLabel(result.primaryLever)}</span>
-              </p>
-              <div className="mt-4">
-                <LikelihoodBars split={result.split} />
-              </div>
-              <div className="mt-5 space-y-3">
-                {explanations.map((item) => (
-                  <p key={item.key} className="text-sm text-slate-700">
-                    <span className="font-medium text-slate-900">{item.key}:</span> {item.text}
-                  </p>
-                ))}
-              </div>
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-medium text-slate-900">Why this is likely</p>
-                <p className="mt-1">{result.whyLikely}</p>
-              </div>
-            </div>
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <h2 className="text-lg font-semibold text-slate-900">Diagnosis summary</h2>
-              <p className="mt-2 text-sm text-slate-700">
-                <span className="font-medium text-slate-900">Primary likely cause:</span> {result.primaryCause}
-              </p>
-              {result.secondaryCause ? (
-                <p className="mt-1 text-sm text-slate-700">
-                  <span className="font-medium text-slate-900">Secondary cause:</span> {result.secondaryCause}
-                </p>
-              ) : null}
-
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-medium text-slate-900">What to check next</p>
-                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                    {result.checksNext.map((check) => (
-                      <li key={check}>• {check}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-medium text-slate-900">Equipment levers</p>
-                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                    {result.equipmentLevers.map((lever) => (
-                      <li key={lever}>• {lever}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-medium text-slate-900">Range test to validate</p>
-                <p className="mt-1">{result.rangeValidationTest}</p>
-              </div>
-            </section>
-
-            <RangePlan tests={result.rangePlan} />
-
-            <button
-              type="button"
-              onClick={() => {
-                clinicCompletedTrackedRef.current = false;
-                setResult(null);
-                setInputs(defaultInputs());
-              }}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-white"
-            >
-              Start a new session
-            </button>
-          </section>
+          <DiagnosisStoryDeck
+            title="Your Pull Hook result"
+            slides={[
+              {
+                id: "pattern",
+                label: "Your pattern",
+                eyebrow: "Observed shot",
+                title: `${inputs.startLine ?? "Unknown"} start · ${inputs.curveSeverity ?? "Unknown"} left curve`,
+                content: (
+                  <div>
+                    <dl className="grid gap-3 sm:grid-cols-3">
+                      {[
+                        ["Start", inputs.startLine ?? "Not measured"],
+                        ["Curve", inputs.curveSeverity === "none" ? "No meaningful left curve" : `${inputs.curveSeverity ?? "Unknown"} left`],
+                        ["Strike", inputs.strikeLocation ?? "Not measured"],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</dt>
+                          <dd className="mt-2 font-semibold capitalize text-slate-900">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {flightShape ? (
+                      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+                        <BallFlightChart shape={flightShape} className="mx-auto max-w-2xl" />
+                      </div>
+                    ) : null}
+                  </div>
+                ),
+              },
+              {
+                id: "why",
+                label: "What it suggests",
+                eyebrow: "Leading hypothesis",
+                title: pullHookLeverLabel(result.primaryLever),
+                content: (
+                  <div>
+                    <p className="max-w-2xl text-lg leading-8 text-slate-700">{result.whyLikely}</p>
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+                      <LikelihoodBars split={result.split} />
+                    </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      {explanations.map((item) => (
+                        <p key={item.key} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                          <span className="font-medium text-slate-900">{item.key}:</span> {item.text}
+                        </p>
+                      ))}
+                    </div>
+                    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p className="text-sm font-semibold text-slate-900">What to check next</p>
+                        <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                          {result.checksNext.map((check) => <li key={check}>• {check}</li>)}
+                        </ul>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <p className="text-sm font-semibold text-slate-900">Equipment levers</p>
+                        <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                          {result.equipmentLevers.map((lever) => <li key={lever}>• {lever}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+                    <p className="mt-5 text-sm leading-6 text-slate-600">
+                      This ranking is a hypothesis to test, not proof of a swing cause.
+                    </p>
+                  </div>
+                ),
+              },
+              {
+                id: "test",
+                label: "Range test",
+                eyebrow: "One variable at a time",
+                title: "Test the leading idea",
+                content: (
+                  <div>
+                    <RangePlan tests={result.rangePlan} />
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+                      <p className="text-sm font-semibold text-slate-900">Range test to validate</p>
+                      <p className="mt-2 text-sm leading-7 text-slate-700">{result.rangeValidationTest}</p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: "share",
+                label: "Save & share",
+                eyebrow: "Your portable result",
+                title: "Share your shot profile",
+                content: (
+                  <div>
+                    <DiagnosisSharePanel
+                      embedded
+                      miss={`Observed shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity === "none" ? "no meaningful left curve" : `${inputs.curveSeverity ?? "unknown"} left curve`}, ${inputs.strikeLocation ?? "unknown"} strike.`}
+                      likelyCause={`${pullHookLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
+                      rangePlan={result.rangePlan[0]?.whatToDo || "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."}
+                      shareUrl="https://dovegolf.fit/clinic/pull-hook"
+                      source="pull_hook"
+                      insightLabel="Leading hypothesis"
+                      emailDiagnosis={{
+                        kind: "pull_hook",
+                        startLine: inputs.startLine ?? "unsure",
+                        curveSeverity: inputs.curveSeverity ?? "none",
+                        strikeLocation: inputs.strikeLocation ?? "unsure",
+                        primaryLever: result.primaryLever,
+                      }}
+                      details={[
+                        { label: "Start", value: inputs.startLine ?? "Not measured" },
+                        { label: "Curve", value: inputs.curveSeverity === "none" ? "No meaningful left curve" : `${inputs.curveSeverity ?? "Unknown"} left` },
+                        { label: "Strike", value: inputs.strikeLocation ?? "Not measured" },
+                      ]}
+                      flightShape={flightShape}
+                      analyticsContext={{
+                        pattern: `${inputs.startLine ?? "unknown"}-${inputs.curveSeverity ?? "unknown"}-left`,
+                        strike: inputs.strikeLocation ?? "unknown",
+                        category: "pull_hook",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clinicCompletedTrackedRef.current = false;
+                        setResult(null);
+                        setInputs(defaultInputs());
+                      }}
+                      className="mt-5 min-h-12 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Start a new session
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         )}
 
         <ClinicSessionHistory

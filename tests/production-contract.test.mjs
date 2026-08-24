@@ -38,6 +38,9 @@ const routeHandlers = new Map([
 
 const behaviorSensitiveFiles = [
   "src/app/diagnostic/EmailCaptureCard.tsx",
+  "src/components/diagnosis/DiagnosisSharePanel.tsx",
+  "src/lib/share/diagnosisShare.ts",
+  "src/lib/share/diagnosisEmail.ts",
   "src/lib/analytics/ga.ts",
   "src/lib/engine/driver.ts",
   "src/lib/engine/driverShaftShortlist.ts",
@@ -96,6 +99,8 @@ const analyticsEvents = [
   "dov_fit_completed",
   "dov_clinic_completed",
   "dov_clinic_recommendation_viewed",
+  "dov_diagnosis_shared",
+  "dov_diagnosis_card_downloaded",
 ];
 
 function absolutePath(relativePath) {
@@ -188,11 +193,62 @@ test("established analytics event names remain available", async () => {
       source("src/app/diagnostic/page.tsx"),
       source("src/app/clinic/driver-slice/page.tsx"),
       source("src/app/clinic/pull-hook/page.tsx"),
+      source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
     ])
   ).join("\n");
 
   for (const eventName of analyticsEvents) {
     assert.ok(analyticsSource.includes(eventName), `${eventName} must remain instrumented`);
+  }
+});
+
+test("canonical flight visuals keep the slow dotted progression and reduced-motion fallback", async () => {
+  const [chart, globals] = await Promise.all([
+    source("src/components/visuals/BallFlightChart.tsx"),
+    source("src/app/globals.css"),
+  ]);
+
+  assert.match(chart, /strokeDasharray="1 9"/);
+  assert.match(chart, /<animateMotion dur="2\.8s"/);
+  assert.match(chart, /className="ball-flight-reveal"/);
+  assert.match(globals, /@keyframes flight-reveal/);
+  assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ball-flight-marker[\s\S]*?display: none/);
+});
+
+test("completed diagnoses keep the distribution loop and keep direct email closed safely", async () => {
+  const [component, emailRoute, decoder, equipment, driverSlice, pullHook, curvesRight] = await Promise.all([
+    source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
+    source("src/app/api/email-results/route.ts"),
+    source("src/components/tools/ball-flight-decoder/BallFlightDecoder.tsx"),
+    source("src/app/diagnostic/page.tsx"),
+    source("src/app/clinic/driver-slice/page.tsx"),
+    source("src/app/clinic/pull-hook/page.tsx"),
+    source("src/app/clinic/ball-curves-right/page.tsx"),
+  ]);
+
+  assert.ok(component.includes("Share my diagnosis"));
+  assert.ok(component.includes("Send me my diagnosis and range plan"));
+  assert.match(component, /Download result card/);
+  assert.match(component, /files: \[shareFile\]/);
+  assert.match(component, /navigator\.canShare\?\.\(fileShareData\) === true/);
+  assert.match(component, /Share link instead/);
+  assert.match(component, /1200 × 630 social card/);
+  assert.match(component, /MY SHOT PROFILE/);
+  assert.match(component, /getBallFlightChartPathGeometry/);
+  assert.match(component, /analyticsContext/);
+  assert.match(component, /analyticsContext\?:\s*{[\s\S]*?pattern\?: string;[\s\S]*?strike\?: string;[\s\S]*?category\?: string;/);
+  assert.match(component, /insightLabel/);
+  assert.match(emailRoute, /status:\s*503/);
+  assert.match(emailRoute, /Cache-Control.*no-store/s);
+  assert.match(emailRoute, /distributed IP \+ recipient abuse limiter/);
+  assert.doesNotMatch(emailRoute, /new Resend\(/);
+  assert.doesNotMatch(emailRoute, /RESEND_API_KEY/);
+
+  for (const resultPage of [decoder, equipment, driverSlice, pullHook, curvesRight]) {
+    assert.match(resultPage, /<DiagnosisSharePanel/);
+    assert.match(resultPage, /details=/);
+    assert.match(resultPage, /flightShape=/);
+    assert.match(resultPage, /analyticsContext=/);
   }
 });
 

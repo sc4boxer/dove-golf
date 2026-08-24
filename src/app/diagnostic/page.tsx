@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import EmailCaptureCard from "./EmailCaptureCard";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
+import { DiagnosisStoryDeck } from "@/components/diagnosis/DiagnosisStoryDeck";
 
 import { recommendDriverWoods, type RecommendDriverWoodsInput } from "@/lib/engine/driver";
 import { recommendIrons, type RecommendIronsInput } from "@/lib/engine/irons";
@@ -21,7 +23,7 @@ import {
 } from "@/lib/tools/ballFlightEquipmentBridge";
 
 const SHARE_CARD_WIDTH = 1080;
-const SHARE_CARD_HEIGHT = 1900;
+const SHARE_CARD_HEIGHT = 2300;
 const SHARE_CARD_PADDING = 64;
 
 /* ---------------- TYPES ---------------- */
@@ -1962,6 +1964,103 @@ function ResultsView({
   const showIrons = result.focus === "irons" || result.focus === "full_bag";
   const showWedges = result.focus === "wedges" || result.focus === "full_bag";
 
+  const diagnosisShareMiss =
+    a.fitFocus === "full_bag"
+      ? "My full bag fit profile"
+      : a.fitFocus === "driver_woods"
+        ? "My driver + woods fit profile"
+        : a.fitFocus === "irons"
+          ? "My iron fit profile"
+          : "My wedge fit profile";
+
+  const diagnosisFlightShape =
+    (showDriver ? getEquipmentBallFlightShape(a.driverStartLine, a.driverCurve) : null) ??
+    (showIrons ? getEquipmentBallFlightShape(a.ironStartLine, a.ironCurve) : null);
+
+  const diagnosisShareDetails =
+    a.fitFocus === "full_bag"
+      ? [
+          { label: "Category", value: "Full bag" },
+          {
+            label: "Driver",
+            value: `${a.driverStartLine === "center" ? "On target" : a.driverStartLine} start · ${a.driverCurve} · ${a.driverStrike.replaceAll("_", " ")} strike`,
+          },
+          {
+            label: "Irons",
+            value: `${a.ironStartLine === "center" ? "On target" : a.ironStartLine} start · ${a.ironCurve} · ${a.ironFaceStrike.replaceAll("_", " ")} strike · ${a.ironLowPoint.replaceAll("_", " ")} low point`,
+          },
+          {
+            label: "Wedges",
+            value: `${a.wedgeMiss.replaceAll("_", " ")} miss · ${a.wedgeTurf} turf · ${a.wedgeTrajectory} trajectory`,
+          },
+          { label: "Goals", value: a.goals.join(" · ").replaceAll("_", " ") || "Not selected" },
+          { label: "Play", value: a.playFreq.replaceAll("_", " ") },
+        ]
+      : showDriver
+        ? [
+            { label: "Category", value: "Driver + woods" },
+            { label: "Start", value: a.driverStartLine === "center" ? "On target" : a.driverStartLine },
+            { label: "Curve", value: a.driverCurve },
+            { label: "Strike", value: a.driverStrike.replaceAll("_", " ") },
+            { label: "Tempo", value: a.driverTempo },
+            { label: "Flight", value: a.driverFlight },
+          ]
+        : showIrons
+          ? [
+              { label: "Category", value: "Irons" },
+              { label: "Start", value: a.ironStartLine === "center" ? "On target" : a.ironStartLine },
+              { label: "Curve", value: a.ironCurve },
+              { label: "Strike", value: a.ironFaceStrike },
+              { label: "Low point", value: a.ironLowPoint.replaceAll("_", " ") },
+              { label: "Tempo", value: a.ironTempo },
+            ]
+          : [
+              { label: "Category", value: "Wedges" },
+              { label: "Miss", value: a.wedgeMiss.replaceAll("_", " ") },
+              { label: "Turf", value: a.wedgeTurf },
+              { label: "Trajectory", value: a.wedgeTrajectory },
+              { label: "Spin", value: a.wedgeSpin.replaceAll("_", " ") },
+              { label: "Shaft", value: a.wedgeShaftPref.replaceAll("_", " ") },
+            ];
+
+  const diagnosisShareRecommendation =
+    a.fitFocus === "full_bag" && result.driver && result.irons && result.wedges
+      ? {
+          label: "Full bag fit direction",
+          value: `Driver ${result.driver.shaft.weight}/${result.driver.shaft.flex} · Irons ${result.irons.shaft.weight}/${result.irons.shaft.flex} · Wedges ${result.wedges.shaft.bounce} bounce`,
+          supporting: `Primary comparison: driver ${result.driver.primaryLever}; irons ${result.irons.primaryLever}; wedges ${result.wedges.shaft.grind} grind.`,
+        }
+      : showDriver && result.driver
+        ? {
+            label: "Top fit direction",
+            value: result.driver.primaryLever,
+            supporting: `${result.driver.shaft.weight} · ${result.driver.shaft.flex}`,
+          }
+        : showIrons && result.irons
+          ? {
+              label: "Top fit direction",
+              value: result.irons.primaryLever,
+              supporting: `${result.irons.shaft.weight} · ${result.irons.shaft.flex}`,
+            }
+          : result.wedges
+            ? {
+                label: "Top fit direction",
+                value: `${result.wedges.shaft.bounce} bounce · ${result.wedges.shaft.grind} grind`,
+                supporting: `${result.wedges.shaft.weight} · ${result.wedges.shaft.flex}`,
+              }
+            : null;
+  const diagnosisShareCause =
+    "This fit is a controlled starting point for the reported pattern. Equipment may amplify a miss; these answers do not prove the club caused it.";
+
+  const diagnosisRangePlan =
+    a.fitFocus === "full_bag"
+      ? "Test one category at a time. Driver/woods: compare strike, start line, curve, and dispersion. Irons: compare strike, low point, carry, and dispersion. Wedges: compare turf entry, strike, carry, and rollout."
+      : showDriver
+        ? "Alternate two five-shot sets with the current club and recommended setup. Keep target, tee height, and speed constant; compare strike, start line, curve, and dispersion."
+        : showIrons
+          ? "Alternate two five-shot sets from the same lie. Compare strike, low point, start line, curve, carry, and dispersion before changing another variable."
+          : "Alternate two five-shot sets from the same lie with the current and proposed bounce or sole setup; compare strike, turf entry, carry, and rollout.";
+
   // ✅ FIX #1: only show ball flight model when driver or irons are part of the workflow
   const showBallFlight = showDriver || showIrons;
 
@@ -2031,7 +2130,6 @@ function ResultsView({
   const qrSvgMarkup = useMemo(() => buildInlineQrSvg(verificationUrl, 112), [verificationUrl]);
 
   // Optional: wedge-only gets a wedge-specific “interaction” model instead of a dummy driver model
-  const showWedgeModelOnly = showWedges && !showDriver && !showIrons;
 
   const generateShareCard = async () => {
     const node = document.getElementById("equipment-alignment-share-card");
@@ -2095,7 +2193,7 @@ function ResultsView({
   };
 
   const copyCaption = async () => {
-    const caption = `My Dove Golf™ Equipment Alignment Record is live.\n\nEquipment Alignment Score: ${alignmentScore}%\nVerify my certificate: ${verificationUrl}\n\n#DoveGolf #EquipmentAlignment #GolfFitting #FitToYourSwing`;
+    const caption = `My Dove Golf™ equipment fit record is ready.\n\nInternal heuristic fit score: ${alignmentScore}%\nView the generated record: ${verificationUrl}\n\nGenerated from self-reported inputs. Record verification does not validate the recommendation.\n\n#DoveGolf #EquipmentFit #GolfFitting #FitToYourSwing`;
     await navigator.clipboard.writeText(caption);
     setCopyState("caption");
     window.setTimeout(() => setCopyState(null), 1500);
@@ -2150,273 +2248,298 @@ function ResultsView({
 
       <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-slate-900">Confidence</div>
+          <div className="text-sm font-semibold text-slate-900">Input completeness</div>
           <div className="text-sm font-medium text-slate-900">{result.confidence}%</div>
         </div>
         <div className="mt-2 h-2 w-full rounded-full bg-white">
           <div className="h-2 rounded-full bg-slate-900 transition-all" style={{ width: `${result.confidence}%` }} />
         </div>
         <div className="mt-2 text-xs text-slate-500">
-          Confidence drops when key inputs are marked “Not sure” or missing.
+          Internal completeness indicator only; it is not a probability that the recommendation is correct.
         </div>
       </div>
 
-      <div className="mt-8 grid gap-4">
-        <Card title="Equipment Alignment Record">
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={generateShareCard}
-              disabled={!isVerified}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
-            >
-              Generate Share Card
-            </button>
-            {!isVerified && (
-              <div className="text-xs text-slate-600">Verify email to unlock your Equipment Alignment Record.</div>
-            )}
-            {shareCardUrl && isVerified && (
-              <div className="flex flex-wrap gap-2 text-xs text-slate-700">
-                <button type="button" onClick={generateShareCard} className="rounded-lg border border-slate-300 px-3 py-1.5">
-                  Download Image
-                </button>
-                <button
-                  type="button"
-                  onClick={copyVerificationLink}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5"
-                >
-                  Copy Verification Link{copyState === "link" ? " · Link copied." : ""}
-                </button>
-                <button type="button" onClick={copyCaption} className="rounded-lg border border-slate-300 px-3 py-1.5">
-                  Copy Caption{copyState === "caption" ? " · Caption copied." : ""}
-                </button>
+      <DiagnosisStoryDeck
+        className="mt-8"
+        title="Your equipment fit story"
+        slides={[
+          {
+            id: "profile",
+            label: "Your profile",
+            eyebrow: "What you reported",
+            title: "Your flight and contact profile",
+            content: (
+              <div className="grid gap-4">
+                {showBallFlight ? (
+                  <Card title="Your ball flight model">
+                    <div className={["grid gap-4", showDriver && showIrons ? "md:grid-cols-2" : ""].join(" ")}>
+                      {showDriver ? (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Driver + Woods</p>
+                          <EquipmentBallFlightPreview start={a.driverStartLine} curve={a.driverCurve} compact={false} />
+                        </div>
+                      ) : null}
+                      {showIrons ? (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Irons</p>
+                          <EquipmentBallFlightPreview start={a.ironStartLine} curve={a.ironCurve} compact={false} />
+                        </div>
+                      ) : null}
+                    </div>
+                  </Card>
+                ) : null}
+
+                {showWedges ? (
+                  <Card title="Your wedge interaction model">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Turf interaction</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.wedgeTurf}</div>
+                        <div className="mt-3"><WedgeTurfViz turf={a.wedgeTurf} /></div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Typical miss</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.wedgeMiss}</div>
+                        <div className="mt-3"><WedgeMissViz miss={a.wedgeMiss} /></div>
+                      </div>
+                    </div>
+                  </Card>
+                ) : null}
+
+                {showIronContactProfile ? (
+                  <Card title="Your iron contact profile">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Iron low point</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.ironLowPoint.replaceAll("_", " ")}</div>
+                        <div className="mt-3"><LowPointViz lowPoint={a.ironLowPoint} /></div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Face strike</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.ironFaceStrike}</div>
+                        <div className="mt-3"><StrikeFaceDiagram strike={a.ironFaceStrike} /></div>
+                      </div>
+                    </div>
+                  </Card>
+                ) : null}
               </div>
-            )}
-          </div>
-        </Card>
+            ),
+          },
+          {
+            id: "fit",
+            label: "Fit direction",
+            eyebrow: "A starting range, not a prescription",
+            title: "What to compare in a fitting",
+            content: (
+              <div className="grid gap-4">
+                {showDriver && result.driver ? (
+                  <Card title="Driver recommendation">
+                    <Line label="Heuristic fit score" value={`${result.driver.fitScore}%`} />
+                    <Line label="Primary lever" value={result.driver.primaryLever} />
+                    <Line label="Shaft weight" value={result.driver.shaft.weight} />
+                    <Line label="Flex" value={result.driver.shaft.flex} />
+                    <Line label="Launch" value={result.driver.shaft.launch} />
+                    <Line label="Torque range" value={result.driver.shaft.torqueRange} />
+                    <Line label="Balance point" value={result.driver.shaft.balancePoint} />
+                    <Line label="Tip stability" value={result.driver.shaft.tipStability} />
+                    <Line label="Target swing weight" value={result.driver.targetSwingWeight} />
+                    {(result.driver.settings ?? []).length ? (
+                      <>
+                        <p className="pt-3 text-sm font-semibold text-slate-900">Test settings</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                          {(result.driver.settings ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                        </ul>
+                      </>
+                    ) : null}
+                  </Card>
+                ) : null}
 
-        {!isVerified && (
-          <EmailCaptureCard
-            payload={a}
-            onProfileSaved={(profile) => {
-              setContactProfile({
-                firstName: profile.firstName,
-                lastName: profile.lastName,
-                email: profile.email,
-              });
-            }}
-          />
-        )}
+                {showDriver && result.woods ? (
+                  <Card title="Woods (3W/5W) baseline">
+                    <Line label="Heuristic fit score" value={`${result.woods.fitScore}%`} />
+                    <Line label="Shaft weight" value={result.woods.shaft.weight} />
+                    <Line label="Flex" value={result.woods.shaft.flex} />
+                    <Line label="Launch" value={result.woods.shaft.launch} />
+                    <Line label="Torque range" value={result.woods.shaft.torqueRange} />
+                    <Line label="Balance point" value={result.woods.shaft.balancePoint} />
+                    <Line label="Target swing weight" value={result.woods.targetSwingWeight} />
+                  </Card>
+                ) : null}
 
-        {showBallFlight && (
-          <Card title="Your ball flight model">
-            <div className={["grid gap-4", showDriver && showIrons ? "md:grid-cols-2" : ""].join(" ")}>
-              {showDriver ? (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Driver + Woods
+                {showIrons && result.irons ? (
+                  <Card title="Iron recommendation">
+                    <Line label="Heuristic fit score" value={`${result.irons.fitScore}%`} />
+                    <Line label="Primary lever" value={result.irons.primaryLever} />
+                    <Line label="Shaft weight" value={result.irons.shaft.weight} />
+                    <Line label="Flex" value={result.irons.shaft.flex} />
+                    <Line label="Launch" value={result.irons.shaft.launch} />
+                    <Line label="Balance point" value={result.irons.shaft.balancePoint} />
+                    <Line label="Material" value={result.irons.shaft.material} />
+                    <Line label="Head bias" value={result.irons.headBias} />
+                    <Line label="Target swing weight" value={result.irons.targetSwingWeight} />
+                  </Card>
+                ) : null}
+
+                {showWedges && result.wedges ? (
+                  <Card title="Wedge recommendation">
+                    <Line label="Heuristic fit score" value={`${result.wedges.fitScore}%`} />
+                    <Line label="Shaft weight" value={result.wedges.shaft.weight} />
+                    <Line label="Flex" value={result.wedges.shaft.flex} />
+                    <Line label="Bounce" value={result.wedges.shaft.bounce} />
+                    <Line label="Grind" value={result.wedges.shaft.grind} />
+                    <Line label="Target swing weight" value={result.wedges.targetSwingWeight} />
+                    <p className="pt-3 text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      {(result.wedges.gappingBullets ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </Card>
+                ) : null}
+              </div>
+            ),
+          },
+          {
+            id: "test",
+            label: "Why & test",
+            eyebrow: "Fit rationale",
+            title: "Why this direction—and how to test it",
+            content: (
+              <div className="grid gap-4">
+                {(result.cause ?? []).length ? (
+                  <Card title="What in your answers drove this fit">
+                    <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      {(result.cause ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </Card>
+                ) : null}
+                <Card title="Why these recommendations">
+                  <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                    {(result.why ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                  </ul>
+                </Card>
+                <Card title="Your controlled validation plan">
+                  <p className="text-sm leading-7 text-slate-700">{diagnosisRangePlan}</p>
+                  <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-700">
+                    <li>Keep weight inside the suggested band before comparing flex or profile.</li>
+                    <li>Change one variable at a time and use the same target, lie, and speed.</li>
+                    <li>Compare strike, start line, curve, carry, and dispersion—not one best shot.</li>
+                  </ul>
+                </Card>
+                <p className="text-sm leading-6 text-slate-600">
+                  Equipment may amplify a pattern; these answers do not prove that a club caused it.
+                </p>
+              </div>
+            ),
+          },
+          {
+            id: "share",
+            label: "Save & share",
+            eyebrow: "Your portable fit result",
+            title: "Share your equipment fit",
+            content: (
+              <div className="grid gap-4">
+                <DiagnosisSharePanel
+                  embedded
+                  miss={diagnosisShareMiss}
+                  likelyCause={diagnosisShareCause}
+                  rangePlan={diagnosisRangePlan}
+                  shareUrl="https://dovegolf.fit/diagnostic"
+                  source="equipment_fit"
+                  insightLabel="Fit rationale"
+                  emailDiagnosis={{
+                    kind: "equipment_fit",
+                    focus: a.fitFocus,
+                    driverStart: a.driverStartLine,
+                    driverCurve: a.driverCurve,
+                    driverStrike: a.driverStrike,
+                    ironStart: a.ironStartLine,
+                    ironCurve: a.ironCurve,
+                    ironStrike: a.ironFaceStrike,
+                    ironLowPoint: a.ironLowPoint,
+                    wedgeMiss: a.wedgeMiss,
+                    wedgeTurf: a.wedgeTurf,
+                  }}
+                  details={diagnosisShareDetails}
+                  flightShape={diagnosisFlightShape}
+                  profileLabel={a.fitFocus === "full_bag" ? "My full bag fit · driver flight shown" : "My equipment fit"}
+                  recommendation={diagnosisShareRecommendation}
+                  analyticsContext={{
+                    pattern: diagnosisFlightShape ?? "unmeasured",
+                    strike: showDriver ? a.driverStrike : showIrons ? a.ironFaceStrike : a.wedgeMiss,
+                    category: a.fitFocus,
+                  }}
+                />
+
+                <details className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-slate-900">
+                    Optional: detailed fitter record
+                  </summary>
+                  <p className="mt-2 text-xs leading-5 text-slate-600">
+                    This record is generated from self-reported inputs. Record verification confirms delivery state, not fit accuracy.
                   </p>
-                  <EquipmentBallFlightPreview
-                    start={a.driverStartLine}
-                    curve={a.driverCurve}
-                    compact={false}
-                  />
-                </div>
-              ) : null}
-              {showIrons ? (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Irons
-                  </p>
-                  <EquipmentBallFlightPreview
-                    start={a.ironStartLine}
-                    curve={a.ironCurve}
-                    compact={false}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </Card>
-        )}
+                  <div className="mt-4 space-y-4">
+                    <Card title="Detailed equipment fit record">
+                      <div className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={generateShareCard}
+                          disabled={!isVerified}
+                          className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                        >
+                          Generate detailed fitter record
+                        </button>
+                        {!isVerified ? (
+                          <div className="text-xs text-slate-600">Verify email to unlock the optional detailed record.</div>
+                        ) : null}
+                        {shareCardUrl && isVerified ? (
+                          <div className="flex flex-wrap gap-2 text-xs text-slate-700">
+                            <button type="button" onClick={generateShareCard} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
+                              Download detailed record
+                            </button>
+                            <button type="button" onClick={copyVerificationLink} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
+                              Copy record link{copyState === "link" ? " · Link copied." : ""}
+                            </button>
+                            <button type="button" onClick={copyCaption} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
+                              Copy caption{copyState === "caption" ? " · Caption copied." : ""}
+                            </button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </Card>
 
-        {showWedgeModelOnly && (
-          <Card title="Your wedge interaction model">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Turf interaction</div>
-                <div className="mt-1 text-xs text-slate-500">{a.wedgeTurf}</div>
-                <div className="mt-3">
-                  <WedgeTurfViz turf={a.wedgeTurf} />
-                </div>
+                    {!isVerified ? (
+                      <EmailCaptureCard
+                        payload={a}
+                        onProfileSaved={(profile) => {
+                          setContactProfile({
+                            firstName: profile.firstName,
+                            lastName: profile.lastName,
+                            email: profile.email,
+                          });
+                        }}
+                      />
+                    ) : null}
+                  </div>
+                </details>
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Typical miss</div>
-                <div className="mt-1 text-xs text-slate-500">{a.wedgeMiss}</div>
-                <div className="mt-3">
-                  <WedgeMissViz miss={a.wedgeMiss} />
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
+            ),
+          },
+        ]}
+      />
 
-        {showIronContactProfile && (
-          <Card title="Your contact profile">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Iron low point</div>
-                <div className="mt-1 text-xs text-slate-500">{a.ironLowPoint.replaceAll("_", " ")}</div>
-                <div className="mt-3">
-                  <LowPointViz lowPoint={a.ironLowPoint} />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Face strike</div>
-                <div className="mt-1 text-xs text-slate-500">{a.ironFaceStrike}</div>
-                <div className="mt-3">
-                  <StrikeFaceDiagram strike={a.ironFaceStrike} />
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Recommendations */}
-        {showDriver && result.driver && (
-          <Card title="Driver recommendation">
-            <Line label="Fit score" value={`${result.driver.fitScore}%`} />
-            <Line label="Primary lever" value={result.driver.primaryLever} />
-            <Line label="Shaft weight" value={result.driver.shaft.weight} />
-            <Line label="Flex" value={result.driver.shaft.flex} />
-            <Line label="Launch" value={result.driver.shaft.launch} />
-            <Line label="Torque range" value={result.driver.shaft.torqueRange} />
-            <Line label="Balance point" value={result.driver.shaft.balancePoint} />
-            <Line label="Tip stability" value={result.driver.shaft.tipStability} />
-            <Line label="Target swing weight" value={result.driver.targetSwingWeight} />
-
-            {(result.driver.settings ?? []).length > 0 && (
-              <>
-                <div className="pt-3 text-sm font-semibold text-slate-900">Test settings</div>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                  {(result.driver.settings ?? []).map((x: string, i: number) => (
-                    <li key={i}>{x}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {result.driver.note ? <p className="pt-2 text-xs text-slate-500">{result.driver.note}</p> : null}
-          </Card>
-        )}
-
-        {showDriver && result.woods && (
-          <Card title="Woods (3W/5W) baseline">
-            <Line label="Fit score" value={`${result.woods.fitScore}%`} />
-            <Line label="Shaft weight" value={result.woods.shaft.weight} />
-            <Line label="Flex" value={result.woods.shaft.flex} />
-            <Line label="Launch" value={result.woods.shaft.launch} />
-            <Line label="Torque range" value={result.woods.shaft.torqueRange} />
-            <Line label="Balance point" value={result.woods.shaft.balancePoint} />
-            <Line label="Target swing weight" value={result.woods.targetSwingWeight} />
-            {result.woods.note ? <p className="pt-2 text-xs text-slate-500">{result.woods.note}</p> : null}
-          </Card>
-        )}
-
-        {showIrons && result.irons && (
-          <Card title="Iron recommendation">
-            <Line label="Fit score" value={`${result.irons.fitScore}%`} />
-            <Line label="Primary lever" value={result.irons.primaryLever} />
-            <Line label="Shaft weight" value={result.irons.shaft.weight} />
-            <Line label="Flex" value={result.irons.shaft.flex} />
-            <Line label="Launch" value={result.irons.shaft.launch} />
-            <Line label="Balance point" value={result.irons.shaft.balancePoint} />
-            <Line label="Material" value={result.irons.shaft.material} />
-            <Line label="Head bias" value={result.irons.headBias} />
-            <Line label="Target swing weight" value={result.irons.targetSwingWeight} />
-            {result.irons.note ? <p className="pt-2 text-xs text-slate-500">{result.irons.note}</p> : null}
-          </Card>
-        )}
-
-        {showWedges && result.wedges && (
-          <Card title="Wedge recommendation">
-            <Line label="Fit score" value={`${result.wedges.fitScore}%`} />
-            <Line label="Shaft weight" value={result.wedges.shaft.weight} />
-            <Line label="Flex" value={result.wedges.shaft.flex} />
-            <Line label="Bounce" value={result.wedges.shaft.bounce} />
-            <Line label="Grind" value={result.wedges.shaft.grind} />
-            <Line label="Target swing weight" value={result.wedges.targetSwingWeight} />
-
-            <div className="pt-3 text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</div>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(result.wedges.gappingBullets ?? []).map((x: string, i: number) => (
-                <li key={i}>{x}</li>
-              ))}
-            </ul>
-
-            <div className="pt-3 text-sm font-semibold text-slate-900">Build notes</div>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(result.wedges.buildNotes ?? []).map((x: string, i: number) => (
-                <li key={i}>{x}</li>
-              ))}
-            </ul>
-
-            {result.wedges.note ? <p className="pt-2 text-xs text-slate-500">{result.wedges.note}</p> : null}
-          </Card>
-        )}
-
-        {/* Reasoning */}
-        {(result.cause ?? []).length > 0 && (
-          <Card title="What in your answers drove this fit">
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(result.cause ?? []).map((c: string, i: number) => (
-                <li key={i}>{c}</li>
-              ))}
-            </ul>
-          </Card>
-        )}
-
-        <Card title="Why these recommendations">
-          <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-            {(result.why ?? []).map((w: string, i: number) => (
-              <li key={i}>{w}</li>
-            ))}
-          </ul>
-        </Card>
-
-        <Card title="How to interpret and apply your results (fitter-grade)">
-          <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
-            <li>
-              <span className="font-medium text-slate-900">Treat weight as the primary constraint.</span>{" "}
-              Stay inside the band first. Only then tune flex/profile.
-            </li>
-            <li>
-              <span className="font-medium text-slate-900">Flex labels are not standardized.</span>{" "}
-              If you’re between bands, test both and compare strike + start-line control.
-            </li>
-            <li>
-              <span className="font-medium text-slate-900">Validate with a controlled test protocol.</span>{" "}
-              Test 2–3 shafts in the same head at the same length/swingweight.
-            </li>
-          </ul>
-        </Card>
-
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={onReset}
-            className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-medium"
-          >
-            Start over
-          </button>
-
-          <Link
-            href="/"
-            className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Back to home
-          </Link>
-        </div>
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={onReset}
+          className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-medium"
+        >
+          Start over
+        </button>
+        <Link
+          href="/"
+          className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Back to home
+        </Link>
       </div>
 
       <div className="pointer-events-none fixed -left-[9999px] top-0 opacity-0" aria-hidden>
@@ -2465,9 +2588,8 @@ function EquipmentAlignmentShareCard({
   const displayName = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ") || "Dove Golfer";
   const contentWidth = SHARE_CARD_WIDTH - SHARE_CARD_PADDING * 2;
 
-  const energyTransfer = a.driverTempo === "quick" ? "Fast Energy" : a.driverTempo === "smooth" ? "Smooth Energy" : "Neutral";
-  const stabilityRequirement = result.confidence >= 80 ? "Medium Stability" : result.confidence >= 65 ? "High Stability" : "Low Stability";
-  const spinBias = a.driverFlight === "low" ? "Low" : a.driverFlight === "high" ? "High" : "Mid";
+  const transitionProfile = showIrons && !showDriver ? a.ironTempo : a.driverTempo;
+  const reportedFlight = showIrons && !showDriver ? a.ironPeak : showDriver ? a.driverFlight : a.wedgeTrajectory;
   const driverFlightShape = showDriver
     ? getEquipmentBallFlightShape(a.driverStartLine, a.driverCurve)
     : null;
@@ -2483,9 +2605,8 @@ function EquipmentAlignmentShareCard({
     { label: "Start line bias", value: showIrons && !showDriver ? a.ironStartLine : a.driverStartLine },
     { label: "Tempo profile", value: showIrons && !showDriver ? a.ironTempo : a.driverTempo },
     ...(a.ironFaceStrike !== "unsure" ? [{ label: "Face strike", value: a.ironFaceStrike }] : []),
-    { label: "Attack angle", value: a.driverFlight === "high" ? "Positive" : a.driverFlight === "low" ? "Negative" : "Neutral" },
+    { label: "Reported flight height", value: showIrons && !showDriver ? a.ironPeak : showDriver ? a.driverFlight : a.wedgeTrajectory },
     { label: "Curvature pattern", value: showIrons && !showDriver ? a.ironCurve : a.driverCurve },
-    ...(a.ironLowPoint !== "unsure" ? [{ label: "Divot depth", value: a.ironLowPoint }] : []),
     ...(a.ironLowPoint !== "unsure" ? [{ label: "Low point / contact", value: a.ironLowPoint }] : []),
   ];
 
@@ -2494,12 +2615,24 @@ function EquipmentAlignmentShareCard({
       ? {
           title: "Driver recommendation",
           lines: [
-            ["Fit score", `${result.driver.fitScore}%`],
+            ["Heuristic fit score", `${result.driver.fitScore}%`],
             ["Shaft weight range", result.driver.shaft.weight],
             ["Flex", result.driver.shaft.flex],
             ["Launch target", result.driver.shaft.launch],
-            ["Head bias", result.driver.primaryLever],
+            ["Primary fit lever", result.driver.primaryLever],
             ["Target swing weight", result.driver.targetSwingWeight],
+          ],
+        }
+      : null,
+    showDriver && result.woods
+      ? {
+          title: "Woods recommendation",
+          lines: [
+            ["Heuristic fit score", `${result.woods.fitScore}%`],
+            ["Shaft weight range", result.woods.shaft.weight],
+            ["Flex", result.woods.shaft.flex],
+            ["Launch target", result.woods.shaft.launch],
+            ["Target swing weight", result.woods.targetSwingWeight],
           ],
         }
       : null,
@@ -2507,7 +2640,7 @@ function EquipmentAlignmentShareCard({
       ? {
           title: "Iron recommendation",
           lines: [
-            ["Fit score", `${result.irons.fitScore}%`],
+            ["Heuristic fit score", `${result.irons.fitScore}%`],
             ["Shaft weight range", result.irons.shaft.weight],
             ["Flex", result.irons.shaft.flex],
             ["Launch target", result.irons.shaft.launch],
@@ -2520,10 +2653,10 @@ function EquipmentAlignmentShareCard({
       ? {
           title: "Wedge recommendation",
           lines: [
-            ["Fit score", `${result.wedges.fitScore}%`],
+            ["Heuristic fit score", `${result.wedges.fitScore}%`],
             ["Shaft weight range", result.wedges.shaft.weight],
             ["Flex", result.wedges.shaft.flex],
-            ["Launch target", result.wedges.shaft.bounce],
+            ["Bounce", result.wedges.shaft.bounce],
             ["Target swing weight", result.wedges.targetSwingWeight],
           ],
         }
@@ -2609,16 +2742,14 @@ function EquipmentAlignmentShareCard({
         <text x="34" y="15" fontSize="18" fontWeight="700" letterSpacing="1" fill="#0f172a">DOVE GOLF™</text>
         <text x="0" y="46" fontSize="16" fill="#334155">Equipment alignment record</text>
 
-        <text x={contentWidth} y="8" fontSize="13" fill="#475569" textAnchor="end">Certificate ID: {certificateId}</text>
+        <text x={contentWidth} y="8" fontSize="13" fill="#475569" textAnchor="end">Record ID: {certificateId}</text>
         <text x={contentWidth} y="29" fontSize="13" fill="#475569" textAnchor="end">Completed: {completedLabel}</text>
       </g>
 
       <text x="540" y="170" fontSize="62" fontWeight="600" textAnchor="middle" fill="#020617">{displayName}</text>
-      {(energyTransfer || stabilityRequirement || spinBias) && (
-        <text x="540" y="204" fontSize="15" textAnchor="middle" fill="#64748b">
-          Primary fit identity: {energyTransfer} · {stabilityRequirement} · {spinBias}
-        </text>
-      )}
+      <text x="540" y="204" fontSize="15" textAnchor="middle" fill="#64748b">
+        Reported context: {transitionProfile} transition · {reportedFlight} flight
+      </text>
 
       <rect x="64" y="228" width="952" height="156" rx="18" fill="#f8fafc" stroke="#e2e8f0" />
       <text x="88" y="258" fontSize="20" fontWeight="600" fill="#0f172a">Swing signature</text>
@@ -2765,13 +2896,13 @@ function EquipmentAlignmentShareCard({
         );
       })}
 
-      <text x="64" y="1840" fontSize="12" fill="#475569">
-        Certified by DoveFit™ Diagnostic Engine · Physics-Based Equipment Mapping
+      <text x="64" y={SHARE_CARD_HEIGHT - 60} fontSize="12" fill="#475569">
+        Generated from self-reported inputs · Educational starting point
       </text>
-      <text x="640" y="1840" fontSize="12" fill="#64748b">Verify at: {verificationUrl}</text>
+      <text x="640" y={SHARE_CARD_HEIGHT - 60} fontSize="12" fill="#64748b">Record at: {verificationUrl}</text>
 
-      <rect x="888" y="1758" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
-      <g transform="translate(896 1766)" clipPath="url(#qrClip)">
+      <rect x="888" y={SHARE_CARD_HEIGHT - 142} width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <g transform={`translate(896 ${SHARE_CARD_HEIGHT - 134})`} clipPath="url(#qrClip)">
         <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
       </g>
     </svg>

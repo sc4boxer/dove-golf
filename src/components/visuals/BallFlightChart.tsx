@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import {
   BALL_FLIGHT_CHART_PATHS_NORMALIZED,
   CANONICAL_BALL_FLIGHT_SHAPES,
@@ -46,6 +47,8 @@ export function BallFlightChartGlyph({
   const centerX = width * 0.5;
   const sharedStartY = BALL_FLIGHT_CHART_PATHS_NORMALIZED.straight.startY * height;
   const singlePathGeometry = getBallFlightChartPathGeometry({ shape, width, height });
+  const pathData = toBallFlightChartSvgPath(singlePathGeometry);
+  const revealMaskId = `flight-reveal-${useId().replace(/:/g, "")}`;
 
   return (
     <>
@@ -92,19 +95,64 @@ export function BallFlightChartGlyph({
           </text>
         </>
       ) : (
-        <path
-          key={shape}
-          d={toBallFlightChartSvgPath(singlePathGeometry)}
-          fill="none"
-          stroke="rgb(15 23 42)"
-          strokeWidth={width <= 300 ? 3 : 4}
-          strokeLinecap="round"
-          className={
-            staticRender
-              ? undefined
-              : "[stroke-dasharray:900] [stroke-dashoffset:900] animate-[dash_0.9s_ease-out_forwards] motion-reduce:animate-none motion-reduce:[stroke-dasharray:none] motion-reduce:[stroke-dashoffset:0]"
-          }
-        />
+        <>
+          {!staticRender ? (
+            <defs>
+              <mask
+                id={revealMaskId}
+                maskUnits="userSpaceOnUse"
+                x={0}
+                y={0}
+                width={width}
+                height={height}
+              >
+                <path
+                  d={pathData}
+                  pathLength={100}
+                  fill="none"
+                  stroke="white"
+                  strokeWidth={width <= 300 ? 9 : 11}
+                  strokeLinecap="round"
+                  className="ball-flight-reveal"
+                />
+              </mask>
+            </defs>
+          ) : null}
+
+          <path
+            d={pathData}
+            fill="none"
+            stroke={staticRender ? "rgb(15 23 42)" : "rgb(203 213 225)"}
+            strokeWidth={width <= 300 ? 3 : 4}
+            strokeDasharray="1 9"
+            strokeLinecap="round"
+          />
+
+          {!staticRender ? (
+            <>
+              <path
+                key={shape}
+                d={pathData}
+                fill="none"
+                stroke="rgb(15 23 42)"
+                strokeWidth={width <= 300 ? 3 : 4}
+                strokeDasharray="1 9"
+                strokeLinecap="round"
+                mask={`url(#${revealMaskId})`}
+              />
+              <circle
+                r={width <= 300 ? 3.5 : 4.5}
+                fill="white"
+                stroke="rgb(15 23 42)"
+                strokeWidth="2"
+                className="ball-flight-marker"
+                aria-hidden
+              >
+                <animateMotion dur="2.8s" fill="freeze" path={pathData} />
+              </circle>
+            </>
+          ) : null}
+        </>
       )}
 
       <circle cx={singlePathGeometry.startX} cy={singlePathGeometry.startY} r="3" fill="rgb(15 23 42)" />

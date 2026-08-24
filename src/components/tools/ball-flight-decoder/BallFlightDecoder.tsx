@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { TrackLink } from "@/components/analytics/TrackLink";
+import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
+import { DiagnosisStoryDeck } from "@/components/diagnosis/DiagnosisStoryDeck";
 import { type FormEvent, type RefObject, useRef, useState } from "react";
 import { BALL_FLIGHT_PATTERNS } from "@/lib/learn/ballFlightPatterns";
 import { buildEquipmentFitHref } from "@/lib/tools/ballFlightEquipmentBridge";
+import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
 import { BallFlightResultVisual } from "./BallFlightResultVisual";
 import { ShotEvidenceView } from "./ShotEvidenceView";
 import {
@@ -166,11 +169,11 @@ export function BallFlightDecoder() {
         ref={resultRef}
         tabIndex={-1}
         aria-live="polite"
-        aria-labelledby="decoder-result-title"
-        className="min-h-[28rem] rounded-3xl border border-slate-200 bg-white p-5 shadow-sm focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-slate-600 sm:p-8"
+        aria-label="Ball flight diagnosis result"
+        className="min-h-[28rem] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-slate-600"
       >
         {!result || !pattern || !start || !curve || !strike ? (
-          <div className="flex min-h-[24rem] flex-col justify-between">
+          <div className="flex min-h-[28rem] flex-col justify-between rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your result will appear here</p>
               <h2 id="decoder-result-title" className="mt-5 max-w-xl text-3xl font-semibold leading-tight tracking-[-0.035em] sm:text-4xl">
@@ -191,115 +194,175 @@ export function BallFlightDecoder() {
             </div>
           </div>
         ) : (
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Your pattern</p>
-            <h2 id="decoder-result-title" className="mt-4 text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
-              {pattern.title}
-            </h2>
-            <p className="mt-4 text-lg leading-8 text-slate-600">{pattern.definition}</p>
-            <p className="mt-3 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-700">
-              Because curve size is not collected, “draw/fade” is descriptive; a large curve may commonly be
-              called a hook/slice.
-            </p>
+          <DiagnosisStoryDeck
+            title={`Your ${pattern.title} diagnosis`}
+            slides={[
+              {
+                id: "pattern",
+                label: "Your pattern",
+                eyebrow: "Your pattern",
+                title: pattern.title,
+                content: (
+                  <div>
+                    <p className="max-w-2xl text-lg leading-8 text-slate-600">{pattern.definition}</p>
+                    <p className="mt-3 max-w-2xl rounded-2xl bg-white p-4 text-sm leading-6 text-slate-700">
+                      Because curve size is not collected, “draw/fade” is descriptive; a large curve may commonly
+                      be called a hook/slice.
+                    </p>
+                    <BallFlightResultVisual
+                      patternSlug={result.patternSlug}
+                      patternTitle={pattern.title}
+                      start={start}
+                      curve={curve}
+                    />
+                  </div>
+                ),
+              },
+              {
+                id: "impact",
+                label: "What it tells us",
+                eyebrow: "Impact interpretation",
+                title: "What this flight can tell us",
+                content: (
+                  <div>
+                    <p className="max-w-2xl text-lg leading-8 text-slate-700">{result.faceSummary}</p>
+                    <p className="mt-3 max-w-2xl text-lg leading-8 text-slate-700">{result.pathSummary}</p>
+                    <ul className="mt-6 grid gap-2 text-sm text-slate-700">
+                      {pattern.physicsConstraints.map((constraint) => (
+                        <li key={constraint} className="flex gap-3 rounded-2xl bg-white p-3">
+                          <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-slate-400" />
+                          <span>{constraint}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4">
+                      <p className="text-sm font-semibold text-slate-900">
+                        Face, path, and strike relationship
+                      </p>
+                      <ShotEvidenceView start={start} curve={curve} strike={strike} />
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: "test",
+                label: "Test the read",
+                eyebrow: "One controlled test",
+                title: "What to test next",
+                content: (
+                  <div>
+                    <p className="max-w-2xl text-lg leading-8 text-slate-700">{result.strikeSummary}</p>
+                    <div className="mt-6 grid gap-4 md:grid-cols-2">
+                      <article className="rounded-2xl bg-slate-900 p-5 text-white">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">
+                          Technique first
+                        </p>
+                        <p className="mt-4 leading-7 text-slate-200">{result.techniqueGuidance}</p>
+                      </article>
+                      <article className="rounded-2xl border border-slate-200 bg-white p-5">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          Equipment check
+                        </p>
+                        <p className="mt-4 leading-7 text-slate-600">{result.equipmentGuidance}</p>
+                      </article>
+                    </div>
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 text-slate-900">
+                      <p className="text-xs font-bold uppercase tracking-[0.12em]">Your next range test</p>
+                      <p className="mt-3 font-medium leading-7">{result.nextTest}</p>
+                    </div>
+                    <div className="mt-5">
+                      <p className="text-sm font-semibold">Limits of this result</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">{result.caveat}</p>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: "share",
+                label: "Save & share",
+                eyebrow: "Your portable result",
+                title: "Share your shot profile",
+                content: (
+                  <div>
+                    <DiagnosisSharePanel
+                      embedded
+                      miss={pattern.title}
+                      likelyCause={`${result.faceSummary} ${result.pathSummary} ${result.strikeSummary}`}
+                      rangePlan={result.nextTest}
+                      shareUrl="https://dovegolf.fit/tools/ball-flight-decoder"
+                      source="ball_flight_decoder"
+                      insightLabel="Impact interpretation"
+                      emailDiagnosis={{
+                        kind: "ball_flight_decoder",
+                        start,
+                        curve,
+                        strike,
+                      }}
+                      details={[
+                        { label: "Start", value: start === "straight" ? "On target" : start },
+                        { label: "Curve", value: curve === "straight" ? "Mostly straight" : curve },
+                        { label: "Strike", value: strike === "unknown" ? "Not measured" : strike },
+                      ]}
+                      flightShape={getBallFlightShapeFromObservation(
+                        start === "straight" ? "center" : start,
+                        curve,
+                      )}
+                      recommendation={{
+                        label: "What to work on first",
+                        value: result.techniqueGuidance,
+                        supporting: "Use the range test before changing equipment.",
+                      }}
+                      analyticsContext={{
+                        pattern: result.patternSlug,
+                        strike,
+                        category: "ball_flight_decoder",
+                      }}
+                    />
 
-            <BallFlightResultVisual
-              patternSlug={result.patternSlug}
-              patternTitle={pattern.title}
-              start={start}
-              curve={curve}
-            />
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:flex sm:items-end sm:justify-between sm:gap-8">
+                      <div className="max-w-lg">
+                        <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                          Continue with this result
+                        </p>
+                        <h4 className="mt-3 text-lg font-semibold">Could your equipment be contributing?</h4>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">
+                          Carry this pattern into Equipment Fit as context—not proof that the club caused the miss.
+                        </p>
+                      </div>
+                      <TrackLink
+                        href={equipmentHref}
+                        eventName="dov_decoder_fit_handoff_clicked"
+                        eventParams={{
+                          module: "ball_flight_decoder",
+                          placement: "decoder_result_story",
+                          start,
+                          curve,
+                          strike,
+                        }}
+                        className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 sm:mt-0 sm:w-auto sm:shrink-0"
+                      >
+                        Check my equipment fit →
+                      </TrackLink>
+                    </div>
 
-            <div className="mt-8 border-t border-slate-200 pt-8">
-              <h3 className="text-xl font-semibold">What the flight tells us</h3>
-              <p className="mt-4 leading-7 text-slate-600">{result.faceSummary}</p>
-              <p className="mt-3 leading-7 text-slate-600">{result.pathSummary}</p>
-              <ul className="mt-5 grid gap-2 text-sm text-slate-700">
-                {pattern.physicsConstraints.map((constraint) => (
-                  <li key={constraint} className="flex gap-3">
-                    <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-slate-400" />
-                    <span>{constraint}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <details className="mt-7 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <summary className="cursor-pointer text-sm font-medium text-slate-900">
-                  See the face, path, and strike relationship
-                </summary>
-                <ShotEvidenceView start={start} curve={curve} strike={strike} />
-              </details>
-            </div>
-
-            <div className="mt-8 border-t border-slate-200 pt-8">
-              <h3 className="text-xl font-semibold">How strike changes the read</h3>
-              <p className="mt-4 leading-7 text-slate-600">{result.strikeSummary}</p>
-            </div>
-
-            <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <article className="rounded-2xl bg-slate-900 p-5 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-300">Technique first</p>
-                <p className="mt-4 leading-7 text-slate-200">{result.techniqueGuidance}</p>
-              </article>
-              <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Equipment check</p>
-                <p className="mt-4 leading-7 text-slate-600">{result.equipmentGuidance}</p>
-              </article>
-            </div>
-
-            <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-900">
-              <p className="text-xs font-bold uppercase tracking-[0.12em]">Your next range test</p>
-              <p className="mt-3 font-medium leading-7">{result.nextTest}</p>
-            </div>
-
-            <div className="mt-8 border-t border-slate-200 pt-8">
-              <h3 className="text-lg font-semibold">Limits of this result</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{result.caveat}</p>
-            </div>
-
-            <div className="mt-8 border-t border-slate-200 pt-8 sm:flex sm:items-end sm:justify-between sm:gap-8">
-              <div className="max-w-lg">
-                <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                  Continue with this result
-                </p>
-                <h3 className="mt-3 text-lg font-semibold">Could your equipment be contributing?</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  Carry this shot pattern into the Equipment Fit Check. We’ll use it as context—not proof that your
-                  clubs caused the miss.
-                </p>
-                <p className="mt-2 text-xs leading-5 text-slate-500">
-                  Your start, curve, and strike will come with you.
-                </p>
-              </div>
-              <TrackLink
-                href={equipmentHref}
-                eventName="dov_decoder_fit_handoff_clicked"
-                eventParams={{
-                  module: "ball_flight_decoder",
-                  placement: "decoder_result",
-                  start,
-                  curve,
-                  strike,
-                }}
-                className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 sm:mt-0 sm:w-auto sm:shrink-0"
-              >
-                Check my equipment fit →
-              </TrackLink>
-            </div>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
-              >
-                Decode another shot
-              </button>
-              <div className="flex flex-wrap gap-5 text-sm font-medium text-slate-700">
-                <Link href="/learn/start-line-vs-curve">Learn face vs path</Link>
-                <Link href="/method">Read our method</Link>
-              </div>
-            </div>
-          </div>
+                    <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={handleReset}
+                        className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
+                      >
+                        Decode another shot
+                      </button>
+                      <div className="flex flex-wrap gap-5 text-sm font-medium text-slate-700">
+                        <Link href="/learn/start-line-vs-curve">Learn face vs path</Link>
+                        <Link href="/method">Read our method</Link>
+                      </div>
+                    </div>
+                  </div>
+                ),
+              },
+            ]}
+          />
         )}
       </section>
     </div>
