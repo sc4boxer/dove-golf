@@ -874,7 +874,7 @@ function computeResults(a: Answers) {
           wedgeUse: a.wedgeUse,
           wedgeTurf: a.wedgeTurf,
           wedgeMiss: a.wedgeMiss,
-          wedgeTrajectory: a.wedgeTrajectoryectory,
+          wedgeTrajectory: a.wedgeTrajectory,
           wedgeSpin: a.wedgeSpin,
           wedgeShaftPref: a.wedgeShaftPref,
         })
@@ -2018,7 +2018,7 @@ function ResultsView({
               { label: "Category", value: "Wedges" },
               { label: "Miss", value: a.wedgeMiss.replaceAll("_", " ") },
               { label: "Turf", value: a.wedgeTurf },
-              { label: "Trajectory", value: a.wedgeTraj },
+              { label: "Trajectory", value: a.wedgeTrajectory },
               { label: "Spin", value: a.wedgeSpin.replaceAll("_", " ") },
               { label: "Shaft", value: a.wedgeShaftPref.replaceAll("_", " ") },
             ];
