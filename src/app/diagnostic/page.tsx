@@ -23,7 +23,7 @@ import {
 } from "@/lib/tools/ballFlightEquipmentBridge";
 
 const SHARE_CARD_WIDTH = 1080;
-const SHARE_CARD_HEIGHT = 1900;
+const SHARE_CARD_HEIGHT = 2300;
 const SHARE_CARD_PADDING = 64;
 
 /* ---------------- TYPES ---------------- */
@@ -2896,13 +2896,13 @@ function EquipmentAlignmentShareCard({
         );
       })}
 
-      <text x="64" y="1840" fontSize="12" fill="#475569">
+      <text x="64" y={SHARE_CARD_HEIGHT - 60} fontSize="12" fill="#475569">
         Generated from self-reported inputs · Educational starting point
       </text>
-      <text x="640" y="1840" fontSize="12" fill="#64748b">Record at: {verificationUrl}</text>
+      <text x="640" y={SHARE_CARD_HEIGHT - 60} fontSize="12" fill="#64748b">Record at: {verificationUrl}</text>
 
-      <rect x="888" y="1758" width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
-      <g transform="translate(896 1766)" clipPath="url(#qrClip)">
+      <rect x="888" y={SHARE_CARD_HEIGHT - 142} width="128" height="128" rx="14" fill="#ffffff" stroke="#e2e8f0" />
+      <g transform={`translate(896 ${SHARE_CARD_HEIGHT - 134})`} clipPath="url(#qrClip)">
         <g dangerouslySetInnerHTML={{ __html: qrSvgMarkup }} />
       </g>
     </svg>
