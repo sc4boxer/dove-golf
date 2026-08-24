@@ -639,7 +639,7 @@ export function DiagnosisSharePanel({
           aria-label="Download diagnosis image, PNG, 1200 by 630 pixels"
           className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
         >
-          Download a backup image
+          Download result card (backup)
         </button>
         <p className="text-xs leading-5 text-slate-500">
           Download is optional; social sharing works directly from the button above.
