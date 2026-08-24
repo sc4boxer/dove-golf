@@ -3,7 +3,6 @@
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics/ga";
-import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 import {
   getBallFlightChartPathGeometry,
   type BallFlightChartShape,
