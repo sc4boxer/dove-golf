@@ -76,6 +76,9 @@ test("derives equipment email copy from a closed observation schema", () => {
   assert.match(content.miss, /Wedges/);
   assert.equal(content.insightLabel, "Fit rationale");
   assert.match(content.insight, /do not prove the club caused it/);
+  assert.match(content.rangePlan, /Driver\/woods/);
+  assert.match(content.rangePlan, /Irons/);
+  assert.match(content.rangePlan, /Wedges/);
   assert.equal(content.shareUrl, "https://dovegolf.fit/diagnostic");
 });
 
