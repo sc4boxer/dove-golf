@@ -1964,41 +1964,85 @@ function ResultsView({
   const showIrons = result.focus === "irons" || result.focus === "full_bag";
   const showWedges = result.focus === "wedges" || result.focus === "full_bag";
 
-  const diagnosisShareMiss = [
-    showDriver
-      ? `Driver/Woods: starts ${a.driverStartLine} and curves ${a.driverCurve}; strike ${a.driverStrike}.`
-      : null,
-    showIrons
-      ? `Irons: starts ${a.ironStartLine} and curves ${a.ironCurve}; face strike ${a.ironFaceStrike}, low point ${a.ironLowPoint.replaceAll("_", " ")}.`
-      : null,
-    showWedges
-      ? `Wedges: ${a.wedgeMiss.replaceAll("_", " ")} miss; ${a.wedgeTurf} turf interaction.`
-      : null,
-  ]
-    .filter((value): value is string => Boolean(value))
-    .join(" ");
+  const diagnosisShareMiss =
+    a.fitFocus === "full_bag"
+      ? "My full bag fit profile"
+      : a.fitFocus === "driver_woods"
+        ? "My driver + woods fit profile"
+        : a.fitFocus === "irons"
+          ? "My iron fit profile"
+          : "My wedge fit profile";
 
   const diagnosisFlightShape =
     (showDriver ? getEquipmentBallFlightShape(a.driverStartLine, a.driverCurve) : null) ??
     (showIrons ? getEquipmentBallFlightShape(a.ironStartLine, a.ironCurve) : null);
 
-  const diagnosisShareDetails = showDriver
-    ? [
-        { label: "Category", value: a.fitFocus === "full_bag" ? "Full bag" : "Driver + woods" },
-        { label: "Start", value: a.driverStartLine === "center" ? "On target" : a.driverStartLine },
-        { label: "Curve", value: a.driverCurve },
-      ]
-    : showIrons
+  const diagnosisShareDetails =
+    a.fitFocus === "full_bag"
       ? [
-          { label: "Category", value: "Irons" },
-          { label: "Strike", value: a.ironFaceStrike },
-          { label: "Low point", value: a.ironLowPoint.replaceAll("_", " ") },
+          { label: "Category", value: "Full bag" },
+          {
+            label: "Driver",
+            value: `${a.driverStartLine} start · ${a.driverCurve} · ${a.driverStrike} strike`,
+          },
+          {
+            label: "Irons",
+            value: `${a.ironStartLine} start · ${a.ironCurve} · ${a.ironFaceStrike} strike`,
+          },
+          {
+            label: "Wedges",
+            value: `${a.wedgeMiss.replaceAll("_", " ")} · ${a.wedgeTurf} turf`,
+          },
+          { label: "Goals", value: a.goals.join(" · ").replaceAll("_", " ") || "Not selected" },
+          { label: "Play", value: a.playFreq.replaceAll("_", " ") },
         ]
-      : [
-          { label: "Category", value: "Wedges" },
-          { label: "Miss", value: a.wedgeMiss.replaceAll("_", " ") },
-          { label: "Turf", value: a.wedgeTurf },
-        ];
+      : showDriver
+        ? [
+            { label: "Category", value: "Driver + woods" },
+            { label: "Start", value: a.driverStartLine === "center" ? "On target" : a.driverStartLine },
+            { label: "Curve", value: a.driverCurve },
+            { label: "Strike", value: a.driverStrike.replaceAll("_", " ") },
+            { label: "Tempo", value: a.driverTempo },
+            { label: "Flight", value: a.driverFlight },
+          ]
+        : showIrons
+          ? [
+              { label: "Category", value: "Irons" },
+              { label: "Start", value: a.ironStartLine === "center" ? "On target" : a.ironStartLine },
+              { label: "Curve", value: a.ironCurve },
+              { label: "Strike", value: a.ironFaceStrike },
+              { label: "Low point", value: a.ironLowPoint.replaceAll("_", " ") },
+              { label: "Tempo", value: a.ironTempo },
+            ]
+          : [
+              { label: "Category", value: "Wedges" },
+              { label: "Miss", value: a.wedgeMiss.replaceAll("_", " ") },
+              { label: "Turf", value: a.wedgeTurf },
+              { label: "Trajectory", value: a.wedgeTraj },
+              { label: "Spin", value: a.wedgeSpin.replaceAll("_", " ") },
+              { label: "Shaft", value: a.wedgeShaftPref.replaceAll("_", " ") },
+            ];
+
+  const diagnosisShareRecommendation =
+    showDriver && result.driver
+      ? {
+          label: "Top fit direction",
+          value: result.driver.primaryLever,
+          supporting: `${result.driver.shaft.weight} · ${result.driver.shaft.flex}`,
+        }
+      : showIrons && result.irons
+        ? {
+            label: "Top fit direction",
+            value: result.irons.primaryLever,
+            supporting: `${result.irons.shaft.weight} · ${result.irons.shaft.flex}`,
+          }
+        : result.wedges
+          ? {
+              label: "Top fit direction",
+              value: `${result.wedges.shaft.bounce} bounce · ${result.wedges.shaft.grind} grind`,
+              supporting: `${result.wedges.shaft.weight} · ${result.wedges.shaft.flex}`,
+            }
+          : null;
 
   const diagnosisShareCause =
     "This fit is a controlled starting point for the reported pattern. Equipment may amplify a miss; these answers do not prove the club caused it.";
@@ -2408,6 +2452,8 @@ function ResultsView({
                   }}
                   details={diagnosisShareDetails}
                   flightShape={diagnosisFlightShape}
+                  profileLabel="My equipment fit"
+                  recommendation={diagnosisShareRecommendation}
                   analyticsContext={{
                     pattern: diagnosisFlightShape ?? "unmeasured",
                     strike: showDriver ? a.driverStrike : showIrons ? a.ironFaceStrike : a.wedgeMiss,
