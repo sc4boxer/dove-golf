@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ClinicSessionHistory } from "@/components/clinic/ClinicSessionHistory";
 import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
+import { DiagnosisStoryDeck } from "@/components/diagnosis/DiagnosisStoryDeck";
 import { ClinicWizard } from "@/components/clinic/ClinicWizard";
 import { LikelihoodBars } from "@/components/clinic/LikelihoodBars";
 import { RangePlan } from "@/components/clinic/RangePlan";
@@ -12,6 +13,7 @@ import { loadClinicSessions, saveClinicSession, updateClinicSession } from "@/li
 import { ClinicFeedbackOutcome, ClinicResult, ClinicSession, DriverSliceInputs } from "@/lib/clinic/types";
 import { track } from "@/lib/analytics/ga";
 import { getBallFlightShapeFromObservation } from "@/lib/visual/ballFlightObservationShape";
+import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 
 const DISCRIMINATOR_OPTIONS = ["heel", "toe", "center"] as const;
 
@@ -65,6 +67,14 @@ export default function DriverSlicePage() {
       .sort(([, a], [, b]) => b - a)
       .map(([key]) => ({ key, text: result.bucketExplanations[key as keyof typeof result.bucketExplanations] }));
   }, [result]);
+
+  const flightShape =
+    inputs.startLine && inputs.startLine !== "unsure"
+      ? getBallFlightShapeFromObservation(
+          inputs.startLine,
+          inputs.curveSeverity === "none" ? "straight" : "right",
+        )
+      : null;
 
   const handleComplete = () => {
     const full = inputs as DriverSliceInputs;
@@ -124,120 +134,153 @@ export default function DriverSlicePage() {
         {!result ? (
           <ClinicWizard value={inputs} onChange={(patch) => setInputs((prev) => ({ ...prev, ...patch }))} onComplete={handleComplete} />
         ) : (
-          <section className="space-y-5">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <h2 className="text-xl font-semibold">Likelihood split</h2>
-              <p className="mt-2 text-sm text-slate-600">
-                Primary lever: <span className="font-medium text-slate-900">{primaryLeverLabel(result.primaryLever)}</span>
-              </p>
-              <div className="mt-4">
-                <LikelihoodBars split={result.split} />
-              </div>
-              <div className="mt-5 space-y-3">
-                {explanations.map((item) => (
-                  <p key={item.key} className="text-sm text-slate-700">
-                    <span className="font-medium text-slate-900">{item.key}:</span> {item.text}
-                  </p>
-                ))}
-              </div>
-              <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                <p className="font-medium text-slate-900">Why this is likely</p>
-                <p className="mt-1">{result.whyLikely}</p>
-              </div>
-            </div>
-
-            <RangePlan tests={result.rangePlan} />
-
-            <DiagnosisSharePanel
-              miss={`Driver shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity === "none" ? "no meaningful right curve" : `${inputs.curveSeverity ?? "unknown"} right curve`}, ${inputs.strikeLocation ?? "unknown"} strike.`}
-              likelyCause={`${primaryLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
-              rangePlan={
-                result.rangePlan[0]?.whatToDo ??
-                "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."
-              }
-              shareUrl="https://dovegolf.fit/clinic/driver-slice"
-              source="driver_slice"
-              insightLabel="Leading hypothesis"
-              emailDiagnosis={{
-                kind: "driver_slice",
-                startLine: inputs.startLine ?? "unsure",
-                curveSeverity: inputs.curveSeverity ?? "none",
-                strikeLocation: inputs.strikeLocation ?? "unsure",
-                primaryLever: result.primaryLever,
-              }}
-              details={[
-                { label: "Start", value: inputs.startLine ?? "Not measured" },
-                {
-                  label: "Curve",
-                  value:
-                    inputs.curveSeverity === "none"
-                      ? "No meaningful right curve"
-                      : `${inputs.curveSeverity ?? "Unknown"} right`,
-                },
-                { label: "Strike", value: inputs.strikeLocation ?? "Not measured" },
-              ]}
-              flightShape={
-                inputs.startLine && inputs.startLine !== "unsure"
-                  ? getBallFlightShapeFromObservation(
-                      inputs.startLine,
-                      inputs.curveSeverity === "none" ? "straight" : "right",
-                    )
-                  : null
-              }
-              analyticsContext={{
-                pattern: `${inputs.startLine ?? "unknown"}-${inputs.curveSeverity ?? "unknown"}-right`,
-                strike: inputs.strikeLocation ?? "unknown",
-                category: "driver_slice",
-              }}
-            />
-
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
-              <p className="text-sm font-medium text-slate-900">Did this help reduce your slice today?</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {(["fixed", "improved", "no-change", "worse"] as const).map((outcome) => (
-                  <button
-                    key={outcome}
-                    type="button"
-                    onClick={() => applyFeedback(outcome)}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                  >
-                    {outcome}
-                  </button>
-                ))}
-              </div>
-
-              {needsDiscriminator ? (
-                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-sm font-medium text-slate-900">One follow-up: where does contact feel most often?</p>
-                  <div className="mt-3 flex gap-2">
-                    {DISCRIMINATOR_OPTIONS.map((choice) => (
-                      <button
-                        key={choice}
-                        type="button"
-                        onClick={() => applyDiscriminator(choice)}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
-                      >
-                        {choice}
-                      </button>
-                    ))}
+          <DiagnosisStoryDeck
+            title="Your Driver Slice result"
+            slides={[
+              {
+                id: "pattern",
+                label: "Your pattern",
+                eyebrow: "Observed shot",
+                title={`${inputs.startLine ?? "Unknown"} start · ${inputs.curveSeverity ?? "Unknown"} right curve`},
+                content: (
+                  <div>
+                    <dl className="grid gap-3 sm:grid-cols-3">
+                      {[
+                        ["Start", inputs.startLine ?? "Not measured"],
+                        ["Curve", inputs.curveSeverity === "none" ? "No meaningful right curve" : `${inputs.curveSeverity ?? "Unknown"} right`],
+                        ["Strike", inputs.strikeLocation ?? "Not measured"],
+                      ].map(([label, value]) => (
+                        <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</dt>
+                          <dd className="mt-2 font-semibold capitalize text-slate-900">{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {flightShape ? (
+                      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+                        <BallFlightChart shape={flightShape} className="mx-auto max-w-2xl" />
+                      </div>
+                    ) : null}
                   </div>
-                </div>
-              ) : null}
-            </section>
-
-            <button
-              type="button"
-              onClick={() => {
-                clinicCompletedTrackedRef.current = false;
-                recommendationViewedTrackedRef.current = false;
-                setResult(null);
-                setInputs(defaultInputs());
-              }}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-white"
-            >
-              Start a new session
-            </button>
-          </section>
+                ),
+              },
+              {
+                id: "why",
+                label: "What it suggests",
+                eyebrow: "Leading hypothesis",
+                title={primaryLeverLabel(result.primaryLever)},
+                content: (
+                  <div>
+                    <p className="max-w-2xl text-lg leading-8 text-slate-700">{result.whyLikely}</p>
+                    <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
+                      <LikelihoodBars split={result.split} />
+                    </div>
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                      {explanations.map((item) => (
+                        <p key={item.key} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm leading-6 text-slate-700">
+                          <span className="font-medium text-slate-900">{item.key}:</span> {item.text}
+                        </p>
+                      ))}
+                    </div>
+                    <p className="mt-5 text-sm leading-6 text-slate-600">
+                      This ranking is a hypothesis to test, not proof of a swing cause.
+                    </p>
+                  </div>
+                ),
+              },
+              {
+                id: "test",
+                label: "Range test",
+                eyebrow: "One variable at a time",
+                title: "Test the leading idea",
+                content: (
+                  <div>
+                    <RangePlan tests={result.rangePlan} />
+                    <section className="mt-5 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6">
+                      <p className="text-sm font-medium text-slate-900">Did this reduce the curve today?</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {(["fixed", "improved", "no-change", "worse"] as const).map((outcome) => (
+                          <button
+                            key={outcome}
+                            type="button"
+                            onClick={() => applyFeedback(outcome)}
+                            className="min-h-11 rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                          >
+                            {outcome}
+                          </button>
+                        ))}
+                      </div>
+                      {needsDiscriminator ? (
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-sm font-medium text-slate-900">Where does contact feel most often?</p>
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {DISCRIMINATOR_OPTIONS.map((choice) => (
+                              <button
+                                key={choice}
+                                type="button"
+                                onClick={() => applyDiscriminator(choice)}
+                                className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                              >
+                                {choice}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </section>
+                  </div>
+                ),
+              },
+              {
+                id: "share",
+                label: "Save & share",
+                eyebrow: "Your portable result",
+                title: "Share your shot profile",
+                content: (
+                  <div>
+                    <DiagnosisSharePanel
+                      miss={`Driver shot: ${inputs.startLine ?? "unknown"} start, ${inputs.curveSeverity === "none" ? "no meaningful right curve" : `${inputs.curveSeverity ?? "unknown"} right curve`}, ${inputs.strikeLocation ?? "unknown"} strike.`}
+                      likelyCause={`${primaryLeverLabel(result.primaryLever)} is the leading hypothesis. Test it against the range plan before treating it as the cause.`}
+                      rangePlan={result.rangePlan[0]?.whatToDo ?? "Hit two five-ball sets at 80% speed. Change one variable and compare start line, curve, and strike."}
+                      shareUrl="https://dovegolf.fit/clinic/driver-slice"
+                      source="driver_slice"
+                      insightLabel="Leading hypothesis"
+                      emailDiagnosis={{
+                        kind: "driver_slice",
+                        startLine: inputs.startLine ?? "unsure",
+                        curveSeverity: inputs.curveSeverity ?? "none",
+                        strikeLocation: inputs.strikeLocation ?? "unsure",
+                        primaryLever: result.primaryLever,
+                      }}
+                      details={[
+                        { label: "Start", value: inputs.startLine ?? "Not measured" },
+                        { label: "Curve", value: inputs.curveSeverity === "none" ? "No meaningful right curve" : `${inputs.curveSeverity ?? "Unknown"} right` },
+                        { label: "Strike", value: inputs.strikeLocation ?? "Not measured" },
+                      ]}
+                      flightShape={flightShape}
+                      analyticsContext={{
+                        pattern: `${inputs.startLine ?? "unknown"}-${inputs.curveSeverity ?? "unknown"}-right`,
+                        strike: inputs.strikeLocation ?? "unknown",
+                        category: "driver_slice",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        clinicCompletedTrackedRef.current = false;
+                        recommendationViewedTrackedRef.current = false;
+                        setResult(null);
+                        setInputs(defaultInputs());
+                      }}
+                      className="mt-5 min-h-12 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Start a new session
+                    </button>
+                  </div>
+                ),
+              },
+            ]}
+          />
         )}
 
         <ClinicSessionHistory
