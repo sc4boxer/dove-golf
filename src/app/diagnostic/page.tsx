@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import EmailCaptureCard from "./EmailCaptureCard";
 import { DiagnosisSharePanel } from "@/components/diagnosis/DiagnosisSharePanel";
+import { DiagnosisStoryDeck } from "@/components/diagnosis/DiagnosisStoryDeck";
 
 import { recommendDriverWoods, type RecommendDriverWoodsInput } from "@/lib/engine/driver";
 import { recommendIrons, type RecommendIronsInput } from "@/lib/engine/irons";
@@ -2207,291 +2208,274 @@ function ResultsView({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-4">
-        <Card title="Equipment Alignment Record">
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={generateShareCard}
-              disabled={!isVerified}
-              className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
-            >
-              Generate Share Card
-            </button>
-            {!isVerified && (
-              <div className="text-xs text-slate-600">Verify email to unlock your Equipment Alignment Record.</div>
-            )}
-            {shareCardUrl && isVerified && (
-              <div className="flex flex-wrap gap-2 text-xs text-slate-700">
-                <button type="button" onClick={generateShareCard} className="rounded-lg border border-slate-300 px-3 py-1.5">
-                  Download Image
-                </button>
-                <button
-                  type="button"
-                  onClick={copyVerificationLink}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5"
-                >
-                  Copy Verification Link{copyState === "link" ? " · Link copied." : ""}
-                </button>
-                <button type="button" onClick={copyCaption} className="rounded-lg border border-slate-300 px-3 py-1.5">
-                  Copy Caption{copyState === "caption" ? " · Caption copied." : ""}
-                </button>
+      <DiagnosisStoryDeck
+        className="mt-8"
+        title="Your equipment fit story"
+        slides={[
+          {
+            id: "profile",
+            label: "Your profile",
+            eyebrow: "What you reported",
+            title: "Your flight and contact profile",
+            content: (
+              <div className="grid gap-4">
+                {showBallFlight ? (
+                  <Card title="Your ball flight model">
+                    <div className={["grid gap-4", showDriver && showIrons ? "md:grid-cols-2" : ""].join(" ")}>
+                      {showDriver ? (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Driver + Woods</p>
+                          <EquipmentBallFlightPreview start={a.driverStartLine} curve={a.driverCurve} compact={false} />
+                        </div>
+                      ) : null}
+                      {showIrons ? (
+                        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Irons</p>
+                          <EquipmentBallFlightPreview start={a.ironStartLine} curve={a.ironCurve} compact={false} />
+                        </div>
+                      ) : null}
+                    </div>
+                  </Card>
+                ) : null}
+
+                {showWedgeModelOnly ? (
+                  <Card title="Your wedge interaction model">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Turf interaction</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.wedgeTurf}</div>
+                        <div className="mt-3"><WedgeTurfViz turf={a.wedgeTurf} /></div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Typical miss</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.wedgeMiss}</div>
+                        <div className="mt-3"><WedgeMissViz miss={a.wedgeMiss} /></div>
+                      </div>
+                    </div>
+                  </Card>
+                ) : null}
+
+                {showIronContactProfile ? (
+                  <Card title="Your iron contact profile">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Iron low point</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.ironLowPoint.replaceAll("_", " ")}</div>
+                        <div className="mt-3"><LowPointViz lowPoint={a.ironLowPoint} /></div>
+                      </div>
+                      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                        <div className="text-sm font-semibold text-slate-900">Face strike</div>
+                        <div className="mt-1 text-xs text-slate-500">{a.ironFaceStrike}</div>
+                        <div className="mt-3"><StrikeFaceDiagram strike={a.ironFaceStrike} /></div>
+                      </div>
+                    </div>
+                  </Card>
+                ) : null}
               </div>
-            )}
-          </div>
-        </Card>
+            ),
+          },
+          {
+            id: "fit",
+            label: "Fit direction",
+            eyebrow: "A starting range, not a prescription",
+            title: "What to compare in a fitting",
+            content: (
+              <div className="grid gap-4">
+                {showDriver && result.driver ? (
+                  <Card title="Driver recommendation">
+                    <Line label="Fit score" value={`${result.driver.fitScore}%`} />
+                    <Line label="Primary lever" value={result.driver.primaryLever} />
+                    <Line label="Shaft weight" value={result.driver.shaft.weight} />
+                    <Line label="Flex" value={result.driver.shaft.flex} />
+                    <Line label="Launch" value={result.driver.shaft.launch} />
+                    <Line label="Torque range" value={result.driver.shaft.torqueRange} />
+                    <Line label="Balance point" value={result.driver.shaft.balancePoint} />
+                    <Line label="Tip stability" value={result.driver.shaft.tipStability} />
+                    <Line label="Target swing weight" value={result.driver.targetSwingWeight} />
+                    {(result.driver.settings ?? []).length ? (
+                      <>
+                        <p className="pt-3 text-sm font-semibold text-slate-900">Test settings</p>
+                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                          {(result.driver.settings ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                        </ul>
+                      </>
+                    ) : null}
+                  </Card>
+                ) : null}
 
-        {!isVerified && (
-          <EmailCaptureCard
-            payload={a}
-            onProfileSaved={(profile) => {
-              setContactProfile({
-                firstName: profile.firstName,
-                lastName: profile.lastName,
-                email: profile.email,
-              });
-            }}
-          />
-        )}
+                {showDriver && result.woods ? (
+                  <Card title="Woods (3W/5W) baseline">
+                    <Line label="Fit score" value={`${result.woods.fitScore}%`} />
+                    <Line label="Shaft weight" value={result.woods.shaft.weight} />
+                    <Line label="Flex" value={result.woods.shaft.flex} />
+                    <Line label="Launch" value={result.woods.shaft.launch} />
+                    <Line label="Torque range" value={result.woods.shaft.torqueRange} />
+                    <Line label="Balance point" value={result.woods.shaft.balancePoint} />
+                    <Line label="Target swing weight" value={result.woods.targetSwingWeight} />
+                  </Card>
+                ) : null}
 
-        {showBallFlight && (
-          <Card title="Your ball flight model">
-            <div className={["grid gap-4", showDriver && showIrons ? "md:grid-cols-2" : ""].join(" ")}>
-              {showDriver ? (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Driver + Woods
-                  </p>
-                  <EquipmentBallFlightPreview
-                    start={a.driverStartLine}
-                    curve={a.driverCurve}
-                    compact={false}
+                {showIrons && result.irons ? (
+                  <Card title="Iron recommendation">
+                    <Line label="Fit score" value={`${result.irons.fitScore}%`} />
+                    <Line label="Primary lever" value={result.irons.primaryLever} />
+                    <Line label="Shaft weight" value={result.irons.shaft.weight} />
+                    <Line label="Flex" value={result.irons.shaft.flex} />
+                    <Line label="Launch" value={result.irons.shaft.launch} />
+                    <Line label="Balance point" value={result.irons.shaft.balancePoint} />
+                    <Line label="Material" value={result.irons.shaft.material} />
+                    <Line label="Head bias" value={result.irons.headBias} />
+                    <Line label="Target swing weight" value={result.irons.targetSwingWeight} />
+                  </Card>
+                ) : null}
+
+                {showWedges && result.wedges ? (
+                  <Card title="Wedge recommendation">
+                    <Line label="Fit score" value={`${result.wedges.fitScore}%`} />
+                    <Line label="Shaft weight" value={result.wedges.shaft.weight} />
+                    <Line label="Flex" value={result.wedges.shaft.flex} />
+                    <Line label="Bounce" value={result.wedges.shaft.bounce} />
+                    <Line label="Grind" value={result.wedges.shaft.grind} />
+                    <Line label="Target swing weight" value={result.wedges.targetSwingWeight} />
+                    <p className="pt-3 text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</p>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      {(result.wedges.gappingBullets ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </Card>
+                ) : null}
+              </div>
+            ),
+          },
+          {
+            id: "test",
+            label: "Why & test",
+            eyebrow: "Fit rationale",
+            title: "Why this direction—and how to test it",
+            content: (
+              <div className="grid gap-4">
+                {(result.cause ?? []).length ? (
+                  <Card title="What in your answers drove this fit">
+                    <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      {(result.cause ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                    </ul>
+                  </Card>
+                ) : null}
+                <Card title="Why these recommendations">
+                  <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
+                    {(result.why ?? []).map((item: string) => <li key={item}>{item}</li>)}
+                  </ul>
+                </Card>
+                <Card title="Your controlled validation plan">
+                  <p className="text-sm leading-7 text-slate-700">{diagnosisRangePlan}</p>
+                  <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-slate-700">
+                    <li>Keep weight inside the suggested band before comparing flex or profile.</li>
+                    <li>Change one variable at a time and use the same target, lie, and speed.</li>
+                    <li>Compare strike, start line, curve, carry, and dispersion—not one best shot.</li>
+                  </ul>
+                </Card>
+                <p className="text-sm leading-6 text-slate-600">
+                  Equipment may amplify a pattern; these answers do not prove that a club caused it.
+                </p>
+              </div>
+            ),
+          },
+          {
+            id: "share",
+            label: "Save & share",
+            eyebrow: "Your portable fit result",
+            title: "Share your equipment fit",
+            content: (
+              <div className="grid gap-4">
+                <DiagnosisSharePanel
+                  miss={diagnosisShareMiss}
+                  likelyCause={diagnosisShareCause}
+                  rangePlan={diagnosisRangePlan}
+                  shareUrl="https://dovegolf.fit/diagnostic"
+                  source="equipment_fit"
+                  insightLabel="Fit rationale"
+                  emailDiagnosis={{
+                    kind: "equipment_fit",
+                    focus: a.fitFocus,
+                    driverStart: a.driverStartLine,
+                    driverCurve: a.driverCurve,
+                    driverStrike: a.driverStrike,
+                    ironStart: a.ironStartLine,
+                    ironCurve: a.ironCurve,
+                    ironStrike: a.ironFaceStrike,
+                    ironLowPoint: a.ironLowPoint,
+                    wedgeMiss: a.wedgeMiss,
+                    wedgeTurf: a.wedgeTurf,
+                  }}
+                  details={diagnosisShareDetails}
+                  flightShape={diagnosisFlightShape}
+                  analyticsContext={{
+                    pattern: diagnosisFlightShape ?? "unmeasured",
+                    strike: showDriver ? a.driverStrike : showIrons ? a.ironFaceStrike : a.wedgeMiss,
+                    category: a.fitFocus,
+                  }}
+                />
+
+                <Card title="Equipment Alignment Record">
+                  <div className="space-y-3">
+                    <button
+                      type="button"
+                      onClick={generateShareCard}
+                      disabled={!isVerified}
+                      className="min-h-12 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-400"
+                    >
+                      Generate detailed fitter record
+                    </button>
+                    {!isVerified ? (
+                      <div className="text-xs text-slate-600">Verify email to unlock the detailed Equipment Alignment Record.</div>
+                    ) : null}
+                    {shareCardUrl && isVerified ? (
+                      <div className="flex flex-wrap gap-2 text-xs text-slate-700">
+                        <button type="button" onClick={generateShareCard} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
+                          Download detailed record
+                        </button>
+                        <button type="button" onClick={copyVerificationLink} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
+                          Copy verification link{copyState === "link" ? " · Link copied." : ""}
+                        </button>
+                        <button type="button" onClick={copyCaption} className="min-h-11 rounded-lg border border-slate-300 px-3 py-1.5">
+                          Copy caption{copyState === "caption" ? " · Caption copied." : ""}
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </Card>
+
+                {!isVerified ? (
+                  <EmailCaptureCard
+                    payload={a}
+                    onProfileSaved={(profile) => {
+                      setContactProfile({
+                        firstName: profile.firstName,
+                        lastName: profile.lastName,
+                        email: profile.email,
+                      });
+                    }}
                   />
-                </div>
-              ) : null}
-              {showIrons ? (
-                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                    Irons
-                  </p>
-                  <EquipmentBallFlightPreview
-                    start={a.ironStartLine}
-                    curve={a.ironCurve}
-                    compact={false}
-                  />
-                </div>
-              ) : null}
-            </div>
-          </Card>
-        )}
-
-        {showWedgeModelOnly && (
-          <Card title="Your wedge interaction model">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Turf interaction</div>
-                <div className="mt-1 text-xs text-slate-500">{a.wedgeTurf}</div>
-                <div className="mt-3">
-                  <WedgeTurfViz turf={a.wedgeTurf} />
-                </div>
+                ) : null}
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Typical miss</div>
-                <div className="mt-1 text-xs text-slate-500">{a.wedgeMiss}</div>
-                <div className="mt-3">
-                  <WedgeMissViz miss={a.wedgeMiss} />
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
+            ),
+          },
+        ]}
+      />
 
-        {showIronContactProfile && (
-          <Card title="Your contact profile">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Iron low point</div>
-                <div className="mt-1 text-xs text-slate-500">{a.ironLowPoint.replaceAll("_", " ")}</div>
-                <div className="mt-3">
-                  <LowPointViz lowPoint={a.ironLowPoint} />
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-sm font-semibold text-slate-900">Face strike</div>
-                <div className="mt-1 text-xs text-slate-500">{a.ironFaceStrike}</div>
-                <div className="mt-3">
-                  <StrikeFaceDiagram strike={a.ironFaceStrike} />
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Recommendations */}
-        {showDriver && result.driver && (
-          <Card title="Driver recommendation">
-            <Line label="Fit score" value={`${result.driver.fitScore}%`} />
-            <Line label="Primary lever" value={result.driver.primaryLever} />
-            <Line label="Shaft weight" value={result.driver.shaft.weight} />
-            <Line label="Flex" value={result.driver.shaft.flex} />
-            <Line label="Launch" value={result.driver.shaft.launch} />
-            <Line label="Torque range" value={result.driver.shaft.torqueRange} />
-            <Line label="Balance point" value={result.driver.shaft.balancePoint} />
-            <Line label="Tip stability" value={result.driver.shaft.tipStability} />
-            <Line label="Target swing weight" value={result.driver.targetSwingWeight} />
-
-            {(result.driver.settings ?? []).length > 0 && (
-              <>
-                <div className="pt-3 text-sm font-semibold text-slate-900">Test settings</div>
-                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                  {(result.driver.settings ?? []).map((x: string, i: number) => (
-                    <li key={i}>{x}</li>
-                  ))}
-                </ul>
-              </>
-            )}
-
-            {result.driver.note ? <p className="pt-2 text-xs text-slate-500">{result.driver.note}</p> : null}
-          </Card>
-        )}
-
-        {showDriver && result.woods && (
-          <Card title="Woods (3W/5W) baseline">
-            <Line label="Fit score" value={`${result.woods.fitScore}%`} />
-            <Line label="Shaft weight" value={result.woods.shaft.weight} />
-            <Line label="Flex" value={result.woods.shaft.flex} />
-            <Line label="Launch" value={result.woods.shaft.launch} />
-            <Line label="Torque range" value={result.woods.shaft.torqueRange} />
-            <Line label="Balance point" value={result.woods.shaft.balancePoint} />
-            <Line label="Target swing weight" value={result.woods.targetSwingWeight} />
-            {result.woods.note ? <p className="pt-2 text-xs text-slate-500">{result.woods.note}</p> : null}
-          </Card>
-        )}
-
-        {showIrons && result.irons && (
-          <Card title="Iron recommendation">
-            <Line label="Fit score" value={`${result.irons.fitScore}%`} />
-            <Line label="Primary lever" value={result.irons.primaryLever} />
-            <Line label="Shaft weight" value={result.irons.shaft.weight} />
-            <Line label="Flex" value={result.irons.shaft.flex} />
-            <Line label="Launch" value={result.irons.shaft.launch} />
-            <Line label="Balance point" value={result.irons.shaft.balancePoint} />
-            <Line label="Material" value={result.irons.shaft.material} />
-            <Line label="Head bias" value={result.irons.headBias} />
-            <Line label="Target swing weight" value={result.irons.targetSwingWeight} />
-            {result.irons.note ? <p className="pt-2 text-xs text-slate-500">{result.irons.note}</p> : null}
-          </Card>
-        )}
-
-        {showWedges && result.wedges && (
-          <Card title="Wedge recommendation">
-            <Line label="Fit score" value={`${result.wedges.fitScore}%`} />
-            <Line label="Shaft weight" value={result.wedges.shaft.weight} />
-            <Line label="Flex" value={result.wedges.shaft.flex} />
-            <Line label="Bounce" value={result.wedges.shaft.bounce} />
-            <Line label="Grind" value={result.wedges.shaft.grind} />
-            <Line label="Target swing weight" value={result.wedges.targetSwingWeight} />
-
-            <div className="pt-3 text-sm font-semibold text-slate-900">{result.wedges.gappingTitle}</div>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(result.wedges.gappingBullets ?? []).map((x: string, i: number) => (
-                <li key={i}>{x}</li>
-              ))}
-            </ul>
-
-            <div className="pt-3 text-sm font-semibold text-slate-900">Build notes</div>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(result.wedges.buildNotes ?? []).map((x: string, i: number) => (
-                <li key={i}>{x}</li>
-              ))}
-            </ul>
-
-            {result.wedges.note ? <p className="pt-2 text-xs text-slate-500">{result.wedges.note}</p> : null}
-          </Card>
-        )}
-
-        {/* Reasoning */}
-        {(result.cause ?? []).length > 0 && (
-          <Card title="What in your answers drove this fit">
-            <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-              {(result.cause ?? []).map((c: string, i: number) => (
-                <li key={i}>{c}</li>
-              ))}
-            </ul>
-          </Card>
-        )}
-
-        <Card title="Why these recommendations">
-          <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-            {(result.why ?? []).map((w: string, i: number) => (
-              <li key={i}>{w}</li>
-            ))}
-          </ul>
-        </Card>
-
-        <DiagnosisSharePanel
-          miss={diagnosisShareMiss}
-          likelyCause={diagnosisShareCause}
-          rangePlan={diagnosisRangePlan}
-          shareUrl="https://dovegolf.fit/diagnostic"
-          source="equipment_fit"
-          insightLabel="Fit rationale"
-          emailDiagnosis={{
-            kind: "equipment_fit",
-            focus: a.fitFocus,
-            driverStart: a.driverStartLine,
-            driverCurve: a.driverCurve,
-            driverStrike: a.driverStrike,
-            ironStart: a.ironStartLine,
-            ironCurve: a.ironCurve,
-            ironStrike: a.ironFaceStrike,
-            ironLowPoint: a.ironLowPoint,
-            wedgeMiss: a.wedgeMiss,
-            wedgeTurf: a.wedgeTurf,
-          }}
-          details={diagnosisShareDetails}
-          flightShape={diagnosisFlightShape}
-          analyticsContext={{
-            pattern: diagnosisFlightShape ?? "unmeasured",
-            strike: showDriver ? a.driverStrike : showIrons ? a.ironFaceStrike : a.wedgeMiss,
-            category: a.fitFocus,
-          }}
-        />
-
-        <Card title="How to interpret and apply your results (fitter-grade)">
-          <ul className="list-disc space-y-2 pl-5 text-sm text-slate-700">
-            <li>
-              <span className="font-medium text-slate-900">Treat weight as the primary constraint.</span>{" "}
-              Stay inside the band first. Only then tune flex/profile.
-            </li>
-            <li>
-              <span className="font-medium text-slate-900">Flex labels are not standardized.</span>{" "}
-              If you’re between bands, test both and compare strike + start-line control.
-            </li>
-            <li>
-              <span className="font-medium text-slate-900">Validate with a controlled test protocol.</span>{" "}
-              Test 2–3 shafts in the same head at the same length/swingweight.
-            </li>
-          </ul>
-        </Card>
-
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={onReset}
-            className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-medium"
-          >
-            Start over
-          </button>
-
-          <Link
-            href="/"
-            className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
-          >
-            Back to home
-          </Link>
-        </div>
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+        <button
+          type="button"
+          onClick={onReset}
+          className="rounded-2xl border border-slate-200 px-6 py-3 text-sm font-medium"
+        >
+          Start over
+        </button>
+        <Link
+          href="/"
+          className="rounded-2xl bg-slate-900 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-800"
+        >
+          Back to home
+        </Link>
       </div>
 
       <div className="pointer-events-none fixed -left-[9999px] top-0 opacity-0" aria-hidden>
