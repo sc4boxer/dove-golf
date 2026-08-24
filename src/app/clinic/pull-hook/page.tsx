@@ -105,7 +105,7 @@ export default function PullHookPage() {
                 id: "pattern",
                 label: "Your pattern",
                 eyebrow: "Observed shot",
-                title={`${inputs.startLine ?? "Unknown"} start · ${inputs.curveSeverity ?? "Unknown"} left curve`},
+                title: `${inputs.startLine ?? "Unknown"} start · ${inputs.curveSeverity ?? "Unknown"} left curve`,
                 content: (
                   <div>
                     <dl className="grid gap-3 sm:grid-cols-3">
@@ -132,7 +132,7 @@ export default function PullHookPage() {
                 id: "why",
                 label: "What it suggests",
                 eyebrow: "Leading hypothesis",
-                title={pullHookLeverLabel(result.primaryLever)},
+                title: pullHookLeverLabel(result.primaryLever),
                 content: (
                   <div>
                     <p className="max-w-2xl text-lg leading-8 text-slate-700">{result.whyLikely}</p>
