@@ -216,11 +216,13 @@ export function buildDiagnosisEmailContent(input: DiagnosisEmailInput): Diagnosi
     }
 
     const rangePlan =
-      input.focus === "wedges"
-        ? "Alternate two five-shot sets from the same lie with the current and proposed bounce or sole setup; compare strike, turf entry, carry, and rollout."
-        : input.focus === "irons"
-          ? "Alternate two five-shot sets from the same lie; compare strike, low point, start line, curve, carry, and dispersion before changing another variable."
-          : "Alternate two five-shot sets with the current club and recommended setup. Hold target, tee height, and speed constant; compare strike, start line, curve, and dispersion.";
+      input.focus === "full_bag"
+        ? "Test one category at a time. Driver/woods: compare strike, start line, curve, and dispersion. Irons: compare strike, low point, carry, and dispersion. Wedges: compare turf entry, strike, carry, and rollout."
+        : input.focus === "wedges"
+          ? "Alternate two five-shot sets from the same lie with the current and proposed bounce or sole setup; compare strike, turf entry, carry, and rollout."
+          : input.focus === "irons"
+            ? "Alternate two five-shot sets from the same lie; compare strike, low point, start line, curve, carry, and dispersion before changing another variable."
+            : "Alternate two five-shot sets with the current club and recommended setup. Hold target, tee height, and speed constant; compare strike, start line, curve, and dispersion.";
 
     return {
       miss: parts.join(" "),
