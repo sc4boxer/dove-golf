@@ -101,7 +101,6 @@ const analyticsEvents = [
   "dov_clinic_recommendation_viewed",
   "dov_diagnosis_shared",
   "dov_diagnosis_card_downloaded",
-  "dov_diagnosis_email_sent",
 ];
 
 function absolutePath(relativePath) {
@@ -216,7 +215,7 @@ test("canonical flight visuals keep the slow dotted progression and reduced-moti
   assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ball-flight-marker[\s\S]*?display: none/);
 });
 
-test("completed diagnoses keep the distribution loop and safe email handoff", async () => {
+test("completed diagnoses keep the distribution loop and keep direct email closed safely", async () => {
   const [component, emailRoute, decoder, equipment, driverSlice, pullHook, curvesRight] = await Promise.all([
     source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
     source("src/app/api/email-results/route.ts"),
@@ -231,17 +230,19 @@ test("completed diagnoses keep the distribution loop and safe email handoff", as
   assert.ok(component.includes("Send me my diagnosis and range plan"));
   assert.match(component, /Download result card/);
   assert.match(component, /files: \[shareFile\]/);
+  assert.match(component, /navigator\.canShare\?\.\(fileShareData\) === true/);
+  assert.match(component, /Share link instead/);
+  assert.match(component, /1200 × 630 social card/);
   assert.match(component, /MY SHOT PROFILE/);
   assert.match(component, /getBallFlightChartPathGeometry/);
   assert.match(component, /analyticsContext/);
   assert.match(component, /analyticsContext\?:\s*{[\s\S]*?pattern\?: string;[\s\S]*?strike\?: string;[\s\S]*?category\?: string;/);
   assert.match(component, /insightLabel/);
-  assert.match(emailRoute, /new Resend\(/);
+  assert.match(emailRoute, /status:\s*503/);
   assert.match(emailRoute, /Cache-Control.*no-store/s);
-  assert.match(emailRoute, /parseDiagnosisEmailInput/);
-  assert.match(emailRoute, /buildDiagnosisEmailContent/);
-  assert.doesNotMatch(emailRoute, /console\.log\([^)]*body/);
-  assert.doesNotMatch(emailRoute, /body\.diagnosis\.(miss|likelyCause|rangePlan|shareUrl)/);
+  assert.match(emailRoute, /distributed IP \+ recipient abuse limiter/);
+  assert.doesNotMatch(emailRoute, /new Resend\(/);
+  assert.doesNotMatch(emailRoute, /RESEND_API_KEY/);
 
   for (const resultPage of [decoder, equipment, driverSlice, pullHook, curvesRight]) {
     assert.match(resultPage, /<DiagnosisSharePanel/);
