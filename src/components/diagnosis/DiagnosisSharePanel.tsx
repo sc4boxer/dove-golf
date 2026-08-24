@@ -417,7 +417,6 @@ export function DiagnosisSharePanel({
         ? {
             title: "My DoveGolf diagnosis",
             text: shareText,
-            url: data.shareUrl,
             files: [shareFile],
           }
         : null;
@@ -529,17 +528,27 @@ export function DiagnosisSharePanel({
         <h3 id={`share-diagnosis-title-${source}`} className="mt-3 text-2xl font-semibold tracking-tight">
           Your portable result
         </h3>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          Your personalized post is ready. On a phone, one tap opens the native share sheet with the image attached.
+        </p>
+        <button
+          type="button"
+          onClick={handleShare}
+          disabled={sharing}
+          aria-busy={sharing}
+          className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50 sm:w-auto"
+        >
+          {sharing ? "Preparing…" : "Share to social apps"}
+        </button>
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Choose Instagram, TikTok, Facebook, Messages, or any installed app from your device share sheet.
+        </p>
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-        <div
-          className={[
-            "grid min-w-0",
-            flightShape ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(18rem,0.85fr)]" : "",
-          ].join(" ")}
-        >
+      <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+        <div className="grid min-w-0">
           {flightShape ? (
-            <div className="min-h-72 border-b border-slate-200 bg-white p-5 sm:p-7 lg:min-h-[25rem] lg:border-b-0 lg:border-r">
+            <div className="min-h-72 border-b border-slate-200 bg-white p-5 sm:min-h-[25rem] sm:p-7">
               <div className="flex items-center justify-between gap-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
                   Your shot shape
@@ -568,7 +577,7 @@ export function DiagnosisSharePanel({
             </p>
 
             {normalizedDetails.length ? (
-              <dl className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+              <dl className="mt-5 grid gap-2 sm:grid-cols-2">
                 {normalizedDetails.map((detail) => (
                   <div
                     key={`${detail.label}-${detail.value}`}
@@ -622,16 +631,7 @@ export function DiagnosisSharePanel({
           </div>
         </div>
       </div>
-      <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-        <button
-          type="button"
-          onClick={handleShare}
-          disabled={sharing}
-          aria-busy={sharing}
-          className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50 sm:w-auto"
-        >
-          {sharing ? "Preparing…" : "Share my diagnosis"}
-        </button>
+      <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={handleDownload}
@@ -639,8 +639,11 @@ export function DiagnosisSharePanel({
           aria-label="Download diagnosis image, PNG, 1200 by 630 pixels"
           className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
         >
-          Download result card
+          Download a backup image
         </button>
+        <p className="text-xs leading-5 text-slate-500">
+          Download is optional; social sharing works directly from the button above.
+        </p>
       </div>
 
       {actionStatus.message ? (
