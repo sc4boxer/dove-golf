@@ -156,6 +156,7 @@ export default function BallCurvesRightPage() {
             title: "Share your shot profile",
             content: (
               <DiagnosisSharePanel
+                embedded
                 miss={selectedVariant.title}
                 likelyCause={shareInsight}
                 rangePlan={BALL_CURVES_RIGHT_MODULE.rangePlan.join(" · ")}
