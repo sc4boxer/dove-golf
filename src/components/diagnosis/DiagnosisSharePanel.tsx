@@ -20,12 +20,20 @@ export type DiagnosisShareDetail = {
   value: string;
 };
 
+export type DiagnosisShareRecommendation = {
+  label: string;
+  value: string;
+  supporting?: string;
+};
+
 type DiagnosisSharePanelProps = DiagnosisShareData & {
   source: string;
   insightLabel?: DiagnosisInsightLabel;
   emailDiagnosis: DiagnosisEmailInput;
   details?: DiagnosisShareDetail[];
   flightShape?: BallFlightChartShape | null;
+  profileLabel?: string;
+  recommendation?: DiagnosisShareRecommendation | null;
   analyticsContext?: {
     pattern?: string;
     strike?: string;
@@ -104,6 +112,8 @@ async function createDiagnosisCard(
   insightLabel: DiagnosisInsightLabel,
   details: DiagnosisShareDetail[],
   flightShape: BallFlightChartShape | null,
+  profileLabel: string,
+  recommendation: DiagnosisShareRecommendation | null,
 ) {
   try {
     await document.fonts?.ready;
@@ -118,51 +128,60 @@ async function createDiagnosisCard(
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Unable to create the result card.");
 
-  context.fillStyle = "#f1f5f9";
+  context.fillStyle = "#eef2f7";
   context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
   context.fillStyle = "#ffffff";
   context.strokeStyle = "#dbe3ec";
   context.lineWidth = 2;
   context.beginPath();
-  context.roundRect(42, 42, CARD_WIDTH - 84, CARD_HEIGHT - 84, 34);
+  context.roundRect(38, 38, CARD_WIDTH - 76, CARD_HEIGHT - 76, 34);
   context.fill();
   context.stroke();
 
   context.textBaseline = "top";
   context.fillStyle = "#64748b";
-  context.font = `700 17px ${fontFamily}`;
-  context.fillText("DOVE GOLF · MY SHOT PROFILE", 82, 76);
+  context.font = `700 16px ${fontFamily}`;
+  context.fillText(`DOVE GOLF · ${profileLabel.toUpperCase()}`, 78, 70);
   context.textAlign = "right";
-  context.fillText("DOVEGOLF.FIT", 1118, 76);
+  context.fillText("TRY YOURS → DOVEGOLF.FIT", 1122, 70);
   context.textAlign = "left";
 
   context.fillStyle = "#0f172a";
-  context.font = `700 46px ${fontFamily}`;
-  wrapCanvasText(context, data.miss, 82, 119, 1036, 52, 2);
+  context.font = `700 43px ${fontFamily}`;
+  wrapCanvasText(context, data.miss, 78, 108, 1044, 48, 2);
 
-  const detailsY = 222;
-  let detailX = 82;
-  context.font = `600 14px ${fontFamily}`;
-  for (const detail of details.slice(0, 3)) {
-    const detailText = `${detail.label.toUpperCase()}: ${detail.value}`;
-    const availableWidth = 1036 - (detailX - 82);
-    const pillWidth = Math.min(context.measureText(detailText).width + 28, availableWidth);
-    if (pillWidth < 96) break;
-    context.fillStyle = "#f1f5f9";
+  const detailStartY = 206;
+  const detailGap = 10;
+  const detailWidth = (1044 - detailGap * 2) / 3;
+  const detailHeight = 48;
+  context.font = `700 11px ${fontFamily}`;
+  details.slice(0, 6).forEach((detail, index) => {
+    const column = index % 3;
+    const row = Math.floor(index / 3);
+    const x = 78 + column * (detailWidth + detailGap);
+    const y = detailStartY + row * (detailHeight + detailGap);
+    context.fillStyle = "#f8fafc";
+    context.strokeStyle = "#e2e8f0";
     context.beginPath();
-    context.roundRect(detailX, detailsY, pillWidth, 34, 17);
+    context.roundRect(x, y, detailWidth, detailHeight, 14);
     context.fill();
-    context.fillStyle = "#475569";
-    context.fillText(detailText, detailX + 14, detailsY + 8);
-    detailX += pillWidth + 10;
-  }
+    context.stroke();
+    context.fillStyle = "#64748b";
+    context.fillText(detail.label.toUpperCase(), x + 14, y + 8);
+    context.fillStyle = "#1e293b";
+    context.font = `600 14px ${fontFamily}`;
+    wrapCanvasText(context, detail.value, x + 14, y + 24, detailWidth - 28, 17, 1);
+    context.font = `700 11px ${fontFamily}`;
+  });
 
-  const chartX = 76;
-  const chartY = 276;
-  const chartWidth = flightShape ? 560 : 0;
-  const chartHeight = 238;
+  const contentY = details.length > 3 ? 328 : details.length ? 270 : 206;
+  const contentHeight = details.length > 3 ? 176 : details.length ? 234 : 298;
+  const chartX = 70;
+  const chartWidth = flightShape ? 596 : 0;
 
   if (flightShape) {
+    const chartY = contentY;
+    const chartHeight = contentHeight;
     const geometry = getBallFlightChartPathGeometry({
       shape: flightShape,
       width: chartWidth,
@@ -173,7 +192,7 @@ async function createDiagnosisCard(
     context.strokeStyle = "#e2e8f0";
     context.lineWidth = 2;
     context.beginPath();
-    context.roundRect(chartX, chartY, chartWidth, chartHeight, 24);
+    context.roundRect(chartX, chartY, chartWidth, chartHeight, 22);
     context.fill();
     context.stroke();
 
@@ -214,47 +233,66 @@ async function createDiagnosisCard(
     context.restore();
   }
 
-  const insightX = flightShape ? 674 : 82;
-  const insightY = 276;
-  const insightWidth = flightShape ? 444 : 1036;
-  context.fillStyle = flightShape ? "#ffffff" : "#f8fafc";
+  const insightX = flightShape ? 686 : 78;
+  const insightWidth = flightShape ? 436 : 1044;
+  context.fillStyle = "#ffffff";
   context.strokeStyle = "#e2e8f0";
   context.lineWidth = 2;
   context.beginPath();
-  context.roundRect(insightX, insightY, insightWidth, chartHeight, 24);
+  context.roundRect(insightX, contentY, insightWidth, contentHeight, 22);
   context.fill();
   context.stroke();
 
   context.fillStyle = "#64748b";
-  context.font = `700 14px ${fontFamily}`;
-  context.fillText(insightLabel.toUpperCase(), insightX + 26, insightY + 24);
+  context.font = `700 12px ${fontFamily}`;
+  context.fillText(insightLabel.toUpperCase(), insightX + 22, contentY + 18);
   context.fillStyle = "#1e293b";
-  context.font = `500 22px ${fontFamily}`;
-  wrapCanvasText(
+  context.font = `500 18px ${fontFamily}`;
+  const insightEndY = wrapCanvasText(
     context,
     data.likelyCause,
-    insightX + 26,
-    insightY + 56,
-    insightWidth - 52,
-    31,
-    flightShape ? 5 : 4,
+    insightX + 22,
+    contentY + 42,
+    insightWidth - 44,
+    25,
+    recommendation ? 3 : 5,
   );
 
-  context.strokeStyle = "#e2e8f0";
-  context.lineWidth = 2;
-  context.beginPath();
-  context.moveTo(82, 542);
-  context.lineTo(1118, 542);
-  context.stroke();
+  if (recommendation) {
+    const recommendationY = Math.max(insightEndY + 9, contentY + contentHeight - 62);
+    context.fillStyle = "#f1f5f9";
+    context.beginPath();
+    context.roundRect(insightX + 16, recommendationY, insightWidth - 32, 48, 14);
+    context.fill();
+    context.fillStyle = "#64748b";
+    context.font = `700 10px ${fontFamily}`;
+    context.fillText(recommendation.label.toUpperCase(), insightX + 30, recommendationY + 7);
+    context.fillStyle = "#0f172a";
+    context.font = `700 15px ${fontFamily}`;
+    wrapCanvasText(
+      context,
+      recommendation.supporting
+        ? `${recommendation.value} · ${recommendation.supporting}`
+        : recommendation.value,
+      insightX + 30,
+      recommendationY + 23,
+      insightWidth - 60,
+      18,
+      1,
+    );
+  }
 
-  context.fillStyle = "#0f172a";
-  context.font = `700 18px ${fontFamily}`;
-  context.fillText("Decode the pattern. Test one change.", 82, 562);
+  context.strokeStyle = "#e2e8f0";
+  context.beginPath();
+  context.moveTo(78, 526);
+  context.lineTo(1122, 526);
+  context.stroke();
   context.fillStyle = "#64748b";
-  context.font = `500 16px ${fontFamily}`;
-  context.textAlign = "right";
-  context.fillText("Share your shot at dovegolf.fit", 1118, 564);
-  context.textAlign = "left";
+  context.font = `700 11px ${fontFamily}`;
+  context.fillText("NEXT RANGE TEST", 78, 544);
+  context.fillStyle = "#334155";
+  context.font = `500 15px ${fontFamily}`;
+  wrapCanvasText(context, data.rangePlan, 78, 562, 1044, 18, 1);
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -284,6 +322,8 @@ export function DiagnosisSharePanel({
   emailDiagnosis,
   details = [],
   flightShape = null,
+  profileLabel = "My shot profile",
+  recommendation = null,
   analyticsContext = {},
 }: DiagnosisSharePanelProps) {
   const data = useMemo(
@@ -292,20 +332,37 @@ export function DiagnosisSharePanel({
   );
   const normalizedDetails = useMemo(
     () =>
-      details.slice(0, 3).map((detail) => ({
+      details.slice(0, 6).map((detail) => ({
         label: normalizeShareText(detail.label, "Observation").slice(0, 28),
         value: normalizeShareText(detail.value, "Not measured").slice(0, 72),
       })),
     [details],
   );
+  const normalizedRecommendation = useMemo(
+    () =>
+      recommendation
+        ? {
+            label: normalizeShareText(recommendation.label, "Recommendation").slice(0, 36),
+            value: normalizeShareText(recommendation.value, "Compare options").slice(0, 100),
+            supporting: recommendation.supporting
+              ? normalizeShareText(recommendation.supporting, "").slice(0, 120)
+              : undefined,
+          }
+        : null,
+    [recommendation],
+  );
+  const normalizedProfileLabel = normalizeShareText(profileLabel, "My shot profile").slice(0, 40);
   const shareText = useMemo(() => {
     const base = buildDiagnosisShareText(data, insightLabel);
     if (!normalizedDetails.length) return base;
     const observations = normalizedDetails
       .map((detail) => `${detail.label}: ${detail.value}`)
       .join(" · ");
-    return `${base}\n\nShot profile: ${observations}`;
-  }, [data, insightLabel, normalizedDetails]);
+    const recommendationText = normalizedRecommendation
+      ? `\n\n${normalizedRecommendation.label}: ${normalizedRecommendation.value}`
+      : "";
+    return `${base}\n\nProfile inputs: ${observations}${recommendationText}`;
+  }, [data, insightLabel, normalizedDetails, normalizedRecommendation]);
   const [actionStatus, setActionStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [emailStatus, setEmailStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
   const [email, setEmail] = useState("");
@@ -321,7 +378,14 @@ export function DiagnosisSharePanel({
     let cancelled = false;
     setShareFile(null);
 
-    createDiagnosisCard(data, insightLabel, normalizedDetails, flightShape)
+    createDiagnosisCard(
+      data,
+      insightLabel,
+      normalizedDetails,
+      flightShape,
+      normalizedProfileLabel,
+      normalizedRecommendation,
+    )
       .then((blob) => {
         if (!cancelled) {
           setShareFile(new File([blob], filenameFor(data.miss), { type: "image/png" }));
@@ -334,7 +398,14 @@ export function DiagnosisSharePanel({
     return () => {
       cancelled = true;
     };
-  }, [data, flightShape, insightLabel, normalizedDetails]);
+  }, [
+    data,
+    flightShape,
+    insightLabel,
+    normalizedDetails,
+    normalizedProfileLabel,
+    normalizedRecommendation,
+  ]);
 
   async function handleShare() {
     setSharing(true);
@@ -387,7 +458,14 @@ export function DiagnosisSharePanel({
     setActionStatus({ kind: "idle", message: "" });
 
     try {
-      const blob = await createDiagnosisCard(data, insightLabel, normalizedDetails, flightShape);
+      const blob = await createDiagnosisCard(
+      data,
+      insightLabel,
+      normalizedDetails,
+      flightShape,
+      normalizedProfileLabel,
+      normalizedRecommendation,
+    );
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
@@ -449,7 +527,7 @@ export function DiagnosisSharePanel({
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Save or share</p>
         <h3 id={`share-diagnosis-title-${source}`} className="mt-3 text-2xl font-semibold tracking-tight">
-          Take your diagnosis with you
+          Your portable result
         </h3>
       </div>
 
@@ -468,7 +546,16 @@ export function DiagnosisSharePanel({
                 </p>
                 <p className="text-xs font-medium text-slate-400">Right-handed view</p>
               </div>
-              <BallFlightChart shape={flightShape} staticRender className="mx-auto mt-5 w-full max-w-2xl" />
+              <div className="relative">
+                <span
+                  aria-hidden
+                  className="absolute right-2 top-1 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
+                >
+                  <span className="size-1.5 rounded-full bg-slate-500 motion-safe:animate-pulse" />
+                  Flight replay
+                </span>
+                <BallFlightChart shape={flightShape} className="mx-auto mt-5 w-full max-w-2xl" />
+              </div>
             </div>
           ) : null}
 
@@ -496,6 +583,20 @@ export function DiagnosisSharePanel({
               </dl>
             ) : null}
 
+            {normalizedRecommendation ? (
+              <div className="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
+                  {normalizedRecommendation.label}
+                </p>
+                <p className="mt-2 text-lg font-semibold leading-7">{normalizedRecommendation.value}</p>
+                {normalizedRecommendation.supporting ? (
+                  <p className="mt-1 text-sm leading-6 text-slate-300">
+                    {normalizedRecommendation.supporting}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
             <div className="mt-6 border-t border-slate-200 pt-5">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                 {insightLabel}
@@ -503,6 +604,13 @@ export function DiagnosisSharePanel({
               <p className="mt-2 break-words text-base leading-7 text-slate-700 sm:text-lg">
                 {data.likelyCause}
               </p>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Your next range test
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">{data.rangePlan}</p>
             </div>
 
             <a
