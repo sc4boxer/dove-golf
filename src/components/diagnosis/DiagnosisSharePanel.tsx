@@ -1,6 +1,7 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
 import { track } from "@/lib/analytics/ga";
 import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 import {
@@ -28,6 +29,7 @@ export type DiagnosisShareRecommendation = {
 
 type DiagnosisSharePanelProps = DiagnosisShareData & {
   source: string;
+  embedded?: boolean;
   insightLabel?: DiagnosisInsightLabel;
   emailDiagnosis: DiagnosisEmailInput;
   details?: DiagnosisShareDetail[];
@@ -319,8 +321,8 @@ export function DiagnosisSharePanel({
   rangePlan,
   shareUrl,
   source,
+  embedded = false,
   insightLabel = "Leading hypothesis",
-  emailDiagnosis,
   details = [],
   flightShape = null,
   profileLabel = DEFAULT_PROFILE_LABEL,
@@ -365,11 +367,10 @@ export function DiagnosisSharePanel({
     return `${base}\n\nProfile inputs: ${observations}${recommendationText}`;
   }, [data, insightLabel, normalizedDetails, normalizedRecommendation]);
   const [actionStatus, setActionStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
-  const [emailStatus, setEmailStatus] = useState<ActionStatus>({ kind: "idle", message: "" });
-  const [email, setEmail] = useState("");
   const [sharing, setSharing] = useState(false);
   const [shareFile, setShareFile] = useState<File | null>(null);
-  const [sending, setSending] = useState(false);
+  const [cardReady, setCardReady] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState("");
   const analyticsParams = {
     source,
     ...analyticsContext,
@@ -378,6 +379,7 @@ export function DiagnosisSharePanel({
   useEffect(() => {
     let cancelled = false;
     setShareFile(null);
+    setCardReady(false);
 
     createDiagnosisCard(
       data,
@@ -394,6 +396,9 @@ export function DiagnosisSharePanel({
       })
       .catch(() => {
         // Native text sharing and download remain available if pre-generation fails.
+      })
+      .finally(() => {
+        if (!cancelled) setCardReady(true);
       });
 
     return () => {
@@ -407,6 +412,17 @@ export function DiagnosisSharePanel({
     normalizedProfileLabel,
     normalizedRecommendation,
   ]);
+
+  useEffect(() => {
+    if (!shareFile) {
+      setPreviewUrl("");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(shareFile);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [shareFile]);
 
   async function handleShare() {
     setSharing(true);
@@ -425,7 +441,7 @@ export function DiagnosisSharePanel({
       if (
         navigator.share &&
         fileShareData &&
-        (!navigator.canShare || navigator.canShare(fileShareData))
+        navigator.canShare?.(fileShareData) === true
       ) {
         await navigator.share(fileShareData);
         setActionStatus({ kind: "success", message: "Diagnosis card shared." });
@@ -481,48 +497,41 @@ export function DiagnosisSharePanel({
     }
   }
 
-  async function handleEmail(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setSending(true);
-    setEmailStatus({ kind: "idle", message: "" });
-    track("dov_diagnosis_email_requested", analyticsParams);
+  async function handleShareLink() {
+    setSharing(true);
+    setActionStatus({ kind: "idle", message: "" });
 
     try {
-      const response = await fetch("/api/email-results", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schemaVersion: 1,
-          email,
-          website: "",
-          diagnosis: emailDiagnosis,
-        }),
-      });
-      const payload = (await response.json()) as { ok?: boolean; error?: string };
-
-      if (!response.ok || !payload.ok) {
-        throw new Error(payload.error || "Unable to send this email.");
+      if (navigator.share) {
+        await navigator.share({ title: "My DoveGolf result", text: shareText, url: data.shareUrl });
+        setActionStatus({ kind: "success", message: "Result link shared." });
+        track("dov_diagnosis_shared", { ...analyticsParams, method: "native_link" });
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareText);
+        setActionStatus({ kind: "success", message: "Result and link copied." });
+        track("dov_diagnosis_shared", { ...analyticsParams, method: "clipboard" });
+      } else {
+        setActionStatus({ kind: "fallback", message: "Copy the result below." });
       }
-
-      setEmailStatus({ kind: "success", message: "Your diagnosis and range plan are on the way." });
-      track("dov_diagnosis_email_sent", analyticsParams);
-    } catch {
-      setEmailStatus({
-        kind: "error",
-        message: "We could not send the email right now. Please try again in a few minutes.",
-      });
-      track("dov_diagnosis_email_failed", { ...analyticsParams, reason_code: "request_failed" });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        setActionStatus({ kind: "idle", message: "" });
+      } else {
+        setActionStatus({ kind: "fallback", message: "Copy the result below." });
+      }
     } finally {
-      setSending(false);
+      setSharing(false);
     }
   }
-
-  const displayUrl = data.shareUrl.replace(/^https:\/\//, "");
 
   return (
     <section
       aria-labelledby={`share-diagnosis-title-${source}`}
-      className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+      className={
+        embedded
+          ? "bg-white"
+          : "rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8"
+      }
     >
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Save or share</p>
@@ -530,184 +539,108 @@ export function DiagnosisSharePanel({
           Your portable result
         </h3>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-          Your personalized post is ready. On a phone, one tap opens the native share sheet with the image attached.
+          This is the exact card friends will see. On a phone, one tap opens the native share sheet with the image attached.
         </p>
         <button
           type="button"
           onClick={handleShare}
-          disabled={sharing}
-          aria-busy={sharing}
+          disabled={sharing || !cardReady}
+          aria-busy={!cardReady || sharing}
           className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 disabled:opacity-50 sm:w-auto"
         >
-          {sharing ? "Preparing…" : "Share my diagnosis to social apps"}
+          {sharing
+            ? "Preparing…"
+            : !cardReady
+              ? "Building your share card…"
+              : shareFile
+                ? "Share my result to social apps"
+                : "Share my result link"}
         </button>
         <p className="mt-2 text-xs leading-5 text-slate-500">
-          Choose Instagram, TikTok, Facebook, Messages, or any installed app from your device share sheet.
+          Choose Instagram, TikTok, Facebook, Messages, Mail, or another installed app.
         </p>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-        <div className="grid min-w-0">
-          {flightShape ? (
-            <div className="min-h-72 border-b border-slate-200 bg-white p-5 sm:min-h-[25rem] sm:p-7">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Your shot shape
-                </p>
-                <p className="text-xs font-medium text-slate-400">Right-handed view</p>
-              </div>
-              <div className="relative">
-                <span
-                  aria-hidden
-                  className="absolute right-2 top-1 inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400"
-                >
-                  <span className="size-1.5 rounded-full bg-slate-500 motion-safe:animate-pulse" />
-                  Flight replay
-                </span>
-                <BallFlightChart shape={flightShape} className="mx-auto mt-5 w-full max-w-2xl" />
-              </div>
+      <div className="mt-6">
+        <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Share preview</p>
+          <p className="text-xs text-slate-400">1200 × 630 social card</p>
+        </div>
+        <div className="mt-3 aspect-[1200/630] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
+          {previewUrl ? (
+            <Image
+              src={previewUrl}
+              alt={`${data.miss} DoveGolf result card with observations, interpretation, recommendation, and next range test`}
+              width={CARD_WIDTH}
+              height={CARD_HEIGHT}
+              unoptimized
+              className="h-full w-full object-contain"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center px-6 text-center text-sm text-slate-500">
+              Building your personalized result card…
             </div>
-          ) : null}
-
-          <div className="min-w-0 p-5 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Observed pattern
-            </p>
-            <p className="mt-3 break-words text-3xl font-semibold tracking-[-0.035em] text-slate-950 sm:text-4xl">
-              {data.miss}
-            </p>
-
-            {normalizedDetails.length ? (
-              <dl className="mt-5 grid gap-2 sm:grid-cols-2">
-                {normalizedDetails.map((detail) => (
-                  <div
-                    key={`${detail.label}-${detail.value}`}
-                    className="min-w-0 rounded-2xl border border-slate-200 bg-white px-4 py-3"
-                  >
-                    <dt className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                      {detail.label}
-                    </dt>
-                    <dd className="mt-1 break-words text-sm font-semibold text-slate-900">{detail.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            ) : null}
-
-            {normalizedRecommendation ? (
-              <div className="mt-5 rounded-2xl bg-slate-900 p-4 text-white">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-300">
-                  {normalizedRecommendation.label}
-                </p>
-                <p className="mt-2 text-lg font-semibold leading-7">{normalizedRecommendation.value}</p>
-                {normalizedRecommendation.supporting ? (
-                  <p className="mt-1 text-sm leading-6 text-slate-300">
-                    {normalizedRecommendation.supporting}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-
-            <div className="mt-6 border-t border-slate-200 pt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                {insightLabel}
-              </p>
-              <p className="mt-2 break-words text-base leading-7 text-slate-700 sm:text-lg">
-                {data.likelyCause}
-              </p>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Your next range test
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{data.rangePlan}</p>
-            </div>
-
-            <a
-              href={data.shareUrl}
-              className="mt-6 block max-w-full break-all text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4"
-            >
-              {displayUrl}
-            </a>
-          </div>
+          )}
         </div>
       </div>
+
       <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
         <button
           type="button"
           onClick={handleDownload}
-          disabled={sharing}
-          aria-label="Download diagnosis image, PNG, 1200 by 630 pixels"
+          disabled={sharing || !cardReady}
+          aria-label="Download result image, PNG, 1200 by 630 pixels"
           className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
         >
           Download result card (backup)
         </button>
         <p className="text-xs leading-5 text-slate-500">
-          Download is optional; social sharing works directly from the button above.
+          Download is optional; direct social sharing is the primary path.
         </p>
       </div>
 
       {actionStatus.message ? (
-        <p
-          role={actionStatus.kind === "error" ? "alert" : "status"}
-          className="mt-3 text-sm text-slate-600"
-        >
+        <p role={actionStatus.kind === "error" ? "alert" : "status"} className="mt-3 text-sm text-slate-600">
           {actionStatus.message}
         </p>
       ) : null}
       {actionStatus.kind === "fallback" ? (
-        <textarea
-          readOnly
-          value={shareText}
-          onFocus={(event) => event.currentTarget.select()}
-          aria-label="Diagnosis text to copy"
-          className="mt-3 min-h-32 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
-        />
+        <div className="mt-3 space-y-3">
+          <button
+            type="button"
+            onClick={handleShareLink}
+            disabled={sharing}
+            className="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900"
+          >
+            Share link instead
+          </button>
+          <textarea
+            readOnly
+            value={shareText}
+            onFocus={(event) => event.currentTarget.select()}
+            aria-label="Result text to copy"
+            className="min-h-32 w-full rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700"
+          />
+        </div>
       ) : null}
 
-      <form onSubmit={handleEmail} className="mt-8 border-t border-slate-200 pt-8">
+      <div className="mt-8 border-t border-slate-200 pt-8">
         <h4 className="text-lg font-semibold">Take the plan to the range</h4>
-        <p id={`diagnosis-email-help-${source}`} className="mt-2 text-sm leading-6 text-slate-600">
-          We’ll send this diagnosis and its range test in one transactional email. This does not subscribe you to
-          marketing.
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Send the result through Mail or Messages without giving DoveGolf your email address.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
-          <div>
-            <label htmlFor={`diagnosis-email-${source}`} className="text-sm font-medium text-slate-900">
-              Email address
-            </label>
-            <input
-              id={`diagnosis-email-${source}`}
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              required
-              maxLength={254}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              aria-describedby={`diagnosis-email-help-${source}`}
-              className="mt-2 min-h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 placeholder:text-slate-400 focus:border-slate-500"
-              placeholder="you@example.com"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={sending}
-            aria-busy={sending}
-            className="inline-flex min-h-12 w-full items-center justify-center self-end rounded-2xl border border-slate-900 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
-          >
-            {sending ? "Sending…" : "Send me my diagnosis and range plan"}
-          </button>
-        </div>
-        {emailStatus.message ? (
-          <p
-            role={emailStatus.kind === "error" ? "alert" : "status"}
-            className="mt-3 text-sm text-slate-600"
-          >
-            {emailStatus.message}
-          </p>
-        ) : null}
-      </form>
+        <button
+          type="button"
+          onClick={handleShareLink}
+          disabled={sharing}
+          className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-slate-900 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
+        >
+          Send me my result and range plan
+        </button>
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          Opens your device share sheet; choose Mail or Messages. No marketing signup.
+        </p>
+      </div>
     </section>
   );
 }
