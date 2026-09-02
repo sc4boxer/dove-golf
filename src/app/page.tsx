@@ -80,7 +80,7 @@ export default function HomePage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#245f4d]">Dove Golf · New to the range?</p>
             <h1 id="home-heading" className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.05em] sm:text-6xl">
-              Dove Golf helps your first bucket feel like{" "}
+              Make your first bucket feel like{" "}
               <span className="block text-[#55716a]">progress.</span>
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-slate-700">

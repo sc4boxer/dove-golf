@@ -5,7 +5,7 @@ import test from "node:test";
 const source = readFileSync(new URL("./page.tsx", import.meta.url), "utf8");
 
 test("homepage keeps the beginner-first Direction C hierarchy", () => {
-  assert.match(source, /Dove Golf helps your first bucket feel like/);
+  assert.match(source, /Make your first bucket feel like/);
   assert.match(source, /href="\/range-rescue"[\s\S]*Get my five-ball plan/);
   assert.match(source, /<TrajectoryComparison \/>/);
 
