@@ -6,12 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node --experimental-strip-types src/lib/range-rescue/plans.test.js",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:contract": "node --test tests/production-contract.test.mjs",
+    "test:visual": "node --test src/lib/visual/*.test.js",
+    "test:decoder": "node --test src/components/tools/ball-flight-decoder/*.test.js",
+    "test:equipment": "node --test src/lib/tools/*.test.js",
+    "test:range-rescue": "node --experimental-strip-types src/lib/range-rescue/plans.test.js",
+    "test": "npm run test:contract && npm run test:visual && npm run test:decoder && npm run test:equipment && npm run test:sharing && npm run test:range-rescue",
+    "check": "npm run test && npm run build",
+    "test:sharing": "node --test src/lib/share/*.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.96.0",
-    "next": "16.1.6",
+    "next": "16.3.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "resend": "^6.9.2"
@@ -22,7 +29,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "16.3.2",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

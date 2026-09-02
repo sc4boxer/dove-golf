@@ -72,7 +72,7 @@ export default function RangeRescuePage() {
             </fieldset>
           </section>
         ) : (
-          <section className={styles.result} aria-labelledby="plan-heading" aria-live="polite">
+          <section className={styles.result} aria-labelledby="plan-heading">
             <button className={styles.back} type="button" onClick={() => setSelectedId(null)}>
               <span aria-hidden="true">←</span> Pick a different miss
             </button>

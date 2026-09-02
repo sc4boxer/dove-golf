@@ -3,6 +3,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --ink: #0f172a;
+  --forest: #0f172a;
+  --forest-deep: #020617;
+  --fairway: #475569;
+  --lime: #f1f5f9;
+  --paper: #ffffff;
+  --paper-strong: #ffffff;
+  --mist: #f8fafc;
+  --muted: #64748b;
+  --line: rgba(15, 23, 42, 0.12);
 }
 
 @theme inline {
@@ -12,21 +22,114 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  outline-offset: 4px;
+}
+
+:focus-visible {
+  outline: 3px solid #475569;
+}
+
+.font-serif {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.eyebrow {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.golf-grid {
+  background: var(--paper);
 }
 
 @keyframes dash {
   to {
     stroke-dashoffset: 0;
+  }
+}
+
+@keyframes flight-reveal {
+  from {
+    stroke-dashoffset: 100;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.ball-flight-reveal {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: flight-reveal 2.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes evidence-ray {
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.evidence-ray {
+  animation: evidence-ray 550ms ease-out both;
+}
+
+.evidence-ray-delay {
+  animation-delay: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .ball-flight-reveal {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+
+  .ball-flight-marker {
+    display: none;
   }
 }

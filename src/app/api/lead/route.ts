@@ -173,17 +173,29 @@ export async function POST(req: Request) {
         : undefined;
 
     return NextResponse.json({ ok: true, ...(debug ? { debug } : {}) });
-  } catch (e: any) {
-    logEmailEvent("lead_email_exception", {
-      error: e?.message ?? "Something went wrong.",
-      code: e?.code ?? e?.name ?? "unknown",
-    });
+  } catch (error: unknown) {
+    const details =
+      error && typeof error === "object"
+        ? (error as { message?: unknown; code?: unknown; name?: unknown })
+        : {};
+    const message =
+      typeof details.message === "string"
+        ? details.message
+        : "Something went wrong.";
+    const code =
+      typeof details.code === "string"
+        ? details.code
+        : typeof details.name === "string"
+          ? details.name
+          : "unknown";
+
+    logEmailEvent("lead_email_exception", { error: message, code });
 
     return NextResponse.json(
       {
         ok: false,
-        error: e?.message ?? "Something went wrong.",
-        code: e?.code ?? e?.name ?? "unknown",
+        error: message,
+        code,
       },
       { status: 500 }
     );

@@ -2,16 +2,26 @@ export type ClinicModuleStatus = "active" | "comingSoon";
 
 export type ClinicModuleDefinition = {
   id: string;
-  problemKey: "driverSlice" | "pullHook";
+  problemKey: string;
   title: string;
   route: string;
   status: ClinicModuleStatus;
   cardDescription: string;
-  heroGraphic: "driverSlice" | "pullHook";
+  heroGraphic: "driverSlice" | "pullHook" | "ballCurvesRight";
   heroCta: string;
 };
 
 export const CLINIC_MODULES: ClinicModuleDefinition[] = [
+  {
+    id: "ball-curves-right",
+    problemKey: "ballCurvesRight",
+    title: "Ball Curves Right",
+    route: "/clinic/ball-curves-right",
+    status: "active",
+    cardDescription: "Symptom-first diagnosis for shots that curve right.",
+    heroGraphic: "ballCurvesRight",
+    heroCta: "Start: Ball Curves Right",
+  },
   {
     id: "driver-slice",
     problemKey: "driverSlice",
