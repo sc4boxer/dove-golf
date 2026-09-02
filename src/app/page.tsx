@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TrackLink } from "@/components/analytics/TrackLink";
+import { TrajectoryComparison } from "@/components/home/TrajectoryComparison";
 
 export const metadata: Metadata = {
   title: "DoveGolf | Read the shot. Test the cause.",
@@ -9,138 +10,150 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-const tools = [
-  {
-    label: "BALL FLIGHT",
-    title: "Ball Flight Decoder",
-    description:
-      "Tell us where the ball started, how it curved, and where it met the face. We will show what that evidence suggests, what it cannot prove, and one variable to test next.",
-    href: "/tools/ball-flight-decoder",
-    action: "Decode my ball flight",
-    meta: "About 2 minutes",
-  },
-  {
-    label: "EQUIPMENT",
-    title: "Equipment Fit Check",
-    description:
-      "Compare your tempo, speed, launch tendencies, and current setup before deciding whether a club or shaft change deserves attention.",
-    href: "/diagnostic",
-    action: "Check my equipment fit",
-    meta: "Brand-neutral",
-  },
+const beginnerSteps = [
+  { title: "Pick the miss", detail: "Choose the picture that looks closest." },
+  { title: "Try one change", detail: "Keep one simple thought for five balls." },
+  { title: "Compare five balls", detail: "Notice better, worse, or just different." },
 ];
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-5xl px-6 py-12">
-        <header className="flex items-center justify-between gap-3 sm:gap-6">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium shadow-sm sm:px-4"
-          >
-            <span aria-hidden className="size-2 rounded-full bg-slate-900" />
-            Dove Golf
-          </Link>
+      <div className="mx-auto max-w-5xl px-6 py-10 sm:py-12">
+        <header>
+          <div className="flex items-center justify-between gap-4">
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-medium shadow-sm sm:px-4"
+            >
+              <span aria-hidden className="size-2 rounded-full bg-[#245f4d]" />
+              Dove Golf
+            </Link>
+            <p className="max-w-36 text-right text-xs leading-5 text-slate-500 sm:max-w-none">
+              Available free at your range
+            </p>
+          </div>
 
-          <nav aria-label="Primary navigation" className="flex items-center gap-3 text-xs text-slate-500 sm:gap-5 sm:text-sm">
-            <Link className="hover:text-slate-900" href="/learn">
-              Learn
-            </Link>
-            <Link className="hover:text-slate-900" href="/method">
-              Method
-            </Link>
-            <Link className="hover:text-slate-900" href="/about">
-              About
-            </Link>
+          <nav
+            aria-label="Primary navigation"
+            className="mt-4 flex items-center gap-5 text-sm text-slate-500 sm:justify-end"
+          >
+            <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/learn">Learn</Link>
+            <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/method">Method</Link>
+            <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/about">About</Link>
           </nav>
         </header>
 
-        <section className="mt-20 max-w-3xl sm:mt-28">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Data-guided golf tools
-          </p>
-          <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl">
-            Read the shot.
-            <span className="block text-slate-500">Test the cause.</span>
-          </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-relaxed text-slate-700">
-            Ball flight is evidence. Dove Golf uses the shot, strike, and equipment clues you can observe to
-            give you a clearer starting point—not another swing opinion.
-          </p>
+        <section className="mt-16 grid items-center gap-12 md:mt-24 md:grid-cols-[1.15fr_0.85fr] md:gap-16" aria-labelledby="home-heading">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#245f4d]">New to the range?</p>
+            <h1 id="home-heading" className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.05em] sm:text-6xl">
+              Your first bucket should feel like{" "}
+              <span className="block text-[#55716a]">progress.</span>
+            </h1>
+            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-slate-700">
+              You do not need to understand your swing yet. Tell us what the last ball did, and we will give
+              you one simple thing to try for the next five.
+            </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <TrackLink
-              href="/tools/ball-flight-decoder"
-              eventParams={{ module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" }}
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+            <Link
+              href="/range-rescue"
+              className="mt-8 inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b] sm:w-auto"
             >
-              Decode my ball flight →
-            </TrackLink>
-            <TrackLink
-              href="/diagnostic"
-              eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
-            >
-              Check my equipment fit →
-            </TrackLink>
+              Get my five-ball plan →
+            </Link>
+            <p className="mt-4 text-sm text-slate-500">Free · No account · Brand-neutral</p>
           </div>
 
-          <div className="mt-7 flex flex-wrap gap-3">
-            {["Free to use", "No account", "Brand-neutral", "Explainable logic"].map((item) => (
-              <span key={item} className="rounded-full border border-slate-200 px-4 py-1.5 text-sm text-slate-600">
-                {item}
-              </span>
-            ))}
+          <div className="rounded-3xl bg-[#edf4ef] p-7 sm:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#55716a]">A calmer way to start</p>
+            <ol className="mt-7 space-y-0">
+              {beginnerSteps.map((step, index) => (
+                <li key={step.title} className="relative flex gap-4 pb-8 last:pb-0">
+                  {index < beginnerSteps.length - 1 ? (
+                    <span aria-hidden className="absolute left-5 top-10 h-full w-px bg-[#bfd0c7]" />
+                  ) : null}
+                  <span className="relative z-10 grid size-10 shrink-0 place-items-center rounded-full bg-white text-sm font-medium text-[#245f4d] shadow-sm">
+                    {index + 1}
+                  </span>
+                  <span className="pt-1">
+                    <span className="block font-medium text-slate-900">{step.title}</span>
+                    <span className="mt-1 block text-sm leading-6 text-slate-600">{step.detail}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         </section>
 
-        <section className="mt-16" aria-labelledby="start-heading">
-          <div className="flex items-end justify-between gap-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Start here</p>
-              <h2 id="start-heading" className="mt-3 text-2xl font-semibold tracking-tight">
-                Choose the evidence you already have.
-              </h2>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
-            {tools.map((tool) => (
+        <section className="mt-16 border-y border-slate-200" aria-labelledby="tools-heading">
+          <h2 id="tools-heading" className="sr-only">Choose a Dove Golf tool</h2>
+          <div className="grid md:grid-cols-3">
+            <article className="border-b border-slate-200 py-8 md:border-b-0 md:border-r md:px-6 md:first:pl-0">
+              <p className="text-xs font-semibold tracking-[0.14em] text-[#55716a]">AT THE RANGE</p>
+              <h3 className="mt-5 text-xl font-semibold tracking-tight">Range Rescue</h3>
+              <p className="mt-3 min-h-20 text-sm leading-6 text-slate-600">
+                When the session is going sideways, get one reset for your next five balls.
+              </p>
               <Link
-                key={tool.title}
-                href={tool.href}
-                className="group flex min-h-72 flex-col rounded-3xl border border-slate-200 bg-white p-8 shadow-sm transition hover:border-slate-300 hover:bg-slate-50/50"
+                href="/range-rescue"
+                className="mt-5 inline-flex min-h-11 items-center font-medium text-[#245f4d] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
               >
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-xs font-semibold tracking-[0.14em] text-slate-500">{tool.label}</p>
-                  <span className="text-xs text-slate-400">{tool.meta}</span>
-                </div>
-                <h3 className="mt-8 text-2xl font-semibold tracking-tight">{tool.title}</h3>
-                <p className="mt-4 leading-relaxed text-slate-600">{tool.description}</p>
-                <p className="mt-auto pt-8 text-sm font-medium text-slate-900">
-                  {tool.action} <span aria-hidden className="transition group-hover:ml-1">→</span>
-                </p>
+                Help my next five →
               </Link>
-            ))}
+            </article>
+
+            <article className="border-b border-slate-200 py-8 md:border-b-0 md:border-r md:px-6">
+              <p className="text-xs font-semibold tracking-[0.14em] text-[#55716a]">AFTER YOUR BUCKET</p>
+              <h3 className="mt-5 text-xl font-semibold tracking-tight">Ball Flight Decoder</h3>
+              <p className="mt-3 min-h-20 text-sm leading-6 text-slate-600">
+                Understand where the ball started, how it curved, and what that pattern may suggest.
+              </p>
+              <TrackLink
+                href="/tools/ball-flight-decoder"
+                eventParams={{ module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" }}
+                className="mt-5 inline-flex min-h-11 items-center font-medium text-[#245f4d] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
+              >
+                Understand the pattern →
+              </TrackLink>
+            </article>
+
+            <article className="py-8 md:px-6 md:last:pr-0">
+              <p className="text-xs font-semibold tracking-[0.14em] text-[#55716a]">BEFORE BUYING GEAR</p>
+              <h3 className="mt-5 text-xl font-semibold tracking-tight">Equipment Fit</h3>
+              <p className="mt-3 min-h-20 text-sm leading-6 text-slate-600">
+                Check whether a repeated pattern makes your current club setup worth testing.
+              </p>
+              <TrackLink
+                href="/diagnostic"
+                eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}
+                className="mt-5 inline-flex min-h-11 items-center font-medium text-[#245f4d] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
+              >
+                Check the setup →
+              </TrackLink>
+            </article>
           </div>
         </section>
 
-        <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:p-8">
-          <p className="text-sm font-semibold">What every Dove Golf result should tell you</p>
-          <div className="mt-5 grid gap-5 text-sm leading-6 text-slate-600 sm:grid-cols-3">
-            <p>
-              <span className="block font-medium text-slate-900">What the evidence supports</span>
-              The relationship we can reasonably read from your inputs.
-            </p>
-            <p>
-              <span className="block font-medium text-slate-900">What remains uncertain</span>
-              The limits of the data, stated without false confidence.
-            </p>
-            <p>
-              <span className="block font-medium text-slate-900">What to test next</span>
-              One practical change you can compare with real shots.
-            </p>
+        <section className="mt-16" aria-labelledby="trajectory-heading">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">What the ball can tell you</p>
+          <h2 id="trajectory-heading" className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight">
+            Different shots leave different clues.
+          </h2>
+          <p className="mt-4 max-w-2xl leading-relaxed text-slate-600">
+            You do not need the perfect golf term. Start with the shape you saw—we can work from there.
+          </p>
+          <div className="mt-7">
+            <TrajectoryComparison />
+          </div>
+        </section>
+
+        <section className="mt-16 border-t border-slate-200 pt-10" aria-labelledby="results-heading">
+          <h2 id="results-heading" className="text-xl font-semibold tracking-tight">A useful answer should stay honest.</h2>
+          <div className="mt-7 grid gap-7 text-sm leading-6 text-slate-600 sm:grid-cols-3">
+            <p><span className="block font-medium text-slate-900">What the evidence supports</span>The relationship we can reasonably read from your inputs.</p>
+            <p><span className="block font-medium text-slate-900">What remains uncertain</span>The limits of the data, stated without false confidence.</p>
+            <p><span className="block font-medium text-slate-900">What to try next</span>One practical change you can compare with real shots.</p>
           </div>
         </section>
 
@@ -148,17 +161,15 @@ export default function HomePage() {
           <div className="flex flex-col justify-between gap-5 text-sm text-slate-500 sm:flex-row">
             <p>© {new Date().getFullYear()} · Dove Golf</p>
             <div className="flex gap-5">
-              <Link className="hover:text-slate-900" href="/faq">
-                FAQ
-              </Link>
-              <Link className="hover:text-slate-900" href="/learn/ball-flight">
-                Ball flight library
-              </Link>
+              <Link className="hover:text-slate-900" href="/faq">FAQ</Link>
+              <Link className="hover:text-slate-900" href="/learn/ball-flight">Ball flight library</Link>
             </div>
           </div>
-          <p className="mt-5 max-w-2xl text-xs leading-5 text-slate-400">
-            Educational guidance only. Results are starting points to test, not guaranteed diagnoses or
-            performance outcomes.
+          <p className="mt-5 max-w-2xl text-xs leading-5 text-slate-500">
+            Dove Golf guidance is brand-neutral. Range partners can help make it available, but they do not influence results.
+          </p>
+          <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-400">
+            Educational guidance only. Results are starting points to test, not guaranteed diagnoses or performance outcomes.
           </p>
         </footer>
       </div>
