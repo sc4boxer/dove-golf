@@ -48,8 +48,10 @@ type ActionStatus =
   | { kind: "error"; message: string }
   | { kind: "fallback"; message: string };
 
-const CARD_WIDTH = 1200;
-const CARD_HEIGHT = 630;
+// Instagram's recommended portrait feed ratio. Keeping this at the final export
+// size avoids an extra resize pass (and soft type) when the image is uploaded.
+const CARD_WIDTH = 1080;
+const CARD_HEIGHT = 1350;
 const DEFAULT_PROFILE_LABEL = "MY SHOT PROFILE";
 
 function wrapCanvasText(
@@ -130,87 +132,114 @@ async function createDiagnosisCard(
   const context = canvas.getContext("2d");
   if (!context) throw new Error("Unable to create the result card.");
 
-  context.fillStyle = "#eef2f7";
+  const ink = "#111827";
+  const muted = "#667085";
+  const line = "#d9dfda";
+  const paper = "#f5f5f0";
+  const white = "#ffffff";
+  const sage = "#315d4b";
+  const softSage = "#e8efe9";
+  const cardX = 54;
+  const cardWidth = CARD_WIDTH - cardX * 2;
+  const contentX = 94;
+  const contentWidth = CARD_WIDTH - contentX * 2;
+
+  context.fillStyle = paper;
   context.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
-  context.fillStyle = "#ffffff";
-  context.strokeStyle = "#dbe3ec";
-  context.lineWidth = 2;
+  context.fillStyle = white;
+  context.strokeStyle = line;
+  context.lineWidth = 1.5;
   context.beginPath();
-  context.roundRect(38, 38, CARD_WIDTH - 76, CARD_HEIGHT - 76, 34);
+  context.roundRect(cardX, 54, cardWidth, CARD_HEIGHT - 108, 38);
   context.fill();
   context.stroke();
 
   context.textBaseline = "top";
-  context.fillStyle = "#64748b";
-  context.font = `700 16px ${fontFamily}`;
-  context.fillText(`DOVE GOLF · ${profileLabel.toUpperCase()}`, 78, 70);
+  context.fillStyle = sage;
+  context.beginPath();
+  context.arc(contentX + 7, 102, 7, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = ink;
+  context.font = `700 17px ${fontFamily}`;
+  context.fillText("DOVE GOLF", contentX + 28, 91);
+  context.fillStyle = muted;
+  context.font = `700 13px ${fontFamily}`;
+  context.fillText(profileLabel.toUpperCase(), contentX, 130);
   context.textAlign = "right";
-  context.fillText("TRY YOURS → DOVEGOLF.FIT", 1122, 70);
+  context.fillStyle = muted;
+  context.font = `600 14px ${fontFamily}`;
+  context.fillText("DOVEGOLF.FIT", CARD_WIDTH - contentX, 94);
   context.textAlign = "left";
 
-  context.fillStyle = "#0f172a";
-  context.font = `700 43px ${fontFamily}`;
-  wrapCanvasText(context, data.miss, 78, 108, 1044, 48, 2);
+  context.fillStyle = ink;
+  context.font = `700 56px ${fontFamily}`;
+  wrapCanvasText(context, data.miss, contentX, 166, contentWidth, 64, 2);
 
-  const detailStartY = 206;
-  const detailGap = 10;
-  const detailWidth = (1044 - detailGap * 2) / 3;
-  const detailHeight = 48;
-  context.font = `700 11px ${fontFamily}`;
+  const detailStartY = 308;
+  const detailGap = 12;
+  const detailWidth = (contentWidth - detailGap * 2) / 3;
+  const detailHeight = 72;
+  context.font = `700 14px ${fontFamily}`;
   details.slice(0, 6).forEach((detail, index) => {
     const column = index % 3;
     const row = Math.floor(index / 3);
-    const x = 78 + column * (detailWidth + detailGap);
+    const x = contentX + column * (detailWidth + detailGap);
     const y = detailStartY + row * (detailHeight + detailGap);
-    context.fillStyle = "#f8fafc";
-    context.strokeStyle = "#e2e8f0";
+    context.fillStyle = paper;
+    context.strokeStyle = line;
     context.beginPath();
-    context.roundRect(x, y, detailWidth, detailHeight, 14);
+    context.roundRect(x, y, detailWidth, detailHeight, 16);
     context.fill();
     context.stroke();
-    context.fillStyle = "#64748b";
-    context.fillText(detail.label.toUpperCase(), x + 14, y + 8);
-    context.fillStyle = "#1e293b";
-    context.font = `600 14px ${fontFamily}`;
-    wrapCanvasText(context, detail.value, x + 14, y + 24, detailWidth - 28, 17, 1);
-    context.font = `700 11px ${fontFamily}`;
+    context.fillStyle = muted;
+    context.fillText(detail.label.toUpperCase(), x + 16, y + 12);
+    context.fillStyle = ink;
+    context.font = `600 20px ${fontFamily}`;
+    wrapCanvasText(context, detail.value, x + 16, y + 37, detailWidth - 32, 22, 1);
+    context.font = `700 14px ${fontFamily}`;
   });
 
-  const contentY = details.length > 3 ? 328 : details.length ? 270 : 206;
-  const contentHeight = details.length > 3 ? 176 : details.length ? 234 : 298;
-  const chartX = 70;
-  const chartWidth = flightShape ? 596 : 0;
+  const detailRows = Math.ceil(Math.min(details.length, 6) / 3);
+  const contentY = details.length
+    ? detailStartY + detailRows * detailHeight + Math.max(0, detailRows - 1) * detailGap + 24
+    : detailStartY;
+  const chartX = contentX;
+  const chartWidth = contentWidth;
+  const chartHeight = flightShape ? (details.length > 3 ? 260 : 294) : 0;
 
   if (flightShape) {
     const chartY = contentY;
-    const chartHeight = contentHeight;
     const geometry = getBallFlightChartPathGeometry({
       shape: flightShape,
       width: chartWidth,
       height: chartHeight,
     });
 
-    context.fillStyle = "#f8fafc";
-    context.strokeStyle = "#e2e8f0";
-    context.lineWidth = 2;
+    context.fillStyle = paper;
+    context.strokeStyle = line;
+    context.lineWidth = 1.5;
     context.beginPath();
-    context.roundRect(chartX, chartY, chartWidth, chartHeight, 22);
+    context.roundRect(chartX, chartY, chartWidth, chartHeight, 24);
     context.fill();
     context.stroke();
 
+    context.fillStyle = muted;
+    context.font = `700 14px ${fontFamily}`;
+    context.fillText("YOUR BALL FLIGHT", chartX + 20, chartY + 18);
+
     context.save();
     context.translate(chartX, chartY);
-    context.strokeStyle = "#cbd5e1";
+    context.strokeStyle = "#c7d0ca";
     context.lineWidth = 2;
-    context.setLineDash([5, 7]);
+    context.setLineDash([6, 9]);
     context.beginPath();
     context.moveTo(chartWidth * 0.5, chartHeight * 0.06);
     context.lineTo(chartWidth * 0.5, geometry.startY);
     context.stroke();
 
-    context.strokeStyle = "#0f172a";
-    context.lineWidth = 5;
-    context.setLineDash([2, 12]);
+    context.strokeStyle = sage;
+    context.lineWidth = 7;
+    context.setLineDash([2, 15]);
     context.lineCap = "round";
     context.beginPath();
     context.moveTo(geometry.startX, geometry.startY);
@@ -225,8 +254,8 @@ async function createDiagnosisCard(
     context.stroke();
 
     context.setLineDash([]);
-    context.fillStyle = "#ffffff";
-    context.strokeStyle = "#0f172a";
+    context.fillStyle = white;
+    context.strokeStyle = sage;
     context.lineWidth = 3;
     context.beginPath();
     context.arc(geometry.endX, geometry.endY, 9, 0, Math.PI * 2);
@@ -235,66 +264,77 @@ async function createDiagnosisCard(
     context.restore();
   }
 
-  const insightX = flightShape ? 686 : 78;
-  const insightWidth = flightShape ? 436 : 1044;
-  context.fillStyle = "#ffffff";
-  context.strokeStyle = "#e2e8f0";
-  context.lineWidth = 2;
+  const insightX = contentX;
+  const insightWidth = contentWidth;
+  const insightY = flightShape ? contentY + chartHeight + 18 : contentY;
+  const remainingBeforeFooter = 1120 - insightY;
+  const insightHeight = Math.max(190, remainingBeforeFooter);
+  context.fillStyle = softSage;
+  context.strokeStyle = "#cedbd2";
+  context.lineWidth = 1.5;
   context.beginPath();
-  context.roundRect(insightX, contentY, insightWidth, contentHeight, 22);
+  context.roundRect(insightX, insightY, insightWidth, insightHeight, 24);
   context.fill();
   context.stroke();
 
-  context.fillStyle = "#64748b";
-  context.font = `700 12px ${fontFamily}`;
-  context.fillText(insightLabel.toUpperCase(), insightX + 22, contentY + 18);
-  context.fillStyle = "#1e293b";
-  context.font = `500 18px ${fontFamily}`;
+  context.fillStyle = sage;
+  context.font = `700 14px ${fontFamily}`;
+  context.fillText(insightLabel.toUpperCase(), insightX + 24, insightY + 22);
+  context.fillStyle = ink;
+  context.font = `500 26px ${fontFamily}`;
   const insightEndY = wrapCanvasText(
     context,
     data.likelyCause,
-    insightX + 22,
-    contentY + 42,
-    insightWidth - 44,
-    25,
+    insightX + 24,
+    insightY + 52,
+    insightWidth - 48,
+    34,
     recommendation ? 3 : 5,
   );
 
   if (recommendation) {
-    const recommendationY = Math.max(insightEndY + 9, contentY + contentHeight - 74);
-    context.fillStyle = "#f1f5f9";
+    const recommendationY = Math.max(insightEndY + 15, insightY + insightHeight - 82);
+    context.fillStyle = white;
     context.beginPath();
-    context.roundRect(insightX + 16, recommendationY, insightWidth - 32, 48, 14);
+    context.roundRect(insightX + 16, recommendationY, insightWidth - 32, 64, 16);
     context.fill();
-    context.fillStyle = "#64748b";
-    context.font = `700 10px ${fontFamily}`;
-    context.fillText(recommendation.label.toUpperCase(), insightX + 30, recommendationY + 7);
-    context.fillStyle = "#0f172a";
-    context.font = `700 15px ${fontFamily}`;
+    context.fillStyle = muted;
+    context.font = `700 12px ${fontFamily}`;
+    context.fillText(recommendation.label.toUpperCase(), insightX + 32, recommendationY + 10);
+    context.fillStyle = ink;
+    context.font = `700 19px ${fontFamily}`;
     wrapCanvasText(
       context,
       recommendation.supporting
         ? `${recommendation.value} · ${recommendation.supporting}`
         : recommendation.value,
-      insightX + 30,
-      recommendationY + 23,
-      insightWidth - 60,
-      18,
+      insightX + 32,
+      recommendationY + 33,
+      insightWidth - 64,
+      22,
       1,
     );
   }
 
-  context.strokeStyle = "#e2e8f0";
+  context.strokeStyle = line;
   context.beginPath();
-  context.moveTo(78, 516);
-  context.lineTo(1122, 516);
+  context.moveTo(contentX, 1148);
+  context.lineTo(CARD_WIDTH - contentX, 1148);
   context.stroke();
-  context.fillStyle = "#64748b";
-  context.font = `700 11px ${fontFamily}`;
-  context.fillText("NEXT RANGE TEST", 78, 532);
-  context.fillStyle = "#334155";
-  context.font = `500 15px ${fontFamily}`;
-  wrapCanvasText(context, data.rangePlan, 78, 550, 1044, 17, 2);
+  context.fillStyle = sage;
+  context.font = `700 14px ${fontFamily}`;
+  context.fillText("NEXT RANGE TEST", contentX, 1174);
+  context.fillStyle = ink;
+  context.font = `600 21px ${fontFamily}`;
+  wrapCanvasText(context, data.rangePlan, contentX, 1205, contentWidth, 28, 2);
+
+  context.fillStyle = muted;
+  context.font = `600 15px ${fontFamily}`;
+  context.fillText("THE BALL LEFT YOU A MESSAGE.", contentX, 1272);
+  context.textAlign = "right";
+  context.fillStyle = sage;
+  context.fillText("TRY YOURS → DOVEGOLF.FIT", CARD_WIDTH - contentX, 1272);
+  context.textAlign = "left";
 
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
@@ -563,9 +603,9 @@ export function DiagnosisSharePanel({
       <div className="mt-6">
         <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Share preview</p>
-          <p className="text-xs text-slate-400">1200 × 630 social card</p>
+          <p className="text-xs text-slate-400">1080 × 1350 Instagram portrait</p>
         </div>
-        <div className="mt-3 aspect-[1200/630] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
+        <div className="mx-auto mt-3 aspect-[4/5] w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
           {previewUrl ? (
             <Image
               src={previewUrl}
@@ -588,7 +628,7 @@ export function DiagnosisSharePanel({
           type="button"
           onClick={handleDownload}
           disabled={sharing || !cardReady}
-          aria-label="Download result image, PNG, 1200 by 630 pixels"
+          aria-label="Download result image, PNG, 1080 by 1350 pixels"
           className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50 disabled:opacity-50 sm:w-auto"
         >
           Download result card (backup)

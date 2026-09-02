@@ -226,7 +226,7 @@ test("canonical flight visuals keep the slow dotted progression and reduced-moti
   assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ball-flight-marker[\s\S]*?display: none/);
 });
 
-test("completed diagnoses keep the distribution loop and keep direct email closed safely", async () => {
+test("completed diagnoses export an Instagram-ready card without losing native sharing or link fallback", async () => {
   const [component, emailRoute, decoder, equipment, driverSlice, pullHook, curvesRight] = await Promise.all([
     source("src/components/diagnosis/DiagnosisSharePanel.tsx"),
     source("src/app/api/email-results/route.ts"),
@@ -242,8 +242,16 @@ test("completed diagnoses keep the distribution loop and keep direct email close
   assert.match(component, /Download result card/);
   assert.match(component, /files: \[shareFile\]/);
   assert.match(component, /navigator\.canShare\?\.\(fileShareData\) === true/);
+  assert.match(component, /await navigator\.share\(fileShareData\)/);
+  assert.match(component, /await navigator\.share\(\{ title: "My DoveGolf diagnosis", text: shareText, url: data\.shareUrl \}\)/);
+  assert.match(component, /navigator\.clipboard\.writeText\(shareText\)/);
   assert.match(component, /Share link instead/);
-  assert.match(component, /1200 × 630 social card/);
+  assert.match(component, /const CARD_WIDTH = 1080/);
+  assert.match(component, /const CARD_HEIGHT = 1350/);
+  assert.match(component, /canvas\.width = CARD_WIDTH/);
+  assert.match(component, /canvas\.height = CARD_HEIGHT/);
+  assert.match(component, /1080 × 1350/);
+  assert.match(component, /aspect-\[4\/5\]/);
   assert.match(component, /MY SHOT PROFILE/);
   assert.match(component, /getBallFlightChartPathGeometry/);
   assert.match(component, /analyticsContext/);
@@ -256,11 +264,22 @@ test("completed diagnoses keep the distribution loop and keep direct email close
   assert.doesNotMatch(emailRoute, /RESEND_API_KEY/);
 
   for (const resultPage of [decoder, equipment, driverSlice, pullHook, curvesRight]) {
+    assert.match(
+      resultPage,
+      /import\s+\{\s*DiagnosisSharePanel\s*\}\s+from\s+["']@\/components\/diagnosis\/DiagnosisSharePanel["']/,
+    );
     assert.match(resultPage, /<DiagnosisSharePanel/);
     assert.match(resultPage, /details=/);
     assert.match(resultPage, /flightShape=/);
     assert.match(resultPage, /analyticsContext=/);
   }
+
+  // The optional fitter record is a document-style archive, not the social card.
+  // Keep its existing high-detail export available alongside the 4:5 summary.
+  assert.match(equipment, /const SHARE_CARD_WIDTH = 1080/);
+  assert.match(equipment, /const SHARE_CARD_HEIGHT = 2300/);
+  assert.match(equipment, /<EquipmentAlignmentShareCard/);
+  assert.match(equipment, /link\.download = `dovegolf-record-\$\{certificateId\}\.png`/);
 });
 
 test("runtime configuration names are documented without real credentials", async () => {
