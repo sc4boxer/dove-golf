@@ -14,9 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_NAME = "Dove Golf";
-const DEFAULT_TITLE = "Dove Golf | Stop guessing. Fit your gear to your swing.";
+const SOCIAL_TITLE = "The ball left you a message.";
+const DEFAULT_TITLE = `${SOCIAL_TITLE} | ${SITE_NAME}`;
 const DEFAULT_DESCRIPTION =
-  "A deterministic, physics-aware golf fitting engine that converts real swing tendencies into testable equipment decisions.";
+  "Simple, visual golf tools for better range sessions, clearer ball flight, and smarter equipment choices.";
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata: Metadata = {
@@ -57,13 +58,13 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: SITE_NAME,
-    title: DEFAULT_TITLE,
+    title: SOCIAL_TITLE,
     description: DEFAULT_DESCRIPTION,
     url: "https://dovegolf.fit",
   },
   twitter: {
     card: "summary_large_image",
-    title: DEFAULT_TITLE,
+    title: SOCIAL_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
   verification: {

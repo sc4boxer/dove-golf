@@ -271,3 +271,18 @@ test("runtime configuration names are documented without real credentials", asyn
 
   assert.doesNotMatch(envExample, /G-XPWFEER0PV/);
 });
+
+test("the homepage share preview reflects the current Dove Golf product", async () => {
+  const [layout, preview] = await Promise.all([
+    source("src/app/layout.tsx"),
+    source("src/components/social/SocialPreviewImage.tsx"),
+  ]);
+
+  assert.match(layout, /The ball left you a message\./);
+  assert.doesNotMatch(layout, /Stop guessing\. Fit your gear to your swing\./);
+  assert.match(layout, /Simple, visual golf tools for better range sessions/);
+  assert.match(preview, /The ball left you/);
+  assert.match(preview, /a message\./);
+  await access(resolve(projectRoot, "src/app/opengraph-image.tsx"));
+  await access(resolve(projectRoot, "src/app/twitter-image.tsx"));
+});
