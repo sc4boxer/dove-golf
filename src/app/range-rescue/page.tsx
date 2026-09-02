@@ -8,16 +8,26 @@ import {
   type RangeRescuePlanId,
 } from "@/lib/range-rescue/plans";
 import { MissVisual } from "@/components/range-rescue/MissVisual";
+import { RescueVisualGuide } from "@/components/range-rescue/RescueVisualGuide";
 import styles from "./range-rescue.module.css";
 
 export default function RangeRescuePage() {
   const [selectedId, setSelectedId] = useState<RangeRescuePlanId | null>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
+  const fiveBallPlan = useRef<HTMLOListElement>(null);
   const selectedPlan = selectedId ? getRangeRescuePlan(selectedId) : undefined;
 
   useEffect(() => {
     if (selectedPlan) resultHeading.current?.focus();
   }, [selectedPlan]);
+
+  function startFiveBallRescue() {
+    fiveBallPlan.current?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "start",
+    });
+    window.requestAnimationFrame(() => fiveBallPlan.current?.focus());
+  }
 
   return (
     <main className={styles.shell}>
@@ -91,7 +101,9 @@ export default function RangeRescuePage() {
               </div>
             </div>
 
-            <ol className={styles.steps}>
+            <RescueVisualGuide id={selectedPlan.id} onStart={startFiveBallRescue} />
+
+            <ol className={styles.steps} ref={fiveBallPlan} tabIndex={-1} aria-label="Your five-ball rescue plan">
               <li>
                 <span className={styles.stepNumber}>1</span>
                 <div><h2>Reset</h2><p>{selectedPlan.reset}</p></div>

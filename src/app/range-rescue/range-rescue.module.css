@@ -208,7 +208,11 @@
   border-radius: 22px;
   background: rgba(255, 255, 255, 0.86);
   list-style: none;
+  scroll-margin-top: 18px;
+  outline: none;
 }
+
+.steps:focus-visible { outline: 3px solid #9db63c; outline-offset: 4px; }
 
 .steps > li {
   display: grid;
