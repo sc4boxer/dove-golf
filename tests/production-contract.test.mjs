@@ -122,6 +122,14 @@ test("all established public pages remain routable", async () => {
   );
 });
 
+test("range rescue provides a clear route back to the landing page", async () => {
+  const rangeRescue = await source("src/app/range-rescue/page.tsx");
+
+  assert.match(rangeRescue, /<Link\s+href="\/"/);
+  assert.match(rangeRescue, /aria-label="Back to Dove Golf home"/);
+  assert.match(rangeRescue, /Dove Golf home/);
+});
+
 test("the legacy ball-flight library permanently redirects to the canonical guide", async () => {
   const legacyLibrary = await source("src/app/ball-flight-library/page.tsx");
 
@@ -209,7 +217,9 @@ test("canonical flight visuals keep the slow dotted progression and reduced-moti
   ]);
 
   assert.match(chart, /strokeDasharray="1 9"/);
-  assert.match(chart, /<animateMotion dur="2\.8s"/);
+  assert.match(chart, /<animateMotion[\s\S]*?dur="2\.8s"/);
+  assert.match(chart, /motionRef\.current\?\.beginElement\(\)/);
+  assert.match(chart, /<animateMotion[\s\S]*?begin="indefinite"/);
   assert.match(chart, /className="ball-flight-reveal"/);
   assert.match(globals, /@keyframes flight-reveal/);
   assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ball-flight-marker[\s\S]*?display: none/);

@@ -1,0 +1,68 @@
+.guide {
+  margin: 2px 0 18px;
+  overflow: hidden;
+  border: 1px solid #dce2dd;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 18px 50px rgba(23, 54, 45, 0.06);
+}
+
+.progress { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; padding: 18px 20px 6px; }
+.progressLabel { color: #245f4d; font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+.progressTrack { height: 3px; overflow: hidden; border-radius: 99px; background: #e5e9e6; }
+.progressTrack > span { display: block; height: 100%; border-radius: inherit; background: #245f4d; transition: width 350ms ease; }
+.progressHalf { width: 50%; }
+.progressComplete { width: 100%; }
+
+.visualFrame { margin: 10px 12px 0; overflow: hidden; border-radius: 20px; background: linear-gradient(145deg, #f5f8f0, #eef3e7); }
+.diagram { display: block; width: 100%; height: auto; min-height: 210px; }
+.ground, .targetCap { fill: none; stroke: #9aac9f; stroke-width: 3; stroke-linecap: round; }
+.targetLine { fill: none; stroke: #b2c0b6; stroke-width: 2; stroke-dasharray: 6 7; }
+.ball { fill: white; stroke: #17362d; stroke-width: 3; }
+.clubTrail, .badFlight, .goodFlight { fill: none; stroke-linecap: round; stroke-width: 5; stroke-dasharray: 8 9; animation: draw 1.65s ease-out both; }
+.clubTrail, .badFlight { stroke: #7e9189; }
+.goodFlight { stroke: #245f4d; }
+.movingHead, .flightBall { fill: #245f4d; }
+.issueBall { fill: #8b7f72; }
+.origin { fill: white; stroke: #17362d; stroke-width: 3; }
+.contactMark circle { fill: rgba(221, 236, 142, .7); stroke: #245f4d; stroke-width: 2; }
+.contactMark path { stroke: #245f4d; stroke-width: 2; }
+.forwardArrow, .feetLine, .smallArc { fill: none; stroke: #245f4d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.feetLine { stroke-dasharray: 7 7; opacity: .75; }
+.feet { fill: none; stroke: #17362d; stroke-width: 8; stroke-linecap: round; }
+.nearMark { fill: #ddec8e; stroke: #245f4d; stroke-width: 2; }
+.targetWindow { fill: rgba(221, 236, 142, .5); stroke: #9eb849; stroke-width: 2; }
+.svgLabel { fill: #5d746b; font: 600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+
+.copy { padding: 24px 22px 18px; }
+.kicker { margin: 0 0 8px !important; color: #245f4d !important; font-size: 11px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.copy h2 { margin: 0; outline: none; color: #17362d; font-size: clamp(1.7rem, 6vw, 2.5rem); font-weight: 650; letter-spacing: -.045em; line-height: 1.05; }
+.copy > p:not(.kicker, .cue) { max-width: 590px; margin: 12px 0 0; color: #5d746b; font-size: 15px; line-height: 1.55; }
+.cue { width: fit-content; display: flex; align-items: center; gap: 8px; margin: 15px 0 0; padding: 8px 11px; border-radius: 999px; background: #f1f5df; color: #375044; font-size: 12px; font-weight: 700; }
+.cue span { display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #245f4d; color: white; font-size: 10px; }
+
+.actions { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 0 22px 14px; }
+.actions button { min-height: 50px; border-radius: 15px; font-size: 13px; font-weight: 750; cursor: pointer; }
+.replay { padding: 0 14px; border: 1px solid #dce2dd; color: #5d746b; background: white; }
+.primary { padding: 0 18px; background: #17362d; color: white; }
+.note { margin: 0; padding: 0 22px 19px; color: #71857d; font-size: 11px; }
+.actions button:focus-visible { outline: 3px solid #9db63c; outline-offset: 3px; }
+
+@keyframes draw { from { stroke-dashoffset: 190; } to { stroke-dashoffset: 0; } }
+
+@media (max-width: 480px) {
+  .guide { border-radius: 22px; }
+  .progress { padding-inline: 16px; }
+  .visualFrame { margin-inline: 8px; }
+  .diagram { min-height: 175px; }
+  .copy { padding: 20px 17px 16px; }
+  .actions { grid-template-columns: 1fr; padding-inline: 17px; }
+  .actions .primary { grid-row: 1; }
+  .note { padding-inline: 17px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progressTrack > span { transition: none; }
+  .clubTrail, .badFlight, .goodFlight { animation: none; }
+  .diagram animateMotion { display: none; }
+}

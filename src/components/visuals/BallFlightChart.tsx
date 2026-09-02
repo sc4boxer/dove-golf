@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import {
   BALL_FLIGHT_CHART_PATHS_NORMALIZED,
   CANONICAL_BALL_FLIGHT_SHAPES,
@@ -49,6 +49,13 @@ export function BallFlightChartGlyph({
   const singlePathGeometry = getBallFlightChartPathGeometry({ shape, width, height });
   const pathData = toBallFlightChartSvgPath(singlePathGeometry);
   const revealMaskId = `flight-reveal-${useId().replace(/:/g, "")}`;
+  const motionRef = useRef<SVGAnimateMotionElement>(null);
+
+  useEffect(() => {
+    if (!staticRender && !showAllPaths) {
+      motionRef.current?.beginElement();
+    }
+  }, [shape, staticRender, showAllPaths]);
 
   return (
     <>
@@ -148,7 +155,13 @@ export function BallFlightChartGlyph({
                 className="ball-flight-marker"
                 aria-hidden
               >
-                <animateMotion dur="2.8s" fill="freeze" path={pathData} />
+                <animateMotion
+                  dur="2.8s"
+                  ref={motionRef}
+                  begin="indefinite"
+                  fill="freeze"
+                  path={pathData}
+                />
               </circle>
             </>
           ) : null}
@@ -190,6 +203,7 @@ export function BallFlightChart({
         aria-label={`${BALL_FLIGHT_CHART_LABELS[shape]} ball flight for a right-handed golfer. The path begins at one shared origin.`}
       >
         <BallFlightChartGlyph
+          key={shape}
           shape={shape}
           width={width}
           height={height}
