@@ -44,11 +44,11 @@ export function TrajectoryComparison() {
         width="100%"
         height="100%"
         viewBox={`0 0 ${w} ${h}`}
-        className="w-full"
+        className="trajectory-comparison w-full"
         role="img"
-        aria-label="Three golf ball trajectories plotted by height and distance"
+        aria-label="Three golf ball trajectories show that different shot shapes leave different clues"
       >
-        <g opacity="0">
+        <g opacity="0" data-trajectory-static="visible">
           <animate attributeName="opacity" from="0" to="1" dur={`${tAxes}s`} fill="freeze" />
           {Array.from({ length: 6 }).map((_, i) => {
             const x = originX + ((xMax - originX) * (i + 1)) / 7;
@@ -61,33 +61,33 @@ export function TrajectoryComparison() {
         </g>
 
         <g>
-          <line x1={originX} y1={originY} x2={originX} y2={yMax} stroke="rgb(203 213 225)" strokeWidth="3" strokeLinecap="round" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
+          <line data-trajectory-static="drawn" x1={originX} y1={originY} x2={originX} y2={yMax} stroke="rgb(203 213 225)" strokeWidth="3" strokeLinecap="round" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
             <animate attributeName="stroke-dashoffset" from={dashLen} to="0" dur={`${tAxes}s`} fill="freeze" />
           </line>
-          <line x1={originX} y1={originY} x2={xMax} y2={originY} stroke="rgb(203 213 225)" strokeWidth="3" strokeLinecap="round" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
+          <line data-trajectory-static="drawn" x1={originX} y1={originY} x2={xMax} y2={originY} stroke="rgb(203 213 225)" strokeWidth="3" strokeLinecap="round" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
             <animate attributeName="stroke-dashoffset" from={dashLen} to="0" dur={`${tAxes}s`} fill="freeze" />
           </line>
-          <text x={originX + 6} y={yMax + 14} fontSize="12" fill="rgb(100 116 139)" opacity="0">
+          <text data-trajectory-static="visible" x={originX + 6} y={yMax + 14} fontSize="12" fill="rgb(100 116 139)" opacity="0">
             Height
             <animate attributeName="opacity" from="0" to="1" begin={`${tAxes}s`} dur="0.35s" fill="freeze" />
           </text>
-          <text x={xMax - 62} y={originY + 26} fontSize="12" fill="rgb(100 116 139)" opacity="0">
+          <text data-trajectory-static="visible" x={xMax - 62} y={originY + 26} fontSize="12" fill="rgb(100 116 139)" opacity="0">
             Distance
             <animate attributeName="opacity" from="0" to="1" begin={`${tAxes}s`} dur="0.35s" fill="freeze" />
           </text>
         </g>
 
-        <path d={pathHigh} fill="none" stroke="rgb(148 163 184)" strokeWidth="3" strokeLinecap="round" strokeDasharray="14 26" opacity="0" strokeDashoffset={dashLen}>
+        <path data-trajectory-static="drawn" d={pathHigh} fill="none" stroke="rgb(148 163 184)" strokeWidth="3" strokeLinecap="round" strokeDasharray="14 26" opacity="0" strokeDashoffset={dashLen}>
           <animate attributeName="opacity" from="0" to="1" begin={`${tHighStart}s`} dur="0.01s" fill="freeze" />
           <animate attributeName="stroke-dashoffset" from={dashLen} to="0" begin={`${tHighStart}s`} dur={`${tHighDur}s`} fill="freeze" />
         </path>
 
-        <path d={pathLow} fill="none" stroke="rgb(148 163 184)" strokeWidth="3" strokeLinecap="round" strokeDasharray="14 26" opacity="0" strokeDashoffset={dashLen}>
+        <path data-trajectory-static="drawn" d={pathLow} fill="none" stroke="rgb(148 163 184)" strokeWidth="3" strokeLinecap="round" strokeDasharray="14 26" opacity="0" strokeDashoffset={dashLen}>
           <animate attributeName="opacity" from="0" to="1" begin={`${tLowStart}s`} dur="0.01s" fill="freeze" />
           <animate attributeName="stroke-dashoffset" from={dashLen} to="0" begin={`${tLowStart}s`} dur={`${tLowDur}s`} fill="freeze" />
         </path>
 
-        <path d={pathOptimal} fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" opacity="0" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
+        <path data-trajectory-static="drawn" d={pathOptimal} fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" opacity="0" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
           <animate attributeName="opacity" from="0" to="1" begin={`${tOptStart}s`} dur="0.01s" fill="freeze" />
           <animate attributeName="stroke-dashoffset" from={dashLen} to="0" begin={`${tOptStart}s`} dur={`${tOptDur}s`} fill="freeze" />
         </path>
@@ -96,6 +96,22 @@ export function TrajectoryComparison() {
       <div className="mt-3 text-xs text-slate-500">
         Different swings → different trajectories. Fit optimizes your “default.”
       </div>
+      <style>{`
+        @media (prefers-reduced-motion: reduce) {
+          .trajectory-comparison animate {
+            display: none;
+          }
+
+          .trajectory-comparison [data-trajectory-static="visible"] {
+            opacity: 1;
+          }
+
+          .trajectory-comparison [data-trajectory-static="drawn"] {
+            opacity: 1;
+            stroke-dashoffset: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 }
