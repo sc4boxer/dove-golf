@@ -62,18 +62,24 @@ export default function HomePage() {
             give you a clearer starting point—not another swing opinion.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link
+              href="/range-rescue"
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
+            >
+              Open Range Rescue →
+            </Link>
             <TrackLink
               href="/tools/ball-flight-decoder"
               eventParams={{ module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" }}
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
             >
               Decode my ball flight →
             </TrackLink>
             <TrackLink
               href="/diagnostic"
               eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}
-              className="inline-flex min-h-12 items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-900 transition hover:bg-slate-50"
+              className="inline-flex min-h-12 items-center justify-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
             >
               Check my equipment fit →
             </TrackLink>
@@ -92,7 +98,23 @@ export default function HomePage() {
 
         <section className="mt-16" aria-labelledby="start-heading">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Start here</p>
-          <h2 id="start-heading" className="mt-3 text-2xl font-semibold tracking-tight">Choose the evidence you already have.</h2>
+          <h2 id="start-heading" className="mt-3 text-2xl font-semibold tracking-tight">Choose what you need right now.</h2>
+
+          <section className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-8" aria-labelledby="range-rescue-heading">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.14em] text-[#245f4d]">AT THE RANGE RIGHT NOW?</p>
+              <h3 id="range-rescue-heading" className="mt-3 text-2xl font-semibold tracking-tight">Calm your next five balls.</h3>
+              <p className="mt-3 max-w-2xl leading-relaxed text-slate-600">
+                Pick the miss that looks closest and get one simple reset and a five-ball plan.
+              </p>
+            </div>
+            <Link
+              href="/range-rescue"
+              className="mt-6 inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b] sm:mt-0 sm:w-auto"
+            >
+              Open Range Rescue →
+            </Link>
+          </section>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             {tools.map((tool) => (
@@ -107,28 +129,14 @@ export default function HomePage() {
                 </div>
                 <h3 className="mt-8 text-2xl font-semibold tracking-tight">{tool.title}</h3>
                 <p className="mt-4 leading-relaxed text-slate-600">{tool.description}</p>
-                <p className="mt-auto pt-8 text-sm font-medium text-slate-900">
-                  {tool.action} <span aria-hidden className="transition group-hover:ml-1">→</span>
+                <p className="mt-auto pt-8">
+                  <span className="inline-flex min-h-12 items-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition group-hover:bg-[#1b4d3e]">
+                    {tool.action} <span aria-hidden className="ml-1 transition group-hover:ml-2">→</span>
+                  </span>
                 </p>
               </Link>
             ))}
           </div>
-        </section>
-
-        <section className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:flex sm:items-center sm:justify-between sm:gap-8 sm:p-8" aria-labelledby="range-rescue-heading">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.14em] text-[#245f4d]">AT THE RANGE RIGHT NOW?</p>
-            <h2 id="range-rescue-heading" className="mt-3 text-2xl font-semibold tracking-tight">Calm your next five balls.</h2>
-            <p className="mt-3 max-w-2xl leading-relaxed text-slate-600">
-              Pick the miss that looks closest and get one simple reset and a five-ball plan.
-            </p>
-          </div>
-          <Link
-            href="/range-rescue"
-            className="mt-6 inline-flex min-h-12 w-full shrink-0 items-center justify-center rounded-2xl bg-[#245f4d] px-5 py-3 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b] sm:mt-0 sm:w-auto"
-          >
-            Open Range Rescue →
-          </Link>
         </section>
 
         <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-50 p-7 sm:p-8">
