@@ -122,6 +122,14 @@ test("all established public pages remain routable", async () => {
   );
 });
 
+test("range rescue provides a clear route back to the landing page", async () => {
+  const rangeRescue = await source("src/app/range-rescue/page.tsx");
+
+  assert.match(rangeRescue, /<Link\s+href="\/"/);
+  assert.match(rangeRescue, /aria-label="Back to Dove Golf home"/);
+  assert.match(rangeRescue, /Dove Golf home/);
+});
+
 test("the legacy ball-flight library permanently redirects to the canonical guide", async () => {
   const legacyLibrary = await source("src/app/ball-flight-library/page.tsx");
 

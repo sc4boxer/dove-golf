@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   RANGE_RESCUE_PLANS,
@@ -23,15 +24,17 @@ export default function RangeRescuePage() {
       <div className={styles.haze} aria-hidden="true" />
       <div className={styles.app}>
         <header className={styles.header}>
-          <button
+          <Link
+            href="/"
             className={styles.brand}
-            type="button"
-            onClick={() => setSelectedId(null)}
-            aria-label="Range Rescue home"
+            aria-label="Back to Dove Golf home"
           >
             <span className={styles.brandMark} aria-hidden="true">R</span>
-            <span>Range Rescue</span>
-          </button>
+            <span className={styles.brandCopy}>
+              <span>Range Rescue</span>
+              <span className={styles.homeCue}><span aria-hidden="true">←</span> Dove Golf home</span>
+            </span>
+          </Link>
           <span className={styles.privateNote}>Nothing is saved</span>
         </header>
 
