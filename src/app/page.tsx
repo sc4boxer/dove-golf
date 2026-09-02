@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TrackLink } from "@/components/analytics/TrackLink";
+import { TrajectoryComparison } from "@/components/home/TrajectoryComparison";
 
 export const metadata: Metadata = {
   title: "DoveGolf | Read the shot. Test the cause.",
@@ -84,6 +85,8 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+        <TrajectoryComparison />
 
         <section className="mt-16" aria-labelledby="start-heading">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Start here</p>
