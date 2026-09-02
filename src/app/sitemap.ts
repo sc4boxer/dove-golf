@@ -9,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/diagnostic",
     "/clinic",
     "/clinic/driver-slice",
+    "/range-rescue",
     "/method",
     "/about",
     "/learn",
