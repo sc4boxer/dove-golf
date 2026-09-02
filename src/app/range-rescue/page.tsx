@@ -9,6 +9,8 @@ import {
 } from "@/lib/range-rescue/plans";
 import { MissVisual } from "@/components/range-rescue/MissVisual";
 import { RescueVisualGuide } from "@/components/range-rescue/RescueVisualGuide";
+import { ProductFeedback } from "@/components/feedback/ProductFeedback";
+import { track } from "@/lib/analytics/ga";
 import styles from "./range-rescue.module.css";
 
 export default function RangeRescuePage() {
@@ -22,6 +24,9 @@ export default function RangeRescuePage() {
   }, [selectedPlan]);
 
   function startFiveBallRescue() {
+    if (selectedPlan) {
+      track("dov_range_rescue_five_ball_started", { plan_id: selectedPlan.id });
+    }
     fiveBallPlan.current?.scrollIntoView({
       behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
       block: "start",
@@ -45,7 +50,7 @@ export default function RangeRescuePage() {
               <span className={styles.homeCue}><span aria-hidden="true">←</span> Dove Golf home</span>
             </span>
           </Link>
-          <span className={styles.privateNote}>Nothing is saved</span>
+          <span className={styles.privateNote}>No account needed</span>
         </header>
 
         {!selectedPlan ? (
@@ -72,7 +77,10 @@ export default function RangeRescuePage() {
                     key={plan.id}
                     className={styles.option}
                     type="button"
-                    onClick={() => setSelectedId(plan.id)}
+                    onClick={() => {
+                      track("dov_range_rescue_plan_selected", { plan_id: plan.id });
+                      setSelectedId(plan.id);
+                    }}
                   >
                     <MissVisual id={plan.id} />
                     <span className={styles.optionCopy}>
@@ -138,6 +146,8 @@ export default function RangeRescuePage() {
                 <p>{selectedPlan.fallback}</p>
               </div>
             </div>
+
+            <ProductFeedback planId={selectedPlan.id} />
 
             <div className={styles.finish}>
               <p>You’re not fixing your swing today. You’re finding one playable shot.</p>

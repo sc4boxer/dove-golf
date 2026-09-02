@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { ConsentManager } from "@/components/privacy/ConsentManager";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -83,7 +83,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GoogleAnalytics measurementId={GA_ID} />
+        <ConsentManager measurementId={GA_ID} />
         {children}
       </body>
     </html>

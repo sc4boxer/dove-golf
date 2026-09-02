@@ -12,7 +12,8 @@
     "test:decoder": "node --test src/components/tools/ball-flight-decoder/*.test.js",
     "test:equipment": "node --test src/lib/tools/*.test.js",
     "test:range-rescue": "node --experimental-strip-types --test src/lib/range-rescue/*.test.js",
-    "test": "npm run test:contract && npm run test:visual && npm run test:decoder && npm run test:equipment && npm run test:sharing && npm run test:range-rescue",
+    "test:feedback": "node --experimental-strip-types --test src/lib/feedback/*.test.js",
+    "test": "npm run test:contract && npm run test:visual && npm run test:decoder && npm run test:equipment && npm run test:sharing && npm run test:range-rescue && npm run test:feedback",
     "check": "npm run test && npm run build",
     "test:sharing": "node --test src/lib/share/*.test.js"
   },

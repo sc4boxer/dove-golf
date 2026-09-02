@@ -1,0 +1,37 @@
+.panel {
+  margin-top: 16px;
+  padding: 24px 22px;
+  border: 1px solid #dfe3df;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.eyebrow { margin: 0 0 8px; color: #245f4d; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.panel h2 { max-width: 580px; margin: 0; color: #17362d; font-size: clamp(1.45rem, 5vw, 2rem); font-weight: 650; letter-spacing: -.035em; line-height: 1.08; }
+.intro, .sentCopy { max-width: 580px; margin: 10px 0 0; color: #5d746b; font-size: 14px; line-height: 1.55; }
+
+.helpfulChoices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0 0; padding: 0; border: 0; }
+.choice, .selectedChoice { min-height: 50px; display: flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid #dfe3df; border-radius: 15px; background: white; color: #375044; font-size: 14px; font-weight: 700; cursor: pointer; }
+.selectedChoice { border-color: #245f4d; background: #17362d; color: white; }
+.choice input, .selectedChoice input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.choice:has(input:focus-visible), .selectedChoice:has(input:focus-visible) { outline: 3px solid #9db63c; outline-offset: 3px; }
+
+.optionalFields { display: grid; gap: 16px; margin-top: 18px; padding-top: 18px; border-top: 1px solid #e7eae7; }
+.fieldGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fieldGrid label, .commentField { display: grid; gap: 7px; color: #375044; font-size: 12px; font-weight: 720; }
+.fieldGrid select, .commentField textarea { width: 100%; min-height: 48px; padding: 0 12px; border: 1px solid #d5ddd8; border-radius: 13px; background: white; color: #17362d; font: inherit; font-size: 14px; }
+.commentField textarea { min-height: 96px; padding-block: 12px; resize: vertical; line-height: 1.45; }
+.commentField em { color: #71857d; font-style: normal; font-weight: 500; }
+.commentField small { color: #71857d; font-size: 11px; font-weight: 500; line-height: 1.4; }
+.submitRow { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; }
+.submitRow button { min-height: 50px; padding: 0 18px; border-radius: 14px; background: #17362d; color: white; font-size: 13px; font-weight: 750; cursor: pointer; }
+.submitRow button:disabled { cursor: wait; opacity: .65; }
+.submitRow p { margin: 0; color: #71857d; font-size: 11px; line-height: 1.45; }
+.submitRow a, .error a { color: #245f4d; font-weight: 700; }
+.error { margin: 0; color: #984638; font-size: 12px; line-height: 1.5; }
+
+@media (max-width: 540px) {
+  .panel { padding: 21px 17px; border-radius: 21px; }
+  .fieldGrid, .submitRow { grid-template-columns: 1fr; }
+  .submitRow button { width: 100%; }
+}

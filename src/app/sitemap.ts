@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/tools/ball-flight-decoder",
     "/method",
     "/about",
+    "/privacy",
     "/learn",
     "/faq",
     "/learn/ball-flight",
