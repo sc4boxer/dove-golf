@@ -209,7 +209,9 @@ test("canonical flight visuals keep the slow dotted progression and reduced-moti
   ]);
 
   assert.match(chart, /strokeDasharray="1 9"/);
-  assert.match(chart, /<animateMotion dur="2\.8s"/);
+  assert.match(chart, /<animateMotion[\s\S]*?dur="2\.8s"/);
+  assert.match(chart, /motionRef\.current\?\.beginElement\(\)/);
+  assert.match(chart, /<animateMotion[\s\S]*?begin="indefinite"/);
   assert.match(chart, /className="ball-flight-reveal"/);
   assert.match(globals, /@keyframes flight-reveal/);
   assert.match(globals, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.ball-flight-marker[\s\S]*?display: none/);
