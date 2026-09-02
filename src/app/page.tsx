@@ -86,7 +86,9 @@ export default function HomePage() {
           </div>
         </section>
 
-        <TrajectoryComparison />
+        <div className="mt-14">
+          <TrajectoryComparison />
+        </div>
 
         <section className="mt-16" aria-labelledby="start-heading">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Start here</p>

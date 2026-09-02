@@ -1,58 +1,101 @@
-import styles from "./TrajectoryComparison.module.css";
-
 export function TrajectoryComparison() {
-  const highShort = "M 48 166 C 145 20, 260 20, 365 164";
-  const lowMid = "M 48 166 C 190 105, 345 105, 535 164";
-  const balanced = "M 48 166 C 205 72, 410 72, 650 164";
+  const w = 760;
+  const h = 240;
+  const padL = 56;
+  const padR = 34;
+  const padT = 26;
+  const padB = 44;
+  const originX = padL;
+  const originY = h - padB;
+  const xMax = w - padR;
+  const yMax = padT;
+
+  function curvePath(endX: number, endY: number, peakY: number) {
+    const c1x = originX + (endX - originX) * 0.28;
+    const c2x = originX + (endX - originX) * 0.72;
+    return `M ${originX} ${originY} C ${c1x} ${peakY}, ${c2x} ${peakY}, ${endX} ${endY}`;
+  }
+
+  const highShortEndX = originX + (xMax - originX) * 0.52;
+  const highShortPeakY = yMax + (originY - yMax) * 0.1;
+  const highShortEndY = originY - 2;
+  const lowMidEndX = originX + (xMax - originX) * 0.76;
+  const lowMidPeakY = yMax + (originY - yMax) * 0.58;
+  const lowMidEndY = originY - 2;
+  const optimalEndX = originX + (xMax - originX) * 0.92;
+  const optimalPeakY = yMax + (originY - yMax) * 0.36;
+  const optimalEndY = originY - 2;
+
+  const pathHigh = curvePath(highShortEndX, highShortEndY, highShortPeakY);
+  const pathLow = curvePath(lowMidEndX, lowMidEndY, lowMidPeakY);
+  const pathOptimal = curvePath(optimalEndX, optimalEndY, optimalPeakY);
+  const tAxes = 0.9;
+  const tHighStart = 1.1;
+  const tHighDur = 3;
+  const tLowStart = tHighStart + tHighDur + 0.35;
+  const tLowDur = 3;
+  const tOptStart = tLowStart + tLowDur + 0.35;
+  const tOptDur = 2.2;
+  const dashLen = 1200;
 
   return (
-    <figure className={styles.figure}>
-      <div className={styles.copy}>
-        <p className={styles.eyebrow}>See the evidence</p>
-        <p className={styles.title}>Different flights point to different tests.</p>
-      </div>
-
+    <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
       <svg
-        className={styles.chart}
-        viewBox="0 0 700 210"
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${w} ${h}`}
+        className="w-full"
         role="img"
-        aria-labelledby="trajectory-title trajectory-description"
+        aria-label="Three golf ball trajectories plotted by height and distance"
       >
-        <title id="trajectory-title">Three animated golf ball trajectories</title>
-        <desc id="trajectory-description">
-          A high short flight and a low medium flight appear as dotted comparisons before a balanced solid flight.
-        </desc>
-
-        <defs>
-          <mask id="reveal-high-short">
-            <path className={`${styles.reveal} ${styles.revealHigh}`} pathLength="1" d={highShort} />
-          </mask>
-          <mask id="reveal-low-mid">
-            <path className={`${styles.reveal} ${styles.revealLow}`} pathLength="1" d={lowMid} />
-          </mask>
-        </defs>
-
-        <g className={styles.grid} aria-hidden="true">
-          <path d="M 48 48 H 664 M 48 87 H 664 M 48 126 H 664" />
-          <path d="M 172 28 V 166 M 296 28 V 166 M 420 28 V 166 M 544 28 V 166" />
+        <g opacity="0">
+          <animate attributeName="opacity" from="0" to="1" dur={`${tAxes}s`} fill="freeze" />
+          {Array.from({ length: 6 }).map((_, i) => {
+            const x = originX + ((xMax - originX) * (i + 1)) / 7;
+            return <line key={`gx-${i}`} x1={x} y1={yMax} x2={x} y2={originY} stroke="rgb(241 245 249)" strokeWidth="2" />;
+          })}
+          {Array.from({ length: 3 }).map((_, i) => {
+            const y = yMax + ((originY - yMax) * (i + 1)) / 4;
+            return <line key={`gy-${i}`} x1={originX} y1={y} x2={xMax} y2={y} stroke="rgb(241 245 249)" strokeWidth="2" />;
+          })}
         </g>
 
-        <g className={styles.axes} aria-hidden="true">
-          <path className={`${styles.axis} ${styles.yAxis}`} pathLength="1" d="M 48 166 V 28" />
-          <path className={`${styles.axis} ${styles.xAxis}`} pathLength="1" d="M 48 166 H 664" />
-          <text className={styles.yLabel} x="56" y="42">Height</text>
-          <text className={styles.xLabel} x="606" y="195">Distance</text>
+        <g>
+          <line x1={originX} y1={originY} x2={originX} y2={yMax} stroke="rgb(203 213 225)" strokeWidth="3" strokeLinecap="round" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
+            <animate attributeName="stroke-dashoffset" from={dashLen} to="0" dur={`${tAxes}s`} fill="freeze" />
+          </line>
+          <line x1={originX} y1={originY} x2={xMax} y2={originY} stroke="rgb(203 213 225)" strokeWidth="3" strokeLinecap="round" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
+            <animate attributeName="stroke-dashoffset" from={dashLen} to="0" dur={`${tAxes}s`} fill="freeze" />
+          </line>
+          <text x={originX + 6} y={yMax + 14} fontSize="12" fill="rgb(100 116 139)" opacity="0">
+            Height
+            <animate attributeName="opacity" from="0" to="1" begin={`${tAxes}s`} dur="0.35s" fill="freeze" />
+          </text>
+          <text x={xMax - 62} y={originY + 26} fontSize="12" fill="rgb(100 116 139)" opacity="0">
+            Distance
+            <animate attributeName="opacity" from="0" to="1" begin={`${tAxes}s`} dur="0.35s" fill="freeze" />
+          </text>
         </g>
 
-        <path className={styles.comparison} d={highShort} mask="url(#reveal-high-short)" />
-        <path className={styles.comparison} d={lowMid} mask="url(#reveal-low-mid)" />
-        <path className={styles.balanced} pathLength="1" d={balanced} />
+        <path d={pathHigh} fill="none" stroke="rgb(148 163 184)" strokeWidth="3" strokeLinecap="round" strokeDasharray="14 26" opacity="0" strokeDashoffset={dashLen}>
+          <animate attributeName="opacity" from="0" to="1" begin={`${tHighStart}s`} dur="0.01s" fill="freeze" />
+          <animate attributeName="stroke-dashoffset" from={dashLen} to="0" begin={`${tHighStart}s`} dur={`${tHighDur}s`} fill="freeze" />
+        </path>
+
+        <path d={pathLow} fill="none" stroke="rgb(148 163 184)" strokeWidth="3" strokeLinecap="round" strokeDasharray="14 26" opacity="0" strokeDashoffset={dashLen}>
+          <animate attributeName="opacity" from="0" to="1" begin={`${tLowStart}s`} dur="0.01s" fill="freeze" />
+          <animate attributeName="stroke-dashoffset" from={dashLen} to="0" begin={`${tLowStart}s`} dur={`${tLowDur}s`} fill="freeze" />
+        </path>
+
+        <path d={pathOptimal} fill="none" stroke="rgb(15 23 42)" strokeWidth="4" strokeLinecap="round" opacity="0" strokeDasharray={dashLen} strokeDashoffset={dashLen}>
+          <animate attributeName="opacity" from="0" to="1" begin={`${tOptStart}s`} dur="0.01s" fill="freeze" />
+          <animate attributeName="stroke-dashoffset" from={dashLen} to="0" begin={`${tOptStart}s`} dur={`${tOptDur}s`} fill="freeze" />
+        </path>
       </svg>
 
-      <figcaption className={styles.caption}>
-        Compare the shape first. Change one variable second.
-      </figcaption>
-    </figure>
+      <div className="mt-3 text-xs text-slate-500">
+        Different swings → different trajectories. Fit optimizes your “default.”
+      </div>
+    </div>
   );
 }
-
