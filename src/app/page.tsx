@@ -97,7 +97,7 @@ export default function HomePage() {
               </p>
               <Link
                 href="/range-rescue"
-                className="mt-5 inline-flex min-h-11 items-center font-medium text-[#245f4d] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#245f4d] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
               >
                 Help my next five →
               </Link>
@@ -112,7 +112,7 @@ export default function HomePage() {
               <TrackLink
                 href="/tools/ball-flight-decoder"
                 eventParams={{ module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" }}
-                className="mt-5 inline-flex min-h-11 items-center font-medium text-[#245f4d] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#245f4d] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
               >
                 Understand the pattern →
               </TrackLink>
@@ -127,7 +127,7 @@ export default function HomePage() {
               <TrackLink
                 href="/diagnostic"
                 eventParams={{ module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}
-                className="mt-5 inline-flex min-h-11 items-center font-medium text-[#245f4d] underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
+                className="mt-5 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-[#245f4d] px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#1b4d3e] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#7d9b3b]"
               >
                 Check the setup →
               </TrackLink>

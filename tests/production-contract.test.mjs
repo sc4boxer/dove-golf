@@ -24,6 +24,7 @@ const publicPages = new Map([
   ["/learn/start-line-vs-curve", "src/app/learn/start-line-vs-curve/page.tsx"],
   ["/learn/tempo-vs-flex", "src/app/learn/tempo-vs-flex/page.tsx"],
   ["/method", "src/app/method/page.tsx"],
+  ["/privacy", "src/app/privacy/page.tsx"],
   ["/tools/ball-flight-decoder", "src/app/tools/ball-flight-decoder/page.tsx"],
 ]);
 
@@ -285,4 +286,36 @@ test("the homepage share preview reflects the current Dove Golf product", async 
   assert.match(preview, /a message\./);
   await access(resolve(projectRoot, "src/app/opengraph-image.tsx"));
   await access(resolve(projectRoot, "src/app/twitter-image.tsx"));
+});
+
+test("optional analytics stay behind an explicit privacy choice", async () => {
+  const [layout, consent, analytics] = await Promise.all([
+    source("src/app/layout.tsx"),
+    source("src/components/privacy/ConsentManager.tsx"),
+    source("src/components/analytics/GoogleAnalytics.tsx"),
+  ]);
+
+  assert.match(layout, /<ConsentManager measurementId={GA_ID} \/>/);
+  assert.doesNotMatch(layout, /<GoogleAnalytics/);
+  assert.match(consent, /Essential only/);
+  assert.match(consent, /Allow analytics/);
+  assert.match(consent, /choice === "analytics" && <GoogleAnalytics/);
+  assert.match(analytics, /ad_storage: 'denied'/);
+  assert.match(analytics, /allow_google_signals: false/);
+});
+
+test("anonymous product feedback keeps identity out of its storage contract", async () => {
+  const [feedbackRoute, migration, privacyPage] = await Promise.all([
+    source("src/app/api/feedback/route.ts"),
+    source("supabase/migrations/202609020001_create_product_feedback.sql"),
+    source("src/app/privacy/page.tsx"),
+  ]);
+
+  for (const storedField of ["module", "plan_id", "helpful", "experience", "next_help", "comment"]) {
+    assert.ok(migration.includes(storedField), `${storedField} must remain in the feedback contract`);
+  }
+  assert.doesNotMatch(migration, /\b(email|name|ip_address|user_agent|visitor_id)\s+text\b/i);
+  assert.match(feedbackRoute, /validateProductFeedback/);
+  assert.match(feedbackRoute, /Cache-Control.*no-store/s);
+  assert.match(privacyPage, /Participation in analytics and product feedback is optional/);
 });

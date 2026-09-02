@@ -1,0 +1,40 @@
+.banner {
+  position: fixed;
+  z-index: 1000;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  width: min(720px, calc(100% - 36px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 22px;
+  padding: 20px;
+  border: 1px solid rgba(23, 54, 45, .16);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .97);
+  color: #17362d;
+  box-shadow: 0 18px 55px rgba(23, 54, 45, .16);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.eyebrow { margin: 0 0 5px !important; color: #245f4d !important; font-size: 10px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.banner h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -.025em; }
+.banner p:not(.eyebrow) { max-width: 470px; margin: 7px 0 0; color: #5d746b; font-size: 12px; line-height: 1.5; }
+.banner a { color: #245f4d; font-weight: 700; }
+.actions { display: flex; gap: 8px; }
+.actions button { min-height: 46px; padding: 0 15px; border-radius: 13px; font-size: 12px; font-weight: 750; white-space: nowrap; cursor: pointer; }
+.secondary { border: 1px solid #d5ddd8; background: white; color: #375044; }
+.primary { background: #17362d; color: white; }
+.actions button:focus-visible, .reopen:focus-visible { outline: 3px solid #9db63c; outline-offset: 3px; }
+.reopen { position: fixed; z-index: 900; right: 12px; bottom: 10px; min-height: 36px; padding: 0 11px; border: 1px solid rgba(23, 54, 45, .14); border-radius: 999px; background: rgba(255, 255, 255, .92); color: #5d746b; box-shadow: 0 5px 18px rgba(23, 54, 45, .08); font-size: 10px; font-weight: 700; cursor: pointer; }
+
+@media (max-width: 620px) {
+  .banner { right: 10px; bottom: 10px; left: 10px; width: calc(100% - 20px); grid-template-columns: 1fr; gap: 15px; padding: 18px; border-radius: 18px; }
+  .actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .actions button { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner, .reopen { scroll-behavior: auto; }
+}

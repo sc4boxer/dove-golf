@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import type { RangeRescuePlanId } from "@/lib/range-rescue/plans";
 import { getRangeRescueVisualGuidance } from "@/lib/range-rescue/visual-guidance";
+import { track } from "@/lib/analytics/ga";
 import styles from "./RescueVisualGuide.module.css";
 
 type Stage = "understand" | "copy";
@@ -105,6 +106,7 @@ export function RescueVisualGuide({ id, onStart }: { id: RangeRescuePlanId; onSt
   const isCopy = stage === "copy";
 
   function showCopy() {
+    track("dov_range_rescue_visual_completed", { plan_id: id });
     setStage("copy");
     window.requestAnimationFrame(() => headingRef.current?.focus({ preventScroll: true }));
   }
