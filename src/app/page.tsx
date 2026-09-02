@@ -4,10 +4,36 @@ import { TrackLink } from "@/components/analytics/TrackLink";
 import { TrajectoryComparison } from "@/components/home/TrajectoryComparison";
 
 export const metadata: Metadata = {
-  title: "DoveGolf | Read the shot. Test the cause.",
+  title: "Dove Golf | Free Golf Tools for Better Range Sessions",
   description:
-    "Free, data-guided golf tools that turn observable ball flight, strike, and equipment clues into one practical next test.",
+    "Dove Golf offers free, data-guided tools that turn ball flight, strike, and equipment clues into one practical next test.",
   alternates: { canonical: "/" },
+};
+
+const siteUrl = "https://dovegolf.fit/";
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}#website`,
+      name: "Dove Golf",
+      alternateName: ["DoveGolf", "dovegolf.fit"],
+      url: siteUrl,
+      description:
+        "Free, data-guided golf tools for better range sessions, clearer ball flight, and smarter equipment choices.",
+      publisher: { "@id": `${siteUrl}#organization` },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}#organization`,
+      name: "Dove Golf",
+      legalName: "Dove Golf, Inc.",
+      url: siteUrl,
+      description:
+        "A brand-neutral golf education company that turns observable ball flight, strike, and equipment clues into practical tests.",
+    },
+  ],
 };
 
 const beginnerSteps = [
@@ -19,6 +45,12 @@ const beginnerSteps = [
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
       <div className="mx-auto max-w-5xl px-6 py-10 sm:py-12">
         <header>
           <div className="flex items-center justify-between gap-4">
@@ -46,14 +78,14 @@ export default function HomePage() {
 
         <section className="mt-16 grid items-center gap-12 md:mt-24 md:grid-cols-[1.15fr_0.85fr] md:gap-16" aria-labelledby="home-heading">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#245f4d]">New to the range?</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#245f4d]">Dove Golf · New to the range?</p>
             <h1 id="home-heading" className="mt-5 text-5xl font-semibold leading-[0.98] tracking-[-0.05em] sm:text-6xl">
-              Your first bucket should feel like{" "}
+              Dove Golf helps your first bucket feel like{" "}
               <span className="block text-[#55716a]">progress.</span>
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-slate-700">
-              You do not need to understand your swing yet. Tell us what the last ball did, and we will give
-              you one simple thing to try for the next five.
+              You do not need to understand your swing yet. Tell Dove Golf what the last ball did, and get
+              one simple thing to try for the next five.
             </p>
 
             <Link
