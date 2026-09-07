@@ -52,7 +52,7 @@ end $$;
 
 create function public.putting_submit_score(p_token_hash text, p_initials text, p_score integer, p_version text) returns jsonb
 language plpgsql set search_path = public as $$
-declare r putting_rounds; s putting_scores; placing bigint;
+declare r putting_rounds; s putting_scores; v_placing bigint;
 begin
   select * into r from putting_rounds where token_hash = p_token_hash for update;
   if not found or r.course_version <> p_version then raise exception 'putting_invalid_round'; end if;
@@ -65,11 +65,11 @@ begin
   if r.expires_at < now() then raise exception 'putting_invalid_round'; end if;
   -- Serialize rank assignment for a course, including simultaneous equal scores.
   perform pg_advisory_xact_lock(hashtext('putting:' || p_version));
-  select count(*) + 1 into placing from putting_scores
+  select count(*) + 1 into v_placing from putting_scores
     where course_version = p_version and not hidden and score > p_score
       and created_at >= (date_trunc('week', now() at time zone 'UTC') at time zone 'UTC');
   insert into putting_scores(round_hash, initials, score, course_version, rank_at_submission)
-    values(p_token_hash, p_initials, p_score, p_version, placing) returning * into s;
+    values(p_token_hash, p_initials, p_score, p_version, v_placing) returning * into s;
   update putting_rounds set used_at = now() where token_hash = p_token_hash;
   return to_jsonb(s) - 'round_hash' - 'hidden';
 end $$;

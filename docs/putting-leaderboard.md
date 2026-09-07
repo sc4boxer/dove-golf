@@ -27,4 +27,16 @@ Replay proves that a score is possible under the rules; it does not prove a huma
 
 ## Verification boundary
 
-Local replay tests, compilation, and unavailable-service behavior can run without database access. SQL execution, transactional concurrency, and real persisted success paths require the migration on a test database and must be reported as unverified until exercised there.
+The migration was executed unchanged in a temporary in-memory PGlite 0.5.8 PostgreSQL engine on September 7, 2026. Ten SQL smoke checks passed: migration creation; service-role start/submission and idempotent retry; altered duplicate rejection; expiry; tied ranks; UTC weekly exclusion; durable rate limits; moderation; and anonymous/authenticated read, write, and RPC permission denial. This caught and fixed a reserved-word variable name before deployment. Advisory locks executed successfully; no lock implementation was stubbed or removed. CI repeats this test with the pinned package installed in its temporary directory.
+
+PGlite has one connection, so this verifies real PostgreSQL SQL behavior but does not establish true simultaneous transaction contention or the hosted Supabase integration. Those remain release checks. No production database was accessed, and no package or lockfile was added to this repository. The separate handler tests exercise real replay and API validation with a mocked Supabase network boundary.
+
+To repeat the optional SQL test, install `@electric-sql/pglite` into a temporary directory outside the repository, then run:
+
+```powershell
+$pgliteTaskDir = Join-Path $env:TEMP 'dove-putting-pglite'
+npm install --prefix $pgliteTaskDir --no-package-lock --ignore-scripts @electric-sql/pglite@0.5.8
+node tests/putting-database-smoke.mjs (Join-Path $pgliteTaskDir 'node_modules/@electric-sql/pglite')
+```
+
+The script creates and closes an in-memory database and cannot connect to Supabase. API reference: [PGlite API](https://pglite.dev/docs/api); connection limitation: [PGlite getting started](https://pglite.dev/docs/).
