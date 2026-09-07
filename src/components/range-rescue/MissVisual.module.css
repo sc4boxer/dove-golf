@@ -6,23 +6,23 @@
   align-content: center;
   padding: 6px 5px 5px;
   border-radius: 13px;
-  background: #f1f3e8;
-  color: #5d746b;
+  background: var(--rr-surface, #f8fafc);
+  color: var(--muted);
   text-align: center;
 }
 
 .visual svg { width: 100%; height: 43px; overflow: visible; }
 .visual span { margin-top: 1px; font-size: 8px; font-weight: 720; line-height: 1.1; }
-.turf { fill: none; stroke: #8fa39a; stroke-width: 2; stroke-linecap: round; }
-.ball { fill: white; stroke: #17362d; stroke-width: 2; }
-.club { fill: none; stroke: #17362d; stroke-width: 4; stroke-linecap: round; }
-.trouble { fill: none; stroke: #d16f52; stroke-width: 3; stroke-linecap: round; }
-.motion { fill: none; stroke: #245f4d; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 4; }
-.targetLine { fill: none; stroke: #b8c6be; stroke-width: 2; stroke-dasharray: 3 4; }
-.flightPath { fill: none; stroke: #245f4d; stroke-width: 4; stroke-linecap: round; }
-.randomPath { fill: none; stroke: #245f4d; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 3 4; }
-.tee { fill: #17362d; }
-.landing { fill: #d16f52; }
+.turf { fill: none; stroke: #64748b; stroke-width: 2; stroke-linecap: round; }
+.ball { fill: white; stroke: var(--ink); stroke-width: 2; }
+.club { fill: none; stroke: var(--ink); stroke-width: 4; stroke-linecap: round; }
+.trouble { fill: none; stroke: #b45309; stroke-width: 3; stroke-linecap: round; }
+.motion { fill: none; stroke: var(--rr-accent, #0f172a); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 3 4; }
+.targetLine { fill: none; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 3 4; }
+.flightPath { fill: none; stroke: var(--rr-accent, #0f172a); stroke-width: 4; stroke-linecap: round; }
+.randomPath { fill: none; stroke: var(--rr-accent, #0f172a); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 3 4; }
+.tee { fill: var(--ink); }
+.landing { fill: #b45309; }
 
 .large { width: 150px; min-height: 112px; padding: 9px; justify-self: start; }
 .large svg { height: 74px; }
