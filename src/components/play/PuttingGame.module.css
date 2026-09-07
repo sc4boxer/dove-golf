@@ -41,3 +41,23 @@
 .powerHud label { display: flex; gap: 8px; }
 .powerHud meter { width: 80px; height: 12px; accent-color: #365540; }
 .powerHud > span { color: #475569; }
+.challenge { margin: 0; padding: 10px 20px; color: #234e40; background: #f5f4eb; font-size: 12px; line-height: 1.6; font-weight: 600; }
+.leaderboard { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; min-width: 0; }
+.panel { min-width: 0; }
+.scoreLink { display: block; margin-top: 12px; text-decoration: underline; min-height: 32px; font-weight: 600; }
+.holeResults { display: flex; gap: 6px; margin: 20px 0; padding: 0; list-style: none; }
+.holeResults li { flex: 1; min-width: 0; display: grid; gap: 8px; padding: 10px 4px; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center; font-size: 11px; }
+.holeResults strong { font-size: 20px; color: #234e40; }
+.holeResults small { font-size: 10px; }
+.initialsLabel { display: block; font-weight: 600; margin: 20px 0 10px; }
+.initials { display: block; width: 150px; padding: 12px; border: 2px solid #475569; border-radius: 12px; color: #0f172a; background: #fff; font: 700 28px var(--font-geist-mono), monospace; letter-spacing: .25em; text-align: center; }
+.periods { display: flex; gap: 8px; }
+.periods button { border: 1px solid #cbd5e1; border-radius: 12px; padding: 10px 18px; min-height: 44px; cursor: pointer; }
+.periods button[aria-pressed="true"] { color: white; background: #0f172a; }
+.tableWrap { overflow-x: auto; }
+.scoreTable { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; margin-top: 16px; }
+.scoreTable th, .scoreTable td { padding: 12px 6px; border-bottom: 1px solid #e2e8f0; }
+.scoreTable thead { color: #64748b; font-size: 11px; text-transform: uppercase; }
+.yourScore { background: #e1edce; }
+.error { font-size: 13px; line-height: 1.6; margin-top: 14px; color: #843c29; }
+@media (max-width: 400px) { .leaderboard .panel { padding: 16px; } .scoreTable { font-size: 12px; } }

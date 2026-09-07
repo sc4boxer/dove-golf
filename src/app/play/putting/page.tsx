@@ -4,7 +4,7 @@ import { PuttingGame } from "@/components/play/PuttingGame";
 
 export const metadata: Metadata = {
   title: "Putting Break — Free Mini Golf Game",
-  description: "Three holes, three putts per hole. Take a quick putting break with a free golf mini game. Drag to aim or use simple aim and power controls.",
+  description: "Five holes, clever obstacles and an arcade leaderboard. Play a free mini golf challenge, bank your putts and share your score.",
   alternates: { canonical: "/play/putting" },
 };
 
@@ -15,7 +15,7 @@ export default function PuttingPage() {
       <header className="mb-6 mt-6 max-w-xl sm:mb-8 sm:mt-10">
         <p className="text-xs font-semibold uppercase tracking-[.16em] text-slate-500">A little game between turns</p>
         <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:mt-4 sm:text-5xl">Putting break.</h1>
-        <p className="mt-3 text-base leading-7 text-slate-600 sm:mt-4">Three holes. Three putts each. Find just enough pace to drop it in.</p>
+        <p className="mt-3 text-base leading-7 text-slate-600 sm:mt-4">Five holes. Five putts each. Find your angles, bank off the walls, and put your initials on the board.</p>
       </header>
       <PuttingGame />
       <footer className="mt-8 border-t border-slate-200 pt-6 text-sm leading-6 text-slate-500">Just for fun. Ready for your turn? You can leave any time. <Link href="/range-rescue" className="font-medium text-slate-900 underline underline-offset-4">Back to practice</Link></footer>

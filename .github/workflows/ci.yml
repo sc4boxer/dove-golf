@@ -86,6 +86,11 @@ jobs:
       - name: Test putting game physics
         run: npm run test:putting
 
+      - name: Verify putting database migration locally
+        run: |
+          npm install --prefix "$RUNNER_TEMP/putting-db" --no-package-lock --ignore-scripts @electric-sql/pglite@0.5.8
+          node tests/putting-database-smoke.mjs "$RUNNER_TEMP/putting-db/node_modules/@electric-sql/pglite"
+
       - name: Test Ball Flight Decoder
         run: npm run test:decoder
 
