@@ -1,0 +1,24 @@
+.session { padding: 24px 0; color: var(--ink); }
+.session h1 { font-size: clamp(2rem, 7vw, 3.5rem); line-height: 1.08; letter-spacing: -.04em; margin: 12px 0 20px; }
+.session h2 { font-size: 1.25rem; line-height: 1.35; margin: 24px 0 12px; }
+.session p, .instructions { line-height: 1.65; }
+.note { color: #50685f; font-size: .9rem; }
+.kicker { color: var(--green); font-size: .8rem; font-weight: 750; margin-top: 24px; }
+.instructions { padding-left: 24px; }
+.instructions li { margin: 14px 0; padding-left: 4px; }
+.session button { min-height: 48px; cursor: pointer; border-radius: 12px; font: inherit; }
+.session button:focus-visible, .session h1:focus-visible { outline: 3px solid #245f4d; outline-offset: 4px; }
+.back { color: var(--green); background: transparent; padding: 10px 4px; text-decoration: underline; text-underline-offset: 4px; }
+.primary { background: var(--green); color: white; padding: 14px 20px; margin: 20px 0 0; border: 0; font-weight: 700 !important; width: 100%; }
+.primary:disabled { background: #e0e5e1; color: #506057; cursor: default; }
+.recorder, .next { background: white; padding: 20px; border: 1px solid var(--line); border-radius: 20px; margin-top: 24px; }
+.recorder > p { font-weight: 700; margin-top: 0; }
+.choices { display: grid; gap: 10px; }
+.choices button { background: #f2f5ed; border: 1px solid #98aca0; color: var(--ink); padding: 12px; text-align: left; }
+.choices button:hover { background: #e7eddd; }
+.records { list-style: none; padding: 0; font-size: .875rem; line-height: 1.8; }
+.results { width: 100%; border-collapse: collapse; margin: 24px 0; font-size: .875rem; }
+.results caption { text-align: left; font-weight: 700; margin-bottom: 12px; }
+.results th, .results td { text-align: left; border-bottom: 1px solid #bdcac2; padding: 14px 6px; }
+.results td { white-space: nowrap; }
+.next h2 { margin-top: 0; }

@@ -27,7 +27,7 @@ export function MissVisual({ id, large = false }: { id: RangeRescuePlanId; large
           <path className={styles.trouble} d="M39 34 H54" />
           <path className={styles.motion} d="M52 34 Q69 29 84 32" />
         </svg>
-        <span>Clip the top of the ball</span>
+        <span>Ball stays low or rolls</span>
       </div>
     );
   }

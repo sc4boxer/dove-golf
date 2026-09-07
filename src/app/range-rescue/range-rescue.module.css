@@ -89,6 +89,41 @@
 }
 
 .chooser, .result { flex: 1; }
+.beginnerCard {
+  display: grid;
+  gap: 16px;
+  margin: 0 0 24px;
+  padding: clamp(20px, 4vw, 32px);
+  border: 1px solid #c4d2b0;
+  border-radius: 22px;
+  background: #edf2df;
+}
+.beginnerCard h2 { margin: 0; font-size: clamp(1.3rem, 3vw, 1.5rem); font-weight: 650; line-height: 1.3; letter-spacing: -0.025em; }
+.beginnerCard p { margin: 0; line-height: 1.6; }
+.beginnerCopy { display: grid; gap: 12px; }
+.beginnerCopy > p:last-child { max-width: 58ch; color: #435e54; font-size: 15px; }
+.beginnerAction { display: grid; gap: 12px; padding-top: 8px; }
+.beginnerAction > p { max-width: 54ch; color: #50685f; font-size: 13px; line-height: 1.5; }
+.beginnerCard button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  min-height: 52px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: var(--green);
+  color: white;
+  text-align: left;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.beginnerCard button > span:last-child { flex-shrink: 0; font-size: 20px; font-weight: 500; }
+.beginnerCard button:hover { background: #1c4d3e; }
+.beginnerCard button:focus-visible, .intro h1:focus-visible { outline: 3px solid var(--green); outline-offset: 4px; }
 
 .intro, .planIntro {
   padding: 46px 0 28px;
