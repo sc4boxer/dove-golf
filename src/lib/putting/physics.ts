@@ -7,6 +7,13 @@ export const COURSE = {
   start: { x: 110, y: 385 },
 } as const;
 
+export type Course = { width: number; height: number; ballRadius: number; cup: { x: number; y: number; radius: number }; start: { x: number; y: number } };
+export const HOLES: readonly Course[] = [
+  COURSE,
+  { ...COURSE, start: { x: 265, y: 385 }, cup: { x: 95, y: 125, radius: 12 } },
+  { ...COURSE, start: { x: 80, y: 390 }, cup: { x: 280, y: 180, radius: 12 } },
+];
+
 export type Ball = { x: number; y: number; vx: number; vy: number; sunk: boolean };
 
 const FRICTION = 90;
@@ -16,8 +23,8 @@ const CAPTURE_SPEED = 90;
 const CAPTURE_RADIUS = 10;
 const MAX_STEP = 1 / 240;
 
-export function createBall(): Ball {
-  return { ...COURSE.start, vx: 0, vy: 0, sunk: false };
+export function createBall(course: Course = COURSE): Ball {
+  return { ...course.start, vx: 0, vy: 0, sunk: false };
 }
 
 export function isMoving(ball: Ball): boolean {
@@ -39,7 +46,7 @@ export function strike(ball: Ball, angleDegrees: number, power: number): Ball {
  * cannot jump over the cup. The UI should advance this with a fixed timestep.
  * Ten seconds is ample to settle any valid strike and bounds suspended-tab work.
  */
-export function step(ball: Ball, dt: number): Ball {
+export function step(ball: Ball, dt: number, course: Course = COURSE): Ball {
   let next = { ...ball };
   if (!Number.isFinite(dt) || dt <= 0 || next.sunk) return next;
   let remaining = Math.min(dt, 10);
@@ -54,18 +61,18 @@ export function step(ball: Ball, dt: number): Ball {
 
     // Closest point on the swept segment, with speed at that actual position.
     const fraction = distance > 0
-      ? Math.max(0, Math.min(1, ((COURSE.cup.x - next.x) * dx + (COURSE.cup.y - next.y) * dy) / (distance * distance)))
+      ? Math.max(0, Math.min(1, ((course.cup.x - next.x) * dx + (course.cup.y - next.y) * dy) / (distance * distance)))
       : 0;
-    const cupDistance = Math.hypot(next.x + dx * fraction - COURSE.cup.x, next.y + dy * fraction - COURSE.cup.y);
+    const cupDistance = Math.hypot(next.x + dx * fraction - course.cup.x, next.y + dy * fraction - course.cup.y);
     const speedAtCup = Math.sqrt(Math.max(0, speed * speed - 2 * FRICTION * distance * fraction));
     if (cupDistance < CAPTURE_RADIUS && speedAtCup < CAPTURE_SPEED) {
-      return { x: COURSE.cup.x, y: COURSE.cup.y, vx: 0, vy: 0, sunk: true };
+      return { x: course.cup.x, y: course.cup.y, vx: 0, vy: 0, sunk: true };
     }
 
     next = { ...next, x: next.x + dx, y: next.y + dy, vx: next.vx / speed * newSpeed, vy: next.vy / speed * newSpeed };
-    const min = 20 + COURSE.ballRadius;
-    const maxX = COURSE.width - min;
-    const maxY = COURSE.height - min;
+    const min = 20 + course.ballRadius;
+    const maxX = course.width - min;
+    const maxY = course.height - min;
     // Reflect the small overshoot as well as velocity to avoid sticking at walls.
     if (next.x < min) {
       next.x = min + (min - next.x) * RESTITUTION;
