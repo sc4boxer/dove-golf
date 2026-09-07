@@ -8,7 +8,7 @@ type Phase = "ready" | "rolling" | "won" | "over";
 type Round = { strokes: number; phase: Phase };
 const aimAtCup = (ball: Ball) => Math.atan2(COURSE.cup.x - ball.x, ball.y - COURSE.cup.y) * 180 / Math.PI;
 
-function draw(canvas: HTMLCanvasElement, ball: Ball, angle: number, power: number, phase: Phase) {
+function draw(canvas: HTMLCanvasElement, ball: Ball, angle: number, power: number, phase: Phase, dragging: boolean) {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
   const { width, height, cup } = COURSE;
@@ -43,6 +43,15 @@ function draw(canvas: HTMLCanvasElement, ball: Ball, angle: number, power: numbe
   } else {
     ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(cup.x, cup.y + 2, 4, 0, Math.PI * 2); ctx.fill();
   }
+  if (dragging && phase === "ready") {
+    const x = Math.max(28, Math.min(width - 124, ball.x - 48));
+    const y = ball.y > 90 ? ball.y - 65 : ball.y + 24;
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.roundRect(x, y, 96, 38, 10); ctx.fill();
+    ctx.fillStyle = "#0f172a"; ctx.font = "600 11px Arial"; ctx.textAlign = "left";
+    ctx.fillText(`Power ${power}%`, x + 10, y + 15);
+    ctx.fillStyle = "#e2e8f0"; ctx.fillRect(x + 10, y + 24, 76, 4);
+    ctx.fillStyle = "#0f172a"; ctx.fillRect(x + 10, y + 24, 76 * power / 100, 4);
+  }
   ctx.fillStyle = "#365540"; ctx.font = "11px Arial"; ctx.textAlign = "left"; ctx.fillText("THE SHORT BREAK", 34, height - 36);
 }
 
@@ -55,6 +64,7 @@ export function PuttingGame() {
   const [power, setPower] = useState(60);
   const aim = useRef({ angle: 27, power: 60 });
   const drag = useRef<{ id: number; x: number; y: number; angle: number; power: number; moved: boolean } | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [best, setBest] = useState<number | null>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
 
@@ -66,6 +76,7 @@ export function PuttingGame() {
   function putt() {
     if (liveRound.current.phase !== "ready" || aim.current.power < 1) return;
     drag.current = null;
+    setDragging(false);
     ball.current = strike(ball.current, aim.current.angle, aim.current.power);
     liveRound.current = { strokes: liveRound.current.strokes + 1, phase: "rolling" };
     setRound(liveRound.current);
@@ -73,6 +84,7 @@ export function PuttingGame() {
 
   function reset() {
     drag.current = null;
+    setDragging(false);
     ball.current = createBall();
     liveRound.current = { strokes: 0, phase: "ready" };
     setRound(liveRound.current);
@@ -82,7 +94,10 @@ export function PuttingGame() {
   }
 
   useEffect(() => {
-    if (round.phase === "won" || round.phase === "over") resultHeading.current?.focus({ preventScroll: true });
+    if (round.phase === "won" || round.phase === "over") {
+      resultHeading.current?.focus({ preventScroll: true });
+      resultHeading.current?.parentElement?.scrollIntoView({ block: "nearest", behavior: "instant" });
+    }
   }, [round.phase]);
 
   useEffect(() => {
@@ -110,12 +125,12 @@ export function PuttingGame() {
         }
       }
       previous = document.hidden ? 0 : time;
-      draw(canvas.current, ball.current, aim.current.angle, aim.current.power, liveRound.current.phase);
+      draw(canvas.current, ball.current, aim.current.angle, aim.current.power, liveRound.current.phase, dragging && drag.current?.moved === true);
       if (liveRound.current.phase === "rolling") frame = requestAnimationFrame(render);
     };
     frame = requestAnimationFrame(render);
     return () => cancelAnimationFrame(frame);
-  }, [round, angle, power]);
+  }, [round, angle, power, dragging]);
 
   function point(event: PointerEvent<HTMLCanvasElement>) {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -124,6 +139,7 @@ export function PuttingGame() {
   function cancelDrag() {
     if (drag.current) changeAim(drag.current.angle, drag.current.power);
     drag.current = null;
+    setDragging(false);
   }
   function pointerDown(event: PointerEvent<HTMLCanvasElement>) {
     if (liveRound.current.phase !== "ready" || !event.isPrimary || event.button !== 0) return;
@@ -132,6 +148,7 @@ export function PuttingGame() {
     event.currentTarget.focus({ preventScroll: true });
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { id: event.pointerId, ...p, ...aim.current, moved: false };
+    setDragging(true);
   }
   function pointerMove(event: PointerEvent<HTMLCanvasElement>) {
     if (!drag.current || event.pointerId !== drag.current.id) return;
@@ -143,12 +160,13 @@ export function PuttingGame() {
   const finished = round.phase === "won" || round.phase === "over";
   return <section className={styles.game} aria-label="One-hole putting game">
     <div className={styles.board}>
-      <div className={styles.score}><span>Hole <strong>01</strong></span><span><strong>{round.strokes}</strong> / 3 putts</span></div>
-      <p className={styles.boardHint}>Drag back from the ball and release. Or use the controls.</p>
-      <canvas ref={canvas} width={COURSE.width * 2} height={COURSE.height * 2} className={styles.canvas} tabIndex={0} aria-label="Putting green. Drag back from the ball and release to putt, or use the aim and power controls below." aria-describedby="putting-keyboard" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} onPointerUp={(event) => {
+      <div className={styles.score}><span>Hole <strong>01</strong></span><span role="status"><strong>{finished ? "Round complete" : round.phase === "rolling" ? "Ball rolling…" : round.strokes === 2 ? "Last putt" : `${3 - round.strokes} putts left`}</strong></span></div>
+      <p className={styles.boardHint}>Drag back from the ball and release. Longer pull, more power.</p>
+      <div className={styles.course}>
+      <canvas ref={canvas} width={COURSE.width * 2} height={COURSE.height * 2} className={styles.canvas} tabIndex={finished ? -1 : 0} aria-disabled={finished} aria-label="Putting green. Drag back from the ball and release to putt, or use the aim and power controls below." aria-describedby="putting-keyboard" onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} onPointerUp={(event) => {
         if (!drag.current || drag.current.id !== event.pointerId) return;
         const previous = drag.current;
-        const moved = previous.moved; drag.current = null;
+        const moved = previous.moved; drag.current = null; setDragging(false);
         if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
         if (moved) putt();
         else changeAim(previous.angle, previous.power);
@@ -162,24 +180,32 @@ export function PuttingGame() {
         if (event.key === "ArrowDown") changeAim(angle, Math.max(1, power - 3));
         if ((event.key === " " || event.key === "Enter") && !event.repeat) putt();
       }}>Use the aim and power controls to play. The cup begins above and to the right of the ball.</canvas>
+      {finished && <div className={styles.overlay}>
+        <section className={styles.resultCard} aria-labelledby="putting-result">
+          <p className={styles.eyebrow}>Round complete · {round.strokes} {round.strokes === 1 ? "putt" : "putts"} used</p>
+          <h2 id="putting-result" ref={resultHeading} tabIndex={-1}>{round.phase === "won" ? (round.strokes === 1 ? "One and done!" : "Nicely putted.") : "Give it another go."}</h2>
+          <p>{round.phase === "won" ? `${(4 - round.strokes) * 100} points. In the cup!` : "Three putts used. A fresh round is one tap away."}</p>
+          <button className={styles.primary} onClick={reset}>Play again →</button>
+          <p className={styles.replayNote}>Same hole. Your turn—or pass it to a friend.</p>
+        </section>
+      </div>}
+      </div>
     </div>
     <div className={styles.panel}>
       <p className={styles.eyebrow}>Hole 01 · The short break</p>
-      <h2 ref={resultHeading} tabIndex={-1}>{round.phase === "won" ? (round.strokes === 1 ? "One and done!" : "Nicely putted.") : round.phase === "over" ? "Another round?" : "A little touch goes a long way."}</h2>
+      <h2>A little touch goes a long way.</h2>
       <p className={styles.description}>Pull back from the ball, then release. A longer pull adds power. The dotted line shows your aim, not where the ball will stop.</p>
-      <div role="status" aria-live="polite" className={finished ? styles.result : styles.description}>
-        {round.phase === "rolling" ? "Ball rolling…" : round.phase === "won" ? <><strong>{round.strokes === 1 ? 300 : round.strokes === 2 ? 200 : 100} points</strong>In the cup in {round.strokes} {round.strokes === 1 ? "putt" : "putts"}. Pass the phone and see who can match it.</> : round.phase === "over" ? "Three putts used. Same hole, fresh start whenever you want." : round.strokes === 0 ? "Your first putt. Aim toward the flag." : `${3 - round.strokes} ${3 - round.strokes === 1 ? "putt" : "putts"} left. Aim has been reset toward the flag.`}
-      </div>
-      {!finished && <>
-        <fieldset disabled={round.phase === "rolling"} className={styles.controls}>
+      <details className={styles.alternative}>
+        <summary>Alternative controls</summary>
+        <p className={styles.help}>Use these sliders and the Putt button instead of dragging.</p>
+        <fieldset disabled={round.phase !== "ready"} className={styles.controls}>
           <legend className="sr-only">Aim and power — no dragging required</legend>
           <label><span className={styles.labelRow}><span>Aim</span><span aria-hidden="true">{Math.round(angle)}°</span></span><input aria-label="Aim" type="range" min="-180" max="180" value={angle} onChange={(e) => changeAim(Number(e.target.value), power)} aria-valuetext={`${Math.round(angle)} degrees; zero points up the green`} /></label>
           <label><span className={styles.labelRow}><span>Power</span><span aria-hidden="true">{power}%</span></span><input aria-label="Power" type="range" min="1" max="100" value={power} onChange={(e) => changeAim(angle, Number(e.target.value))} /></label>
         </fieldset>
-        <button className={styles.primary} disabled={round.phase === "rolling"} onClick={putt}>{round.phase === "rolling" ? "Rolling…" : "Putt →"}</button>
-      </>}
-      {finished && <button className={styles.primary} onClick={reset}>Play again / next player →</button>}
+        <button className={styles.primary} disabled={round.phase !== "ready"} onClick={putt}>{finished ? "Round complete" : round.phase === "rolling" ? "Rolling…" : "Putt →"}</button>
       {!finished && <button className={styles.secondary} onClick={reset}>Start a fresh round</button>}
+      </details>
       {best !== null && <p className={styles.help}>Best this visit: {best} {best === 1 ? "putt" : "putts"}. Resets when you leave or refresh.</p>}
       <details className={styles.help}><summary>Controls &amp; a small hint</summary><p id="putting-keyboard">On the green, use ← / → to aim and ↑ / ↓ for power. Press Enter or Space to putt. Escape cancels a drag. You can also tap the sliders and Putt button.</p><p>0° points up; positive angles turn right. Walls bounce. The cup catches a slow ball; a fast one can roll straight over it. This is a flat game green, not a real-world putting lesson.</p></details>
     </div>

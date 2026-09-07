@@ -14,6 +14,8 @@ The model uses fictional course units and is not intended to teach real putting 
 
 ## Evaluation before expansion
 
+Touch-flow update: after the ball settles on a win or the third missed putt, a result card appears over the green with a Play again button. Focus moves to the result heading and the card is brought into view if necessary. The course header announces remaining putts, the last putt, rolling, and completion. Alternative controls are collapsed by default; the same sliders, keyboard support, and Putt action remain available. A clamped power meter appears beside the ball during an active pull. Physics and scoring are unchanged.
+
 Have several people play on real phones while waiting between turns. Observe whether they discover dragging, distinguish aim from stopping distance, understand overshooting the cup, and want a second round. Confirm comfortable touch targets, course scrolling, and drag reach on short screens. Tune feel before building additional holes. Next candidates are a bank-shot hole and same-hole two-player scoring; saved records or leaderboards require separate design.
 
 ## Validation and release
