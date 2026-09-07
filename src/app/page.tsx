@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
+import { SITE_SLOGAN, SITE_DESCRIPTION } from "@/lib/siteCopy";
 import Link from "next/link";
 import { ToolShowcase } from "@/components/home/ToolShowcase";
 
 
 export const metadata: Metadata = {
   title: "Dove Golf | Free Golf Tools for Better Range Sessions",
-  description:
-    "Dove Golf offers free, data-guided tools that turn ball flight, strike, and equipment clues into one practical next test.",
+  description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
 
@@ -51,8 +51,8 @@ export default function HomePage() {
         </header>
         <section className="mb-8 mt-10 max-w-2xl sm:mb-10 sm:mt-14" aria-labelledby="home-heading">
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">Free tools. Clear next steps.</p>
-          <h1 id="home-heading" className="mt-4 text-4xl font-semibold leading-[1.08] tracking-[-0.045em] sm:text-5xl">Make your next range session more useful.</h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">Simple practice plans, clearer ball-flight feedback, and equipment checks—all in one place.</p>
+          <h1 id="home-heading" className="mt-4 text-4xl font-semibold leading-[1.08] tracking-[-0.045em] sm:text-5xl">{SITE_SLOGAN}</h1>
+          <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">{SITE_DESCRIPTION}</p>
         </section>
         <ToolShowcase />
         <aside className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6" aria-labelledby="putting-break-heading">

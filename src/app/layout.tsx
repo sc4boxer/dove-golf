@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ConsentManager } from "@/components/privacy/ConsentManager";
 import "./globals.css";
+import { SITE_SLOGAN, SITE_DESCRIPTION } from "@/lib/siteCopy";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,10 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_NAME = "Dove Golf";
-const SOCIAL_TITLE = "The ball left you a message.";
+const SOCIAL_TITLE = SITE_SLOGAN;
 const DEFAULT_TITLE = `${SOCIAL_TITLE} | ${SITE_NAME}`;
-const DEFAULT_DESCRIPTION =
-  "Simple, visual golf tools for better range sessions, clearer ball flight, and smarter equipment choices.";
+const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
 export const metadata: Metadata = {
