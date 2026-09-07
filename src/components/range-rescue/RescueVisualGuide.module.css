@@ -23,6 +23,7 @@
 .clubTrail, .badFlight { stroke: #7e9189; }
 .goodFlight { stroke: #245f4d; }
 .movingHead, .flightBall { fill: #245f4d; }
+.staticHead { display: none; fill: #245f4d; }
 .issueBall { fill: #8b7f72; }
 .origin { fill: white; stroke: #17362d; stroke-width: 3; }
 .contactMark circle { fill: rgba(221, 236, 142, .7); stroke: #245f4d; stroke-width: 2; }
@@ -45,7 +46,8 @@
 .actions button { min-height: 50px; border-radius: 15px; font-size: 13px; font-weight: 750; cursor: pointer; }
 .replay { padding: 0 14px; border: 1px solid #dce2dd; color: #5d746b; background: white; }
 .primary { padding: 0 18px; background: #17362d; color: white; }
-.note { margin: 0; padding: 0 22px 19px; color: #71857d; font-size: 11px; }
+.note { margin: 0; padding: 0 22px 19px; color: #52685e; font-size: 12px; line-height: 1.5; }
+.copy h2:focus-visible { outline: 3px solid #245f4d; outline-offset: 5px; border-radius: 3px; }
 .actions button:focus-visible { outline: 3px solid #9db63c; outline-offset: 3px; }
 
 @keyframes draw { from { stroke-dashoffset: 190; } to { stroke-dashoffset: 0; } }
@@ -64,5 +66,8 @@
 @media (prefers-reduced-motion: reduce) {
   .progressTrack > span { transition: none; }
   .clubTrail, .badFlight, .goodFlight { animation: none; }
-  .diagram animateMotion { display: none; }
+  .movingHead, .flightBall, .issueBall { display: none; }
+  .staticHead { display: block; }
+  .replay { display: none; }
+  .actions { grid-template-columns: 1fr; }
 }
