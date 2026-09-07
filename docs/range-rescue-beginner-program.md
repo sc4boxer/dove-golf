@@ -8,7 +8,7 @@ Upgrade the existing range companion into a guided practice program, while retai
 
 - A prominent beginner entry, including people unsure what their miss is.
 - Five stages: preparation, five starting attempts, three small practice swings without a ball, five comparison attempts, and a concrete next-session action.
-- Record airborne, rolling contact, or missed ball. Airborne shots also count as contact. Every attempt counts; undo corrects the last entry. Incomplete sets cannot advance or produce advice.
+- Record airborne, rolling contact, missed ball, or unclear result. Airborne shots also count as contact. Unclear results prevent comparison claims. Every attempt counts; undo corrects the last entry. Incomplete sets cannot advance or produce advice.
 - Compare counts using the same club and setup. No distance target, accuracy grade, diagnosis, or promise of improvement. Feedback distinguishes progress, repeatability, no contact, and an easier next task.
 - Session results stay in React memory and clear on exit or refresh. No new upload, persistence, account, API, or tracking feature.
 - All quick plans use plain instructions and count five actual balls. Starting-shot instructions supply a comparison. Diagrams distinguish straight offline shots from curves; reduced-motion users see a static endpoint.
@@ -37,4 +37,8 @@ Feature branch and draft PR only. Review the Vercel preview; merge to production
 
 ## Validation record
 
-See the pull request for final command results and browser checks. Manual testing must cover desktop/mobile, keyboard and focus return, both shot recorders, undo, incomplete-set gating, feedback branches, reset/refresh, all quick-plan selections, animation stages, and metadata. Existing feedback submission should not send test messages to production.
+Local validation: npm ci and full lint passed. Range Rescue and visual semantics tests passed with --experimental-strip-types (required by the installed Node 22.17); the literal visual-test command without that flag fails on TypeScript imports. Production-contract tests passed. Production build passed with documented CI placeholder Supabase/Resend settings and network access for existing Google Fonts.
+
+Browser checks covered 320px/390px mobile and 1280px desktop layouts, guided before/after completion, both recorders, undo and incomplete-set gating, final-ball focus, exit focus, refresh clearing, all seven quick-plan selections, both aiming-animation stages, scrolling to the plan, and canonical metadata. Feedback branches have focused unit tests. Reduced-motion fallback was inspected in code but not emulated in the browser. Existing production feedback submissions were not sent; their network loading/error/success states are unverified in this session. Human beginner usability and qualified coaching validation remain future work.
+
+The feature is committed locally. Automated approval review blocked pushing to the GitHub remote pending explicit user approval, so a draft PR, hosted Vercel preview, and remote CI results are not yet available.

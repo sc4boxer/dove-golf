@@ -1,14 +1,18 @@
-export type ShotOutcome = "air" | "contact" | "miss";
+export type ShotOutcome = "air" | "contact" | "miss" | "unsure";
 
 export function summarizeShots(shots: readonly ShotOutcome[]) {
   return {
-    contact: shots.filter((shot) => shot !== "miss").length,
+    contact: shots.filter((shot) => shot === "air" || shot === "contact").length,
     airborne: shots.filter((shot) => shot === "air").length,
   };
 }
 
 export function getSessionFeedback(before: readonly ShotOutcome[], after: readonly ShotOutcome[]) {
   if (before.length !== 5 || after.length !== 5) throw new Error("Record five shots in each set.");
+  if ([...before, ...after].includes("unsure")) return {
+    title: "Let’s get a clearer starting point",
+    next: "Some results were unclear, so we cannot compare these sets fairly. Next time, ask someone to watch from a safe place outside your swing area. Keep the same club and small swing, and record what you can see without guessing.",
+  };
   const initial = summarizeShots(before);
   const final = summarizeShots(after);
   if (final.contact === 0) return {

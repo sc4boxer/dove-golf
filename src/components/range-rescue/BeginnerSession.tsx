@@ -10,6 +10,7 @@ const outcomes: { value: ShotOutcome; label: string }[] = [
   { value: "air", label: "The ball went into the air" },
   { value: "contact", label: "I hit it, but it stayed on the ground" },
   { value: "miss", label: "I missed the ball" },
+  { value: "unsure", label: "I couldn’t tell what happened" },
 ];
 
 export function BeginnerSession({ onExit }: { onExit: () => void }) {
@@ -17,9 +18,13 @@ export function BeginnerSession({ onExit }: { onExit: () => void }) {
   const [before, setBefore] = useState<ShotOutcome[]>([]);
   const [after, setAfter] = useState<ShotOutcome[]>([]);
   const heading = useRef<HTMLHeadingElement>(null);
+  const continueButton = useRef<HTMLButtonElement>(null);
   useEffect(() => { heading.current?.focus(); }, [stage]);
   const shots = stage === 1 ? before : after;
   const setShots = stage === 1 ? setBefore : setAfter;
+  useEffect(() => {
+    if ((stage === 1 || stage === 3) && shots.length === 5) continueButton.current?.focus();
+  }, [stage, shots.length]);
   const initial = summarizeShots(before);
   const final = summarizeShots(after);
   const feedback = stage === 4 ? getSessionFeedback(before, after) : null;
@@ -43,7 +48,7 @@ export function BeginnerSession({ onExit }: { onExit: () => void }) {
     {(stage === 1 || stage === 3) && <>
       <h2>{stage === 1 ? "Take five comfortable shots" : "Take five shots with the small swing"}</h2>
       <p>{stage === 1 ? "Use your current comfortable swing. After each attempt, record what happened—even a miss counts." : "Let your hands travel only to about waist height going back and forward. After each attempt, record what happened."}</p>
-      <p id="shot-help">“Into the air” means you saw the ball lift off the ground, even briefly. A rolling ball still counts as contact. If you couldn’t see the result, check where it went before recording it.</p>
+      <p id="shot-help">“Into the air” means you saw the ball lift off the ground, even briefly. A rolling ball still counts as contact. If you couldn’t tell, choose that option without guessing. Stay inside your hitting area.</p>
       <div className={styles.recorder}>
         <p role="status">{shots.length < 5 ? `Ball ${shots.length + 1} of 5: what happened?` : "All five attempts recorded."}</p>
         {shots.length < 5 && <div className={styles.choices} aria-describedby="shot-help">
@@ -54,7 +59,7 @@ export function BeginnerSession({ onExit }: { onExit: () => void }) {
           <button className={styles.back} onClick={() => setShots((previous) => previous.slice(0, -1))}>Undo last ball</button>
         </>}
       </div>
-      <button className={styles.primary} disabled={shots.length !== 5} onClick={() => setStage(stage + 1)}>{stage === 1 ? "Show me the practice exercise" : "Compare my results"}</button>
+      <button ref={continueButton} className={styles.primary} disabled={shots.length !== 5} onClick={() => setStage(stage + 1)}>{stage === 1 ? "Show me the practice exercise" : "Compare my results"}</button>
     </>}
     {stage === 2 && <>
       <h2>One change: make the swing smaller</h2>
@@ -68,7 +73,7 @@ export function BeginnerSession({ onExit }: { onExit: () => void }) {
         <tr><th scope="row">Touched the ball</th><td>{initial.contact}/5</td><td>{final.contact}/5</td></tr>
         <tr><th scope="row">Got it into the air</th><td>{initial.airborne}/5</td><td>{final.airborne}/5</td></tr>
       </tbody></table>
-      <p>Shots that went into the air count in both rows. These are your observations from a small sample, not a swing diagnosis.</p>
+      <p>Shots that went into the air count in both rows. Unclear results are not counted as contact or height; the table only shows what you observed. These are observations from a small sample, not a swing diagnosis.</p>
       <div className={styles.next}><h2>Next practice</h2><p>{feedback.next}</p></div>
       <p>You can finish here. There’s no need to keep hitting until you get a perfect shot.</p>
       <button className={styles.primary} onClick={onExit}>Finish session</button>

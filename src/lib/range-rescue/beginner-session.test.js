@@ -8,6 +8,10 @@ test("airborne shots also count as contact", () => {
 test("incomplete sets cannot produce a comparison", () => {
   assert.throws(() => getSessionFeedback([], Array(5).fill("air")), /five shots/);
 });
+test("uncertain observations do not count as contact or produce improvement claims", () => {
+  assert.deepEqual(summarizeShots(["unsure", "miss"]), { contact: 0, airborne: 0 });
+  assert.match(getSessionFeedback(Array(5).fill("unsure"), Array(5).fill("air")).next, /cannot compare/);
+});
 test("feedback adapts to improvement, repeatability, struggle, and regression", () => {
   const set = (value) => Array(5).fill(value);
   assert.match(getSessionFeedback(set("miss"), set("contact")).title, /useful starting/);

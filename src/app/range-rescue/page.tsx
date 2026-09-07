@@ -133,7 +133,7 @@ export default function RangeRescuePage() {
 
             <div className={styles.beginnerCard}>
               <h2>Before you try the change</h2>
-              <p>Remember what your last five shots did. If you have not hit any yet, take five comfortable shots first. Use those as your starting point, then compare with the five below.</p>
+              <p>Read the Reset step below and choose your club first. Take five comfortable shots as your starting point, or use your last five only if you used the same club and setup. If either changes, take a new starting set before trying the change.</p>
               <p>Count every attempt, including misses. Use the same club and setup for both sets. Stop if swinging hurts.</p>
             </div>
             <RescueVisualGuide id={selectedPlan.id} onStart={startFiveBallRescue} />
