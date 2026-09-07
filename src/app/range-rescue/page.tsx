@@ -50,7 +50,6 @@ export default function RangeRescuePage() {
 
   return (
     <main className={styles.shell}>
-      <div className={styles.haze} aria-hidden="true" />
       <div className={styles.app}>
         <header className={styles.header}>
           <Link
