@@ -25,7 +25,7 @@ function draw(canvas: HTMLCanvasElement, ball: Ball, angle: number, power: numbe
   ctx.strokeStyle = "#edf3e9"; ctx.lineWidth = 2; ctx.stroke();
   ctx.strokeStyle = "#324b3b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cup.x, cup.y - 7); ctx.lineTo(cup.x, cup.y - 49); ctx.stroke();
   ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.moveTo(cup.x + 1, cup.y - 49); ctx.lineTo(cup.x + 27, cup.y - 40); ctx.lineTo(cup.x + 1, cup.y - 31); ctx.fill();
-  ctx.fillStyle = "#365540"; ctx.font = "600 10px Arial"; ctx.textAlign = "center"; ctx.fillText(String(hole + 1).padStart(2, "0"), cup.x + 10, cup.y - 38);
+  ctx.fillStyle = "#365540"; ctx.font = "600 10px Arial"; ctx.textAlign = "center"; ctx.fillText(String(hole + 1), cup.x + 10, cup.y - 38);
   if (!ball.sunk) {
     if (phase === "ready") {
       const rad = angle * Math.PI / 180;
@@ -156,7 +156,7 @@ export function PuttingGame() {
   const finished = round.phase === "won" || round.phase === "over";
   return <section className={styles.game} aria-label="Three-hole putting game">
     <div className={styles.board}>
-      <div className={styles.score}><span>Hole <strong>{String(hole + 1).padStart(2, "0")} / {HOLES.length}</strong></span><span role="status"><strong>{finished ? (hole === HOLES.length - 1 ? "Round complete" : "Hole complete") : round.phase === "rolling" ? "Ball rolling…" : round.strokes === 2 ? "Last putt" : `${3 - round.strokes} putts left`}</strong></span></div>
+      <div className={styles.score}><span>Hole <strong>{hole + 1} of {HOLES.length}</strong></span><span role="status"><strong>{finished ? (hole === HOLES.length - 1 ? "Round complete" : "Hole complete") : round.phase === "rolling" ? "Ball rolling…" : round.strokes === 2 ? "Last putt" : `${3 - round.strokes} putts left`}</strong></span></div>
       <p className={styles.boardHint}>Drag back from the ball and release. Longer pull, more power.</p>
       <div className={styles.powerHud}>
         <label htmlFor="putting-power-meter">Power <strong>{power}%</strong></label>
@@ -193,7 +193,7 @@ export function PuttingGame() {
       </div>
     </div>
     <div className={styles.panel}>
-      <p className={styles.eyebrow}>Hole {String(hole + 1).padStart(2, "0")} of {HOLES.length} · The short break</p>
+      <p className={styles.eyebrow}>Hole {hole + 1} of {HOLES.length} · The short break</p>
       <h2>A little touch goes a long way.</h2>
       <p className={styles.description}>Pull back from the ball, then release. A longer pull adds power. The dotted line shows your aim, not where the ball will stop.</p>
       <details className={styles.alternative}>
