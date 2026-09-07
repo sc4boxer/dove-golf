@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/clinic",
     "/clinic/driver-slice",
     "/range-rescue",
+    "/play/putting",
     "/clinic/ball-curves-right",
     "/clinic/pull-hook",
     "/tools/ball-flight-decoder",
