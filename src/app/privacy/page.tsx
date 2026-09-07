@@ -20,7 +20,7 @@ export default function PrivacyPage() {
             We want to learn whether the tools are useful without building a profile about you.
             Participation in analytics and product feedback is optional.
           </p>
-          <p className="mt-4 text-sm text-slate-500">Last updated September 1, 2026</p>
+          <p className="mt-4 text-sm text-slate-500">Last updated September 7, 2026</p>
         </header>
 
         <div className="space-y-10 py-10 text-base leading-7 text-slate-700">
@@ -29,6 +29,7 @@ export default function PrivacyPage() {
             <ul className="mt-4 list-disc space-y-3 pl-5">
               <li><strong>Optional analytics:</strong> If you allow analytics, Google Analytics may collect page views, session activity, approximate location, and broad browser or device information.</li>
               <li><strong>Optional product feedback:</strong> The module used, selected miss, whether the guidance helped, an optional golf-experience range, what topic you want next, and an optional comment.</li>
+              <li><strong>Optional putting leaderboard:</strong> If you post a score, your three-character initials, score, date and rank are public. We process your shot sequence to verify the score and store the result, course edition and a hashed round token. No account or email is needed.</li>
               <li><strong>Basic technical processing:</strong> Our hosting and security providers may temporarily process request information such as IP address and user agent to deliver and protect the site. Dove Golf does not add those fields to the product-feedback table.</li>
             </ul>
           </section>
@@ -51,11 +52,12 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Storage and retention</h2>
             <p className="mt-4">The essential browser storage remembers only your privacy choice. Anonymous product feedback is kept for product research and reviewed for deletion after 180 days. Google Analytics information follows the retention settings configured in our Google Analytics property.</p>
+            <p className="mt-4">Putting scores remain available for the all-time leaderboard until removed. To limit spam, we store a daily keyed hash derived from the hosting provider’s client IP address, rather than the plain IP. Old rate-limit records and expired unused round tokens are cleaned up during subsequent requests. Downloaded scorecards are created in your browser; sharing them is your choice. For a leaderboard removal request, include the initials, score and submission date.</p>
           </section>
 
           <section>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Service providers</h2>
-            <p className="mt-4">Dove Golf currently uses Vercel for hosting, Supabase for feedback storage, and Google Analytics only when allowed. These providers process information under their own terms and privacy commitments.</p>
+            <p className="mt-4">Dove Golf currently uses Vercel for hosting, Supabase for feedback and leaderboard storage, and Google Analytics only when allowed. These providers process information under their own terms and privacy commitments.</p>
           </section>
 
           <section>

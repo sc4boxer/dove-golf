@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { COURSE, createBall, strike, step, isMoving, type Ball, HOLES, type Course } from "@/lib/putting/physics";
 import styles from "./PuttingGame.module.css";
+import { MAX_STROKES, type Shot } from "@/lib/putting/physics";
+import { PuttingLeaderboard } from "./PuttingLeaderboard";
 
 type Phase = "ready" | "rolling" | "won" | "over";
 type Round = { strokes: number; phase: Phase };
@@ -21,6 +23,12 @@ function draw(canvas: HTMLCanvasElement, ball: Ball, angle: number, power: numbe
   for (let y = 20; y < height - 20; y += 64) { ctx.fillStyle = "#bfd6bd"; ctx.fillRect(20, y, width - 40, 32); }
   ctx.restore();
   ctx.strokeStyle = "#77977d"; ctx.lineWidth = 2; ctx.strokeRect(20, 20, width - 40, height - 40);
+  for (const obstacle of course.obstacles) {
+    ctx.fillStyle = "#365540";
+    ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    ctx.strokeStyle = "#f5f4eb"; ctx.lineWidth = 2;
+    ctx.strokeRect(obstacle.x + 2, obstacle.y + 2, obstacle.width - 4, obstacle.height - 4);
+  }
   ctx.fillStyle = "#243c32"; ctx.beginPath(); ctx.arc(cup.x, cup.y, cup.radius, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = "#edf3e9"; ctx.lineWidth = 2; ctx.stroke();
   ctx.strokeStyle = "#324b3b"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cup.x, cup.y - 7); ctx.lineTo(cup.x, cup.y - 49); ctx.stroke();
@@ -59,7 +67,21 @@ export function PuttingGame() {
   const aim = useRef({ angle: 27, power: 60 });
   const drag = useRef<{ id: number; x: number; y: number; angle: number; power: number; moved: boolean } | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [best, setBest] = useState<number | null>(null);
+  const shots = useRef<Shot[][]>(HOLES.map(() => []));
+  const [completedShots, setCompletedShots] = useState<Shot[][]>([]);
+  const [results, setResults] = useState<{strokes: number; points: number; sunk: boolean}[]>([]);
+  const [banked, setBanked] = useState(false);
+  const [visit, setVisit] = useState(0);
+  const token = useRef<Promise<string> | null>(null);
+  function getToken() {
+    if (!token.current) {
+      const pending = fetch("/api/putting/round", {method: "POST", headers: {"Content-Type": "application/json"}, body: "{}"})
+      .then(async response => { const data = await response.json(); if (!response.ok || !data.token) throw new Error(data.error || "Score posting is unavailable. Please try again."); return data.token as string; })
+      .catch(error => { if (token.current === pending) token.current = null; throw error; });
+      token.current = pending;
+    }
+    return token.current;
+  }
   const resultHeading = useRef<HTMLHeadingElement>(null);
 
   function changeAim(nextAngle: number, nextPower: number) {
@@ -71,12 +93,19 @@ export function PuttingGame() {
     if (liveRound.current.phase !== "ready" || aim.current.power < 1) return;
     drag.current = null;
     setDragging(false);
+    if (activeHole.current === 0 && liveRound.current.strokes === 0) void getToken().catch(() => {});
+    shots.current[activeHole.current].push({...aim.current});
     ball.current = strike(ball.current, aim.current.angle, aim.current.power);
     liveRound.current = { strokes: liveRound.current.strokes + 1, phase: "rolling" };
     setRound(liveRound.current);
   }
 
   function reset(nextHole = 0) {
+    if (nextHole === 0) {
+      shots.current = HOLES.map(() => []);
+      setResults([]); setCompletedShots([]); token.current = null; setVisit(value => value + 1);
+    }
+    setBanked(false);
     activeHole.current = nextHole;
     setHole(nextHole);
     drag.current = null;
@@ -106,13 +135,15 @@ export function PuttingGame() {
         accumulated += previous ? Math.min((time - previous) / 1000, .05) : 0;
         while (accumulated >= 1 / 120) {
           ball.current = step(ball.current, 1 / 120, HOLES[activeHole.current]);
+          if (ball.current.banked) setBanked(true);
           accumulated -= 1 / 120;
         }
         if (!isMoving(ball.current)) {
-          const next: Round = { strokes: liveRound.current.strokes, phase: ball.current.sunk ? "won" : liveRound.current.strokes >= 3 ? "over" : "ready" };
+          const next: Round = { strokes: liveRound.current.strokes, phase: ball.current.sunk ? "won" : liveRound.current.strokes >= MAX_STROKES ? "over" : "ready" };
           liveRound.current = next; setRound(next);
-          if (ball.current.sunk) setBest((value) => value === null ? next.strokes : Math.min(value, next.strokes));
-          else {
+          if ((next.phase === "won" || next.phase === "over") && activeHole.current === HOLES.length - 1) setCompletedShots(shots.current.map(holeShots => [...holeShots]));
+          if (next.phase === "won" || next.phase === "over") setResults(previous => [...previous.slice(0, activeHole.current), {strokes: next.strokes, sunk: ball.current.sunk, points: ball.current.sunk ? (6 - next.strokes) * 100 : 0}]);
+          if (!ball.current.sunk) {
             const nextAngle = aimAtCup(ball.current, HOLES[activeHole.current]);
             aim.current = { angle: nextAngle, power: 40 };
             setAngle(nextAngle); setPower(40);
@@ -154,9 +185,10 @@ export function PuttingGame() {
     if (distance >= 6) changeAim(Math.atan2(dx, -dy) * 180 / Math.PI, Math.min(100, Math.round(distance / 1.2)));
   }
   const finished = round.phase === "won" || round.phase === "over";
-  return <section className={styles.game} aria-label="Three-hole putting game">
+  return <section className={styles.game} aria-label="Five-hole putting game">
     <div className={styles.board}>
-      <div className={styles.score}><span>Hole <strong>{hole + 1} of {HOLES.length}</strong></span><span role="status"><strong>{finished ? (hole === HOLES.length - 1 ? "Round complete" : "Hole complete") : round.phase === "rolling" ? "Ball rolling…" : round.strokes === 2 ? "Last putt" : `${3 - round.strokes} putts left`}</strong></span></div>
+      <div className={styles.score}><span>Hole <strong>{hole + 1} of {HOLES.length}</strong></span><span role="status"><strong>{finished ? (hole === HOLES.length - 1 ? "Round complete" : "Hole complete") : round.phase === "rolling" ? "Ball rolling…" : round.strokes === MAX_STROKES - 1 ? "Last putt" : `${MAX_STROKES - round.strokes} putts left`}</strong></span></div>
+      <p className={styles.challenge} role="status">{course.name} · {course.bankRequired ? banked ? "✓ Bank complete — find the cup" : "Bank required — bounce off a wall or barrier" : "Find your pace"}</p>
       <p className={styles.boardHint}>Drag back from the ball and release. Longer pull, more power.</p>
       <div className={styles.powerHud}>
         <label htmlFor="putting-power-meter">Power <strong>{power}%</strong></label>
@@ -185,16 +217,17 @@ export function PuttingGame() {
         <section className={styles.resultCard} aria-labelledby="putting-result">
           <p className={styles.eyebrow}>Hole {hole + 1} complete · {round.strokes} {round.strokes === 1 ? "putt" : "putts"} used</p>
           <h2 id="putting-result" ref={resultHeading} tabIndex={-1}>{round.phase === "won" ? (round.strokes === 1 ? "One and done!" : "Nicely putted.") : "Give it another go."}</h2>
-          <p>{round.phase === "won" ? `${(4 - round.strokes) * 100} points. In the cup!` : (hole < HOLES.length - 1 ? "Three putts used. A new hole is ready." : "Three putts used. You finished the last hole.")}</p>
+          <p>{round.phase === "won" ? `${(6 - round.strokes) * 100} points. In the cup!` : (hole < HOLES.length - 1 ? "Five putts used. A new hole is ready." : "Five putts used. You finished the last hole.")}</p>
+          {hole === HOLES.length - 1 && <a className={styles.scoreLink} href="#round-scorecard">Your score & leaderboard ↓</a>}
           <button className={styles.primary} onClick={() => reset(hole < HOLES.length - 1 ? hole + 1 : 0)}>{hole < HOLES.length - 1 ? `Next hole (${hole + 2}) →` : "Play again →"}</button>
-          <p className={styles.replayNote}>{hole < HOLES.length - 1 ? "Three fresh putts on the next green." : "All three holes complete. Play again from hole 1."}</p>
+          <p className={styles.replayNote}>{hole < HOLES.length - 1 ? "Five fresh putts on the next green." : "Post your score below before starting a new round."}</p>
         </section>
       </div>}
       </div>
     </div>
     <div className={styles.panel}>
       <p className={styles.eyebrow}>Hole {hole + 1} of {HOLES.length} · The short break</p>
-      <h2>A little touch goes a long way.</h2>
+      <h2>{course.name}</h2>
       <p className={styles.description}>Pull back from the ball, then release. A longer pull adds power. The dotted line shows your aim, not where the ball will stop.</p>
       <details className={styles.alternative}>
         <summary>Alternative controls</summary>
@@ -207,8 +240,10 @@ export function PuttingGame() {
         <button className={styles.primary} disabled={round.phase !== "ready"} onClick={putt}>{finished ? (hole === HOLES.length - 1 ? "Round complete" : "Hole complete") : round.phase === "rolling" ? "Rolling…" : "Putt →"}</button>
       {!finished && <button className={styles.secondary} onClick={() => reset()}>Start a fresh round</button>}
       </details>
-      {best !== null && <p className={styles.help}>Best hole this visit: {best} {best === 1 ? "putt" : "putts"}. Resets when you leave or refresh.</p>}
+      <p className={styles.help}>Round score: <strong>{results.reduce((sum, result) => sum + result.points, 0).toLocaleString()} / 2,500</strong>. Sink in one putt for 500 points, then 100 fewer per extra putt. An unfinished hole scores zero.</p>
+      <p className={styles.help}>On holes 2–5, bounce off a wall or barrier at least once during the hole to unlock the cup. You can use a putt to get into position.</p>
       <details className={styles.help}><summary>Controls &amp; a small hint</summary><p id="putting-keyboard">On the green, use ← / → to aim and ↑ / ↓ for power. Press Enter or Space to putt. Escape cancels a drag. You can also tap the sliders and Putt button.</p><p>0° points up; positive angles turn right. Walls bounce. The cup catches a slow ball; a fast one can roll straight over it. This is a flat game green, not a real-world putting lesson.</p></details>
     </div>
+    <PuttingLeaderboard key={visit} results={results} shots={completedShots} getToken={getToken} complete={finished && hole === HOLES.length - 1} />
   </section>;
 }

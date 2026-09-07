@@ -13,7 +13,7 @@
     "test:equipment": "node --test src/lib/tools/*.test.js",
     "test:range-rescue": "node --experimental-strip-types --test src/lib/range-rescue/*.test.js",
     "test:feedback": "node --experimental-strip-types --test src/lib/feedback/*.test.js",
-    "test:putting": "node --experimental-strip-types --test src/lib/putting/*.test.js",
+    "test:putting": "node --experimental-strip-types --test src/lib/putting/*.test.js && node --test tests/putting-backend.test.mjs",
     "test": "npm run test:contract && npm run test:visual && npm run test:decoder && npm run test:equipment && npm run test:sharing && npm run test:range-rescue && npm run test:feedback && npm run test:putting",
     "check": "npm run test && npm run build",
     "test:sharing": "node --test src/lib/share/*.test.js"
