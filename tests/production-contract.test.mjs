@@ -293,16 +293,20 @@ test("runtime configuration names are documented without real credentials", asyn
 });
 
 test("the homepage share preview reflects the current Dove Golf product", async () => {
-  const [layout, preview] = await Promise.all([
+  const [layout, preview, home, copy] = await Promise.all([
     source("src/app/layout.tsx"),
     source("src/components/social/SocialPreviewImage.tsx"),
+    source("src/app/page.tsx"),
+    source("src/lib/siteCopy.ts"),
   ]);
 
-  assert.match(layout, /The ball left you a message\./);
-  assert.doesNotMatch(layout, /Stop guessing\. Fit your gear to your swing\./);
-  assert.match(layout, /Simple, visual golf tools for better range sessions/);
-  assert.match(preview, /The ball left you/);
-  assert.match(preview, /a message\./);
+  assert.match(copy, /Make your next range session more useful\./);
+  assert.match(copy, /Simple practice plans, clearer ball-flight feedback/);
+  for (const surface of [layout, preview, home]) {
+    assert.match(surface, /SITE_SLOGAN/);
+    assert.match(surface, /SITE_DESCRIPTION/);
+    assert.doesNotMatch(surface, /Stop guessing|Fit your gear to your swing|The ball left you a message/i);
+  }
   await access(resolve(projectRoot, "src/app/opengraph-image.tsx"));
   await access(resolve(projectRoot, "src/app/twitter-image.tsx"));
 });
