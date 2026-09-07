@@ -23,9 +23,9 @@ export function drawScoreCard(canvas: HTMLCanvasElement, entry: ShareEntry, form
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Image creation is unavailable in this browser.");
-  const green = "#174d3e";
-  const muted = "#52655b";
-  const cream = "#f6f5ed";
+  const green = "#17362d";
+  const muted = "#526960";
+  const cream = "#f5f6f0";
   const story = format === "story";
   const top = story ? 190 : 80;
   ctx.fillStyle = cream;
@@ -47,7 +47,7 @@ export function drawScoreCard(canvas: HTMLCanvasElement, entry: ShareEntry, form
   }
 
   ctx.beginPath(); ctx.arc(116, top + 2, 28, 0, Math.PI * 2);
-  ctx.fillStyle = green; ctx.fill();
+  ctx.fillStyle = "#245f4d"; ctx.fill();
   text("D", 105, top + 12, 28, 600, cream);
   text("Dove Golf", 161, top + 13, 35, 600);
   text("THE FIVE-HOLE CHALLENGE", 88, top + 105, 25, 600, muted);
@@ -59,10 +59,11 @@ export function drawScoreCard(canvas: HTMLCanvasElement, entry: ShareEntry, form
 
   text(entry.initials.toUpperCase(), 82, top + 337, 138, 700);
   text(entry.score.toLocaleString("en-US"), 77, top + 513, 176, 700);
-  text("POINTS / 2,500", 91, top + 559, 27, 600, muted);
+  // Leave room for the large score's comma descender before the smaller label.
+  text("POINTS / 2,500", 91, top + 599, 27, 600, muted);
 
   // A miniature bank-shot green echoes the site's dotted ball-flight motif.
-  const greenTop = top + 614;
+  const greenTop = top + 660;
   const greenHeight = story ? 448 : 250;
   rounded(88, greenTop, 904, greenHeight, 52, "#e4eade");
   ctx.save();
@@ -84,7 +85,7 @@ export function drawScoreCard(canvas: HTMLCanvasElement, entry: ShareEntry, form
   ctx.lineWidth = 5;
   ctx.beginPath(); ctx.moveTo(746, 209); ctx.lineTo(746, 93); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(749, 94); ctx.lineTo(819, 112); ctx.lineTo(749, 132);
-  ctx.fillStyle = "#174d3e"; ctx.fill();
+  ctx.fillStyle = green; ctx.fill();
   ctx.beginPath(); ctx.ellipse(118, 256, 16, 16 * 360 / greenHeight, 0, 0, Math.PI * 2);
   ctx.fillStyle = "#ffffff"; ctx.fill();
   ctx.strokeStyle = green; ctx.lineWidth = 3; ctx.stroke();
