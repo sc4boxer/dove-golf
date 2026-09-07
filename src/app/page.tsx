@@ -56,7 +56,7 @@ export default function HomePage() {
         </section>
         <ToolShowcase />
         <aside className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6" aria-labelledby="putting-break-heading">
-          <div><h2 id="putting-break-heading" className="text-base font-semibold tracking-tight">A little break between shots.</h2><p className="mt-1 text-sm leading-6 text-slate-600">Putting Break · One hole. Three putts.</p></div>
+          <div><h2 id="putting-break-heading" className="text-base font-semibold tracking-tight">A little break between shots.</h2><p className="mt-1 text-sm leading-6 text-slate-600">Putting Break · Three holes. Three putts each.</p></div>
           <Link href="/play/putting" className="inline-flex min-h-11 shrink-0 items-center justify-center gap-5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-100">Play a quick hole <span aria-hidden>→</span></Link>
         </aside>
         <footer className="mt-9 border-t border-slate-200 pt-6">

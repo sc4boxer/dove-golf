@@ -36,3 +36,8 @@
 .help p { margin-bottom: 12px; }
 .game button:focus-visible, .game input:focus-visible, .help summary:focus-visible { outline: 3px solid #475569; outline-offset: 4px; }
 @media (min-width: 700px) { .game { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); gap: 28px; } }
+
+.powerHud { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; padding: 10px 20px; border-top: 1px solid #dbe3df; background: #fff; color: #334155; font-size: 12px; }
+.powerHud label { display: flex; gap: 8px; }
+.powerHud meter { width: 80px; height: 12px; accent-color: #365540; }
+.powerHud > span { color: #475569; }

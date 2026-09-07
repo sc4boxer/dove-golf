@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { COURSE, createBall, strike, step, isMoving } from "./physics.ts";
+import { COURSE, HOLES, createBall, strike, step, isMoving } from "./physics.ts";
 
 test("strikes use clockwise aim, clamp power, and leave input unchanged", () => {
   const ball = createBall();
@@ -75,4 +75,29 @@ test("the opening hole is achievable with a forgiving useful power range", () =>
   for (const power of [79, 80, 81, 82, 83, 84]) {
     assert.equal(step(strike(createBall(), aim, power), 5).sunk, true, `power ${power}`);
   }
+});
+
+test("every hole starts fresh and can be completed with a direct putt", () => {
+  for (const course of HOLES) {
+    const ball = createBall(course);
+    assert.deepEqual(ball, { ...course.start, vx: 0, vy: 0, sunk: false });
+    const dx = course.cup.x - ball.x;
+    const dy = course.cup.y - ball.y;
+    const angle = Math.atan2(dx, -dy) * 180 / Math.PI;
+    const power = Math.sqrt(2 * 90 * Math.hypot(dx, dy)) / 3;
+    const result = step(strike(ball, angle, power), 10, course);
+    assert.equal(result.sunk, true);
+    assert.equal(result.x, course.cup.x);
+    assert.equal(result.y, course.cup.y);
+  }
+});
+
+test("later holes capture at their own cup, not the first hole's cup", () => {
+  const course = HOLES[1];
+  const approach = { x: course.cup.x - 20, y: course.cup.y, vx: 60, vy: 0, sunk: false };
+  assert.equal(step(approach, 1, course).sunk, true);
+  const oldCup = { x: COURSE.cup.x - 20, y: COURSE.cup.y, vx: 60, vy: 0, sunk: false };
+  assert.equal(step(oldCup, 1, course).sunk, false);
+  assert.notDeepEqual(HOLES[1].cup, HOLES[0].cup);
+  assert.notDeepEqual(HOLES[2].cup, HOLES[1].cup);
 });
