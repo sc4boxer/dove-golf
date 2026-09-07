@@ -78,11 +78,15 @@ export default function RangeRescuePage() {
             </div>
 
             <div className={styles.beginnerCard}>
-              <p className={styles.eyebrow}>Start here · About 10–15 minutes</p>
-              <h2>New to golf? Let’s make contact.</h2>
-              <p>Get ready, record five starting shots, try a smaller swing, then see what changed. No golf vocabulary needed.</p>
-              <button type="button" onClick={() => setBeginnerSession(true)}>Start guided beginner practice <span aria-hidden="true">→</span></button>
-              <p className={styles.hint}>Not sure what’s going wrong? This is a good place to begin.</p>
+              <div className={styles.beginnerCopy}>
+                <p className={styles.eyebrow}>Start here · About 10–15 minutes</p>
+                <h2>New to golf? Let’s make contact.</h2>
+                <p>Get ready, record five starting shots, try a smaller swing, then see what changed. No golf vocabulary needed.</p>
+              </div>
+              <div className={styles.beginnerAction}>
+                <button type="button" onClick={() => setBeginnerSession(true)}><span>Start guided beginner practice</span><span aria-hidden="true">→</span></button>
+                <p>Not sure what’s going wrong? This is a good place to begin.</p>
+              </div>
             </div>
 
             <div className={styles.breath} aria-label="First, take one slow breath">
