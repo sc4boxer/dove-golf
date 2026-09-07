@@ -83,6 +83,9 @@ jobs:
       - name: Test Range Rescue beginner program
         run: npm run test:range-rescue
 
+      - name: Test putting game physics
+        run: npm run test:putting
+
       - name: Test Ball Flight Decoder
         run: npm run test:decoder
 

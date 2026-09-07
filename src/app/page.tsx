@@ -167,6 +167,11 @@ export default function HomePage() {
           </div>
         </section>
 
+        <aside className="mt-10 flex flex-col gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-6 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="putting-break-heading">
+          <div><h2 id="putting-break-heading" className="text-lg font-semibold tracking-tight">Waiting for your turn?</h2><p className="mt-2 text-sm leading-6 text-slate-600">One hole, three putts. Take a little putting break.</p></div>
+          <Link href="/play/putting" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 px-5 py-3 text-sm font-medium text-white hover:bg-slate-800">Play a quick hole →</Link>
+        </aside>
+
         <section className="mt-16" aria-labelledby="trajectory-heading">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">What the ball can tell you</p>
           <h2 id="trajectory-heading" className="mt-3 max-w-2xl text-3xl font-semibold tracking-tight">
