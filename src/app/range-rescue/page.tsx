@@ -20,6 +20,7 @@ export default function RangeRescuePage() {
   const [club, setClub] = useState<RangeRescueClub>("iron");
   const [selectedId, setSelectedId] = useState<RangeRescuePlanId | null>(null);
   const [beginnerSession, setBeginnerSession] = useState(false);
+  const [videoPreview, setVideoPreview] = useState(false);
   const chooserHeading = useRef<HTMLHeadingElement>(null);
   const returnToChooser = useRef(false);
   const resultHeading = useRef<HTMLHeadingElement>(null);
@@ -38,6 +39,7 @@ export default function RangeRescuePage() {
     returnToChooser.current = true;
     setSelectedId(null);
     setBeginnerSession(false);
+    setVideoPreview(false);
   }
 
   function startFiveBallRescue() {
@@ -69,7 +71,7 @@ export default function RangeRescuePage() {
           <span className={styles.privateNote}>No account needed</span>
         </header>
 
-        {beginnerSession ? <BeginnerSession key={club} club={club} onExit={showChooser} /> : !selectedPlan ? (
+        {beginnerSession ? <BeginnerSession key={club} club={club} videoPreview={videoPreview} onExit={showChooser} /> : !selectedPlan ? (
           <section className={styles.chooser} aria-labelledby="rescue-heading">
             <div className={styles.intro}>
               <p className={styles.eyebrow}>A little help at the range</p>
@@ -99,6 +101,10 @@ export default function RangeRescuePage() {
               <div className={styles.beginnerAction}>
                 <button type="button" onClick={() => setBeginnerSession(true)}><span>{club === "driver" ? "Start guided driver practice" : "Start guided beginner practice"}</span><span aria-hidden="true">→</span></button>
                 <p>Not sure what’s going wrong? This is a good place to begin.</p>
+                {club === "iron" && process.env.NEXT_PUBLIC_SWING_VIDEO_PREVIEW === "true" && <>
+                  <button type="button" onClick={() => { setVideoPreview(true); setBeginnerSession(true); }}><span>Film your swing. Get one thing to work on.</span><span aria-hidden="true">→</span></button>
+                  <p>Interactive preview · Explore an example review. No recording or AI analysis yet.</p>
+                </>}
               </div>
             </div>
 

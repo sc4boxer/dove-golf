@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RescueVisualGuide } from "./RescueVisualGuide";
 import { DriverPracticeGuide } from "./DriverPracticeGuide";
+import { SwingVideoPreview } from "./SwingVideoPreview";
 import type { RangeRescueClub } from "@/lib/range-rescue/plans";
 import { getSessionFeedback, summarizeShots, type ShotOutcome } from "@/lib/range-rescue/beginner-session";
 import styles from "./BeginnerSession.module.css";
@@ -15,8 +16,10 @@ const outcomes: { value: ShotOutcome; label: string }[] = [
   { value: "unsure", label: "I couldn’t tell what happened" },
 ];
 
-export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void; club?: RangeRescueClub }) {
+export function BeginnerSession({ onExit, club = "iron", videoPreview = false }: { onExit: () => void; club?: RangeRescueClub; videoPreview?: boolean }) {
   const driver = club === "driver";
+  const preview = videoPreview && !driver;
+  const [reviewOpen, setReviewOpen] = useState(false);
   const [stage, setStage] = useState(0);
   const [before, setBefore] = useState<ShotOutcome[]>([]);
   const [after, setAfter] = useState<ShotOutcome[]>([]);
@@ -27,19 +30,25 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
   const setShots = stage === 1 ? setBefore : setAfter;
   useEffect(() => {
     if ((stage === 1 || stage === 3) && shots.length === 5) continueButton.current?.focus();
-  }, [stage, shots.length]);
+  }, [stage, shots.length, reviewOpen]);
   const initial = summarizeShots(before);
   const final = summarizeShots(after);
   const feedback = stage === 4 ? getSessionFeedback(before, after, club) : null;
+
+  if (preview && reviewOpen) return <SwingVideoPreview
+    onBack={() => setReviewOpen(false)}
+    onComplete={() => { setReviewOpen(false); setStage(2); }}
+  />;
 
   return <section className={styles.session} aria-labelledby="session-heading">
     <button className={styles.back} onClick={onExit}>← Leave session</button>
     <p className={styles.kicker}>{driver ? "Driver practice" : "Beginner iron practice"} · Step {stage + 1} of 5</p>
     <h1 ref={heading} tabIndex={-1} id="session-heading">{driver && stage === 2 ? "Easy driver practice" : stages[stage]}</h1>
     <p className={styles.note}>About 10–15 minutes. Go at your own pace. Your results stay on this page and clear when you leave or refresh.</p>
+    {preview && <p className={styles.next}><strong>Video experience preview</strong><br />The review uses an illustrated example, not your swing. No camera, upload, or AI analysis. Record your own shot results below; the example does not diagnose them.</p>}
     {stage === 0 && <>
       <h2>{driver ? "Today’s goal: make contact from the tee" : "Today’s goal: touch the ball, then find a little height"}</h2>
-      <p>Distance and direction can wait. We’ll compare five starting shots with five shots after one simple exercise.</p>
+      <p>Distance and direction can wait. We’ll compare five starting shots with five shots after one simple exercise.{preview && " Between sets, explore how a video review could suggest one thing to practice."}</p>
       <ol className={styles.instructions}>
         <li>{driver ? "Use your driver and a tee intended for it. Ask range staff to help choose a suitable tee height if you are unsure." : "Choose a club marked 9, PW, or SW if you have one. Otherwise use an iron you feel comfortable holding, or ask range staff to help choose one."}</li>
         <li>Stay inside your hitting area, face the range, and check that nobody is within reach of your club. Stop if a swing hurts.</li>
@@ -62,7 +71,11 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
           <button className={styles.back} onClick={() => setShots((previous) => previous.slice(0, -1))}>Undo last ball</button>
         </>}
       </div>
-      <button ref={continueButton} className={styles.primary} disabled={shots.length !== 5} onClick={() => setStage(stage + 1)}>{stage === 1 ? "Show me the practice exercise" : "Compare my results"}</button>
+      <button ref={continueButton} className={styles.primary} disabled={shots.length !== 5} onClick={() => {
+        if (stage === 1 && preview) setReviewOpen(true);
+        else setStage(stage + 1);
+      }}>{stage === 1 ? preview ? "Explore the video review preview" : "Show me the practice exercise" : "Compare my results"}</button>
+      {stage === 1 && preview && <button className={styles.back} disabled={shots.length !== 5} onClick={() => setStage(2)}>Skip preview and use the usual exercise</button>}
     </>}
     {stage === 2 && <>
       <h2>{driver ? "One change: shorten your backswing" : "One change: make the swing smaller"}</h2>
