@@ -8,9 +8,9 @@ import { nextToolIndex, swipeStep } from "./showcaseInteraction";
 import styles from "./ToolShowcase.module.css";
 
 const tools = [
-  { id: "range", tab: "Range Rescue", title: "Build a better next shot.", label: "A guided start", description: "Build better contact, one small practice step at a time.", detail: "Irons or driver. Five shots. One change to test.", href: "/range-rescue", action: "Start practicing" },
-  { id: "flight", tab: "Ball Flight", title: "Make sense of your ball flight.", label: "Ball Flight Decoder", description: "Understand what your ball’s start and curve may suggest.", detail: "Describe the flight. Get a clear explanation and one practical test.", href: "/tools/ball-flight-decoder", action: "Decode a shot" },
-  { id: "equipment", tab: "Equipment Fit", title: "Know what’s worth testing.", label: "Before buying gear", description: "Check whether a repeated pattern makes your club setup worth testing.", detail: "Explore your observations before deciding what to change.", href: "/diagnostic", action: "Check my setup" },
+  { id: "range", tab: "Range Rescue", title: "Build a better next shot.", label: "Struggling with contact?", description: "Build better contact, one small practice step at a time.", detail: "Irons or driver. Five shots. One change to test.", href: "/range-rescue", action: "Start practicing" },
+  { id: "flight", tab: "Ball Flight", title: "Make sense of your ball flight.", label: "Confused by your curve?", description: "Understand what your ball’s start and curve may suggest.", detail: "Describe the flight. Get a clear explanation and one practical test.", href: "/tools/ball-flight-decoder", action: "Decode a shot" },
+  { id: "equipment", tab: "Equipment Fit", title: "Know what’s worth testing.", label: "Considering a club change?", description: "Check whether a repeated pattern makes your club setup worth testing.", detail: "Explore your observations before deciding what to change.", href: "/diagnostic", action: "Check my setup" },
 ] as const;
 
 function subscribeMotion(callback: () => void) {
