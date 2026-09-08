@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState, type PointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent } from "react";
 import { TrackLink } from "@/components/analytics/TrackLink";
-import { MissVisual } from "@/components/range-rescue/MissVisual";
-import { BallFlightChart } from "@/components/visuals/BallFlightChart";
+import { ToolPreview } from "./ToolPreview";
+import { nextToolIndex, swipeStep } from "./showcaseInteraction";
 import styles from "./ToolShowcase.module.css";
 
 const tools = [
@@ -13,37 +13,118 @@ const tools = [
   { id: "equipment", tab: "Equipment Fit", title: "Know what’s worth testing.", label: "Before buying gear", description: "Check whether a repeated pattern makes your club setup worth testing.", detail: "Explore your observations before deciding what to change.", href: "/diagnostic", action: "Check my setup" },
 ] as const;
 
+function subscribeMotion(callback: () => void) {
+  const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+  media.addEventListener("change", callback);
+  return () => media.removeEventListener("change", callback);
+}
+function subscribeVisibility(callback: () => void) {
+  document.addEventListener("visibilitychange", callback);
+  return () => document.removeEventListener("visibilitychange", callback);
+}
+const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const pageIsVisible = () => !document.hidden;
+const serverReducedMotion = () => true;
+const serverVisible = () => false;
+
 export function ToolShowcase() {
   const [selected, setSelected] = useState(0);
+  const [rotationOn, setRotationOn] = useState(true);
+  const [motionPaused, setMotionPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [inView, setInView] = useState(false);
+  const section = useRef<HTMLElement>(null);
+  const animationDone = useRef(false);
+  const reducedMotion = useSyncExternalStore(subscribeMotion, prefersReducedMotion, serverReducedMotion);
+  const pageVisible = useSyncExternalStore(subscribeVisibility, pageIsVisible, serverVisible);
   const tabs = useRef<(HTMLButtonElement | null)[]>([]);
   const gesture = useRef<{ x: number; y: number; id: number } | null>(null);
   const swiped = useRef(false);
-  function select(index: number, focus = false) {
-    const next = (index + tools.length) % tools.length;
+  const select = useCallback((index: number, focus = false, manual = true) => {
+    const next = nextToolIndex(index, tools.length);
+    if (manual) setRotationOn(false);
+    if (next !== selected) animationDone.current = false;
     setSelected(next);
     if (focus) tabs.current[next]?.focus();
-  }
+  }, [selected]);
+  const previewComplete = useCallback(() => { animationDone.current = true; }, []);
+  const previewStarted = useCallback(() => { animationDone.current = false; }, []);
+
+  useEffect(() => {
+    if (!section.current) return;
+    const observer = new IntersectionObserver(([entry]) => setInView(entry.isIntersecting && entry.intersectionRatio >= 0.25), { threshold: 0.25 });
+    observer.observe(section.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!rotationOn || hovered || !inView || !pageVisible || reducedMotion) return;
+    // Each visible preview gets a full ten seconds, and may finish before advancing.
+    let timer: ReturnType<typeof setTimeout>;
+    const advanceWhenFinished = () => {
+      if (animationDone.current) select(selected + 1, false, false);
+      else timer = setTimeout(advanceWhenFinished, 100);
+    };
+    timer = setTimeout(advanceWhenFinished, 10_000);
+    return () => clearTimeout(timer);
+  }, [selected, rotationOn, hovered, inView, pageVisible, reducedMotion, select]);
+
   function startSwipe(event: PointerEvent<HTMLDivElement>) {
     swiped.current = false;
-    if (!event.isPrimary || event.button !== 0 || (event.target as HTMLElement).closest("a,button,input")) return;
+    const target = event.target as HTMLElement;
+    if (!event.isPrimary || event.button !== 0 || target.closest("a,input") || target.closest("button:not([role=tab])")) return;
+    setRotationOn(false);
     gesture.current = { x: event.clientX, y: event.clientY, id: event.pointerId };
-    event.currentTarget.setPointerCapture(event.pointerId);
   }
-  return <section className={styles.showcase} aria-label="Explore Dove Golf tools">
-    <div role="tablist" aria-label="Choose a tool" className={styles.tabs}>
+  function moveSwipe(event: PointerEvent<HTMLDivElement>) {
+    const start = gesture.current;
+    if (!start || start.id !== event.pointerId) return;
+    const dx = event.clientX - start.x, dy = event.clientY - start.y;
+    if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { gesture.current = null; return; }
+    if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+      event.currentTarget.setPointerCapture(event.pointerId);
+      swiped.current = true;
+    }
+  }
+  function endSwipe(event: PointerEvent<HTMLDivElement>) {
+    const start = gesture.current;
+    gesture.current = null;
+    if (!start || start.id !== event.pointerId) return;
+    const dx = event.clientX - start.x, dy = event.clientY - start.y;
+    const direction = swipeStep(dx, dy);
+    if (direction) {
+      swiped.current = true;
+      const tabFocused = tabs.current.some(tab => tab === document.activeElement);
+      select(selected + direction, tabFocused);
+    }
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+  }
+  const swipeHandlers = {
+    onPointerDown: startSwipe,
+    onPointerMove: moveSwipe,
+    onPointerUp: endSwipe,
+    onPointerCancel: () => { gesture.current = null; swiped.current = false; },
+    onLostPointerCapture: (event: PointerEvent<HTMLDivElement>) => {
+      // Touch implicitly captures a tab; transferring it to this wrapper must not cancel the swipe.
+      if (event.target === event.currentTarget) gesture.current = null;
+    },
+  };
+  const animate = inView && pageVisible && !reducedMotion && !motionPaused;
+  return <section ref={section} className={styles.showcase} aria-label="Explore Dove Golf tools" onPointerDownCapture={() => { swiped.current = false; }} onPointerEnter={event => { if (event.pointerType === "mouse") setHovered(true); }} onPointerLeave={() => setHovered(false)} onFocusCapture={event => {
+    if (!(event.target as HTMLElement).closest("[data-rotation-control]")) setRotationOn(false);
+  }} onClickCapture={event => {
+    if (swiped.current && event.detail > 0) { event.preventDefault(); event.stopPropagation(); swiped.current = false; }
+  }}>
+    <div className={styles.selectorLabel}><span>Explore the tools</span><span>Swipe or choose a tab</span></div>
+    <div role="tablist" aria-label="Preview a tool" className={styles.tabs} style={{ "--selected-tab": selected } as CSSProperties} {...swipeHandlers}>
+      <span className={styles.tabIndicator} aria-hidden="true" />
       {tools.map((tool, index) => <button key={tool.id} type="button" role="tab" id={`tool-tab-${tool.id}`} aria-controls={`tool-panel-${tool.id}`} aria-selected={selected === index} tabIndex={selected === index ? 0 : -1} ref={(element) => { tabs.current[index] = element; }} onClick={() => select(index)} onKeyDown={(event) => {
         if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
         event.preventDefault();
         select(event.key === "Home" ? 0 : event.key === "End" ? tools.length - 1 : selected + (event.key === "ArrowRight" ? 1 : -1), true);
       }}>{tool.tab}</button>)}
     </div>
-    <div className={styles.panels} onPointerDown={startSwipe} onPointerCancel={() => { gesture.current = null; }} onLostPointerCapture={() => { gesture.current = null; }} onPointerUp={(event) => {
-      const start = gesture.current; gesture.current = null;
-      if (!start || start.id !== event.pointerId) return;
-      const dx = event.clientX - start.x, dy = event.clientY - start.y;
-      if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.3) { swiped.current = true; select(selected + (dx < 0 ? 1 : -1)); }
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-    }} onClickCapture={(event) => { if (swiped.current) { event.preventDefault(); event.stopPropagation(); swiped.current = false; } }}>
+    <div className={styles.panels} {...swipeHandlers}>
       {tools.map((tool, index) => <div key={tool.id} role="tabpanel" id={`tool-panel-${tool.id}`} aria-labelledby={`tool-tab-${tool.id}`} aria-hidden={selected !== index} inert={selected !== index} className={`${styles.panel} ${selected === index ? styles.active : ""}`}>
         <div className={styles.copy}>
           <p className={styles.eyebrow}>{tool.label}</p>
@@ -53,26 +134,13 @@ export function ToolShowcase() {
           {tool.id === "range" ? <Link href={tool.href} className={styles.action}>{tool.action}<span aria-hidden="true">→</span></Link> : <TrackLink href={tool.href} className={styles.action} eventParams={tool.id === "flight" ? { module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" } : { module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}>{tool.action}<span aria-hidden="true">→</span></TrackLink>}
         </div>
         <div className={styles.visual}>
-          {tool.id === "range" ? <div className={styles.practicePreview}>
-            <div className={styles.previewTop}><span>Your next five balls</span><span aria-hidden="true">01—05</span></div>
-            <div className={styles.contact}><MissVisual id="thin-or-top" large /><span>Spot the miss.<br />Try one change.</span></div>
-            <div className={styles.fiveBalls} aria-label="Five attempts, one step at a time">{[1, 2, 3, 4, 5].map((ball) => <span key={ball}>{ball}</span>)}</div>
-            <p>One clear thing to practice.</p>
-          </div> : tool.id === "flight" ? <div className={styles.flightPreview}>
-            <p className={styles.previewTop}>Start direction + curve</p>
-            <BallFlightChart shape="fade" compact staticRender className={styles.flightChart} />
-            <p>An example flight, viewed from above.</p>
-          </div> : <div className={styles.equipmentPreview}>
-            <p className={styles.previewTop}>A clearer equipment check</p>
-            {["Your current club", "The pattern you see", "One change to test"].map((label, i) => <div className={styles.checkRow} key={label}><span aria-hidden="true">0{i + 1}</span><strong>{label}</strong></div>)}
-            <p>Observe first. Test before buying.</p>
-          </div>}
+          <ToolPreview id={tool.id} animate={selected === index && animate} onStart={selected === index ? previewStarted : undefined} onComplete={selected === index ? previewComplete : undefined} />
         </div>
       </div>)}
     </div>
     <div className={styles.browse}>
-      <span>Choose a tab or swipe to explore</span>
-      <div><button type="button" aria-label="Previous tool" onClick={() => select(selected - 1)}><span aria-hidden="true">←</span></button><span role="status" aria-live="polite">{selected + 1} / 3</span><button type="button" aria-label="Next tool" onClick={() => select(selected + 1)}><span aria-hidden="true">→</span></button></div>
+      <button type="button" className={styles.rotation} data-rotation-control disabled={reducedMotion} onClick={() => { setRotationOn(!rotationOn); setMotionPaused(rotationOn); }} aria-label={reducedMotion ? "Automatic previews off: reduced motion" : rotationOn ? "Pause automatic previews" : "Resume automatic previews"}><span aria-hidden="true">{rotationOn && !reducedMotion ? "Ⅱ" : "▷"}</span>{reducedMotion ? "Auto-preview off" : rotationOn ? "Pause previews" : "Resume previews"}</button>
+      <div><button type="button" aria-label="Previous tool" onClick={() => select(selected - 1)}><span aria-hidden="true">←</span></button><span role="status" aria-live={rotationOn ? "off" : "polite"}>{selected + 1} / 3</span><button type="button" aria-label="Next tool" onClick={() => select(selected + 1)}><span aria-hidden="true">→</span></button></div>
     </div>
   </section>;
 }

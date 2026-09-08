@@ -1,0 +1,53 @@
+.practicePreview, .flightPreview, .equipmentPreview { width: 100%; max-width: 320px; }
+.previewTop { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; font-weight: 600; color: #475569; }
+.contact { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 18px 0; }
+.contact > span { font-size: 17px; font-weight: 600; line-height: 1.5; letter-spacing: -.025em; }
+.fiveBalls { display: flex; justify-content: space-between; gap: 8px; }
+.fiveBalls span { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid #cbd5e1; border-radius: 50%; background: white; font-size: 11px; color: #475569; }
+.practicePreview > p, .flightPreview > p:last-child, .equipmentPreview > p:last-child { margin: 16px 0 0; color: #64748b; font-size: 12px; line-height: 1.5; }
+.flightChart { width: 100%; margin-top: 12px; }
+.flightChart svg { max-height: 195px; }
+.checkRow { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 14px 12px; border: 1px solid #e2e8f0; border-radius: 12px; background: white; }
+.checkRow span { color: #64748b; font-size: 11px; }
+.checkRow strong { font-size: 13px; font-weight: 500; }
+
+/* One pass per preview activation; keep all content readable throughout. */
+.animated .fiveBalls span { animation: ballHighlight 1.2s ease-out forwards; }
+.animated .checkRow { animation: rowHighlight 1.1s ease-out forwards; }
+.animated .equipmentHeading { animation: headingHighlight 1s 3.4s ease-out forwards; }
+
+@keyframes ballHighlight {
+  0% { background: white; border-color: #cbd5e1; color: #475569; box-shadow: 0 0 0 0 rgb(56 189 248 / 0); }
+  35% { background: #bae6fd; border-color: #38bdf8; color: #0c4a6e; box-shadow: 0 0 0 5px rgb(56 189 248 / .12); }
+  100% { background: #e0f2fe; border-color: #7dd3fc; color: #0c4a6e; box-shadow: 0 0 0 0 rgb(56 189 248 / 0); }
+}
+
+@keyframes rowHighlight {
+  0% { background: white; border-color: #e2e8f0; box-shadow: 0 0 0 0 rgb(56 189 248 / 0); }
+  35% { background: #e0f2fe; border-color: #7dd3fc; box-shadow: 0 0 0 3px rgb(56 189 248 / .1); }
+  100% { background: #f0f9ff; border-color: #bae6fd; box-shadow: 0 0 0 0 rgb(56 189 248 / 0); }
+}
+
+@keyframes headingHighlight {
+  0% { color: #475569; text-shadow: 0 0 0 rgb(56 189 248 / 0); }
+  45% { color: #0369a1; text-shadow: 0 0 14px rgb(56 189 248 / .4); }
+  100% { color: #075985; text-shadow: 0 0 0 rgb(56 189 248 / 0); }
+}
+
+@media (max-width: 639px) {
+  .previewTop { font-size: 11px; }
+  .contact { margin: 6px 0; }
+  .contact > div { width: 90px; min-height: 64px; padding: 0; }
+  .contact svg { height: 44px; }
+  .contact > div span { display: none; }
+  .contact > span { font-size: 16px; }
+  .fiveBalls span { width: 28px; height: 28px; }
+  .practicePreview > p, .flightPreview > p:last-child, .equipmentPreview > p:last-child { margin-top: 8px; font-size: 11px; }
+  .flightChart { margin-top: 4px; }
+  .flightChart svg { max-height: 104px; }
+  .checkRow { padding: 7px 10px; margin-top: 6px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated .fiveBalls span, .animated .checkRow, .animated .equipmentHeading { animation: none !important; }
+}
