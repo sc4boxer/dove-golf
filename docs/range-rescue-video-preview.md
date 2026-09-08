@@ -1,59 +1,43 @@
-# Film your swing. Get one thing to work on.
+# Range Rescue shot replay prototype
 
-## Product decision
+## Current product
 
-Start with an interactive preview inside beginner iron practice. The user selected a preview before connecting AI. This release uses illustrated examples only: no camera request, file selection, upload, processing service, new account, or personal swing assessment. It preserves the existing driver flow and deterministic shot comparison.
+Film a shot. Find your next step. This prototype replaces the earlier face-on swing review with a rear-view, outcome-first experience for beginner iron practice. It keeps Range Rescue's typography, white/slate cards, muted green accents, navigation, and existing before/after semantics. The normal beginner and driver sessions remain separate and unchanged.
 
-Enable `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=true` in local development or a review deployment, then rebuild/restart. The default is false. The flag controls discoverability, not access to confidential information; all example content is public-safe. Do not enable or publish to production without explicit owner approval.
+The owner requested a near-complete local prototype before pushing, merging, or publishing. This iteration stays local on `codex/range-rescue-video-preview`. No remote push or deployment is authorized by this build request.
 
-## Experience
+## Try it
 
-1. Enter from the beginner card in Range Rescue with irons selected.
-2. Prepare and record five starting attempts using the existing recorder. Every attempt counts; unknown outcomes stay unknown.
-3. Explore face-on filming guidance: show the complete golfer and club, use a stable phone outside the swing area, and capture setup through finish. The preview illustrates framing without accessing a camera.
-4. Explore a supported example, footage needing a retake, or a clear clip with no supported finding. All results are explicitly examples.
-5. A supported example describes hands traveling above waist height. It does not label a longer swing a fault or claim it caused a miss. Offer the existing smaller-swing exercise as an experiment.
-6. Rehearse and record five comparison attempts. Reuse existing feedback; do not claim the example video explains the golfer's actual results.
+Enable `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=true` locally and restart/rebuild. At `/range-rescue`, choose Irons, then “Film a shot. Find your next step.” The default flag in `.env.example` remains false. The flag is a discoverability switch, not an authentication boundary.
 
-Back from the preview preserves starting shots. Skipping the preview leads to the usual exercise. Leaving the session or refreshing clears its state. Keep the same club and setup across the comparison; any future setup-changing recommendation requires a new baseline.
+1. Prepare: rear, offset camera placement with right/left-handed diagrams; safe bay positioning; include the ground and the ball's initial movement.
+2. Choose a sample session or your own practice. These modes do not mix results or media.
+3. Review five shots. Samples have scrubbable, paused-by-default illustrated replays; own practice can replay a device-local video or work without a clip. Confirm Airborne, Rolled, Missed, or Unclear. Correct any recorded outcome or undo the last attempt.
+4. Choose one controlled practice task from the confirmed set. Any unclear starting attempt requires a fresh baseline; no-contact suggests small contact practice; limited airborne results suggest the existing small-swing brush exercise; repeated airborne results suggest repeating the easy swing. These are practice choices, not diagnoses or validated readiness grades.
+5. Record five further outcomes and compare confirmed contact and airborne counts. Sample comparisons are labeled examples; unknown comparison outcomes prevent improvement claims. Review/correct comparison outcomes or start fresh.
 
-## Path to a working private beta
+## Media and evidence boundaries
 
-First evaluate consented clips against a rubric defined with a qualified instructor. Start with one face-on view and irons. Candidate observations are visible swing length and a finish step; setup diagnosis, exact joint/club angles, impact conditions, and ball-flight causation are outside the first scope. A finish step is an observation, not proof of imbalance or a cause of poor contact. Two separately recorded swings are not synchronized camera views.
+No camera request, upload, model call, inference, or automatic tracking exists in this prototype. SVG sample trajectories are illustrations, not measured flight. There is no distance, height, speed, club-path, or impact-angle measurement. A miss sample has a stationary ball; an unclear sample supplies no invented trajectory.
 
-Use 20–30 clips for initial feasibility, including left/right-handed players, different clothing/body types, lighting, device formats, camera errors, and unclear clips. This is not a validation sample sufficient to advertise accuracy. Reserve independent evaluation clips and agree release thresholds with coaches for observation agreement, unsupported claims, appropriate abstention, and exercise suitability before choosing a model. Measure processing time and cost per completed review.
+Own clips use temporary browser object URLs and native playback controls. Sample traces never overlay own clips. Files are limited to 50 MiB and 30 seconds with MIME/metadata/decode checks and a metadata-loading timeout. Actual format support depends on the browser; MP4 is suggested as a fallback. Clips are released on replacement, removal, confirmation, switching shots, or leaving the component. Editing an outcome requires selecting its clip again. Original files on the user's device are not deleted. No file contents or outcomes are added to analytics.
 
-The analysis contract should contain a supported observation code, evidence timestamps within the clip, footage quality issues, and an allowed exercise ID. Reject malformed output and unsupported claims. Render controlled coaching copy from exercise IDs rather than unrestricted model advice. Treat any instructions embedded in uploaded media as content, never as system instructions. A usable clip can still produce no supported finding.
+Session results remain in React memory and clear on exit or refresh. No storage service, account, migration, environment credential, or production configuration is added. Privacy/lead routes and existing analytics events are preserved.
 
-Proposed service flow: browser receives a narrowly scoped upload authorization; clip uploads directly to private storage; server validates media and starts a bounded background job; client polls status; model output passes validation; the user receives one observation and one exercise. API keys remain server-side. Use owner-scoped job/result/delete access and durable per-user and overall spending limits. Do not accept arbitrary remote URLs as media sources.
+## Architecture and verification
 
-Proposed capture limits for testing: one 5–15 second swing clip, up to 50 MB, with supported codecs confirmed on iPhone and Android. Keep native upload as a fallback when browser recording is unsupported. Validate true media type, duration, size, and frame decoding on the server; client checks are only convenience. Evaluate sampling around fast motion rather than trusting low-rate defaults.
+`ShotReplay` handles illustrated replay and local media. `SwingVideoPreview` owns preparation, mode separation, five-shot state, editing, practice, and comparison. `shot-practice.ts` validates exactly five outcomes and reuses `summarizeShots` plus `getSessionFeedback`; repeat-task feedback preserves the existing easy swing rather than incorrectly referring to a newly introduced smaller swing. The original beginner component is restored to its pre-preview version.
 
-Define and test upload progress/cancel, invalid media, footage retake, timeout, retry, unavailable provider, no finding, successful result, deletion, and failed deletion. Canceling a client request alone must not imply a job or stored video was deleted. Make retries idempotent to avoid duplicate charges.
+Focused tests cover input validation (including sparse arrays), unclear data, all practice branches, unchanged inputs, and feedback consistency. Browser verification covers a complete sample session, confirmed counts, correction/undo, no-data gating, unclear-baseline restart, reset, driver isolation, keyboard controls, 320px mobile and 1280px desktop. Synthetic local files exercise valid replay, removal, broken video, excessive duration, and excessive size; no personal video was used. The metadata timeout is implemented but not forced in browser testing. Native mobile camera recording and iPhone/Android codec coverage remain unverified.
 
-For the beta, propose deleting the source clip after processing, with a bounded cleanup deadline for failed jobs and an explicit delete action. The exact promise must cover our storage and provider copies, distinguish operational logs/backups, and be verified before it appears in product copy. No model-training reuse without a separate opt-in. Choose provider terms appropriate to the audience, including junior golfers if supported; do not assume a consumer developer API permits every age group.
+Validation: full lint, Range Rescue tests, production-contract tests, and production build pass. The literal visual test command fails on TypeScript imports under installed Node 22.17; all visual tests pass with `--experimental-strip-types`. Build uses placeholder backend settings and network access for the existing Google Fonts. No dependencies or lockfiles changed. Remote CI/Vercel preview and real-world beginner/coach validation are not yet performed. Screenshots in `artifacts/shot-replay-prototype/` document the new design; older swing-video screenshots represent the superseded concept.
 
-## Effort and prerequisites
+## Next step after prototype review
 
-Planning estimate: a few development days for the interaction preview; 3–5 days for initial model feasibility; roughly 3–6 weeks for a narrow private beta with upload lifecycle and testing, assuming one experienced developer and timely coach/provider access. These are estimates, not delivery commitments. A provider account, server-side credentials, consented evaluation footage, coaching review, and preview infrastructure configuration are needed for real analysis.
+Evaluate consented rear-view range clips before promising tracking. Begin with detection of initial ball movement and user-confirmed outcomes; full-flight tracking is a separate feasibility project. Test busy backgrounds, other balls, moving phones, rolling shots, loss of visibility, body/club occlusion, and left/right-handed recordings. Stop observed traces when evidence ends. Any estimated continuation must be labeled and must not become a measured coaching claim.
 
-No AI provider has been selected. Gemini supports video input, but its developer API terms include audience restrictions that need to fit the product. Paid-service handling differs from unpaid-service handling. Provider choice should follow evaluation and audience requirements, not just a successful demo.
+If a real analysis service is selected, define provider terms, audience suitability, private direct uploads, owner-scoped access, bounded background jobs, retry/cancel semantics, spending limits, and verified deletion of storage/provider copies. Coach-defined evaluation and independent clips are required before accuracy claims. None of that service is implemented here.
 
-## Technical references checked during planning
+## Rollback
 
-- [Vercel function limits](https://vercel.com/docs/functions/limitations): normal function payloads are limited to 4.5 MB, motivating direct uploads.
-- [Video understanding](https://ai.google.dev/gemini-api/docs/video-understanding): video input and sampling controls.
-- [Gemini API terms](https://ai.google.dev/gemini-api/terms): audience and data-use requirements; paid use is not a promise of zero retention.
-- [Files API](https://ai.google.dev/gemini-api/docs/files): provider file deletion facilities and automatic expiry.
-
-## Release and rollback
-
-Feature branch and review deployment only. The preview adds no backend service or migration. Disable the preview flag and rebuild to remove its entry, or revert the feature commit. Preserve established routes, metadata, analytics, lead capture, scoring, and the archive branch. Before production merge, require successful CI, a Vercel preview, and explicit publication approval.
-
-The implementation is committed locally on `codex/range-rescue-video-preview`. Automatic approval review rejected pushing to `https://github.com/sc4boxer/dove-golf.git` because it requires explicit authorization for exporting repository source to that destination. No push, draft PR, hosted preview, or production deployment occurred.
-
-## Validation
-
-Local verification passed: dependency install, full lint, seven Range Rescue tests, thirteen production-contract checks, and production build with placeholder backend settings and network access for existing Google Fonts. The literal `node --test src/lib/visual/*.test.js` fails on TypeScript imports under Node 22.17; rerunning with `--experimental-strip-types` passes all twelve visual tests.
-
-Browser checks covered 1280px desktop and 320px mobile, all three example outcomes, retake recovery, preserved starting shots after Back, undo/incomplete-set gating, keyboard activation and heading focus, skip to practice, completed before/after comparison, driver isolation, refresh reset, and the unchanged canonical URL. Screenshots: `artifacts/swing-video-preview/desktop.png` and `artifacts/swing-video-preview/mobile.png`. Real recording, upload, model behavior, latency, deletion, and coaching accuracy are outside this preview and remain unverified. Existing external feedback/lead submissions were not exercised. Remote CI and a hosted Vercel preview are not yet verified.
+Disable the preview flag and rebuild, or revert this feature's commits. No data migration is necessary. Preserve the production domain, main branch behavior, and `archive/pre-revival-2026-08-23`. Review the prototype first; a hosted PR preview, merge, and publication are later steps requiring explicit authorization and successful CI.

@@ -1,114 +1,132 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import ShotReplay from "./ShotReplay";
+import { summarizeShots, type ShotOutcome } from "@/lib/range-rescue/beginner-session";
+import { getShotPractice, getShotPracticeFeedback, SAMPLE_START, SAMPLE_AFTER } from "@/lib/range-rescue/shot-practice";
 import styles from "./SwingVideoPreview.module.css";
 
-type Sample = "review" | "retake" | "unclear";
-const examples: { id: Sample; title: string; description: string }[] = [
-  { id: "review", title: "Example review", description: "A visible movement and one practice idea." },
-  { id: "retake", title: "Needs a retake", description: "The golfer’s hands leave the picture." },
-  { id: "unclear", title: "No clear finding", description: "There isn’t enough evidence for a suggestion." },
+type Stage = "setup" | "start" | "practice" | "after" | "results";
+type Mode = "sample" | "own";
+const outcomeOptions: { id: ShotOutcome; label: string; detail: string }[] = [
+  { id: "air", label: "Airborne", detail: "Lifted off the ground, even briefly" },
+  { id: "contact", label: "Rolled", detail: "Made contact, stayed on the ground" },
+  { id: "miss", label: "Missed", detail: "Did not touch the ball" },
+  { id: "unsure", label: "Unclear", detail: "I couldn't confidently tell" },
 ];
+const titles: Record<Stage, string> = { setup: "Film a shot. Find your next step.", start: "First, see what happens.", practice: "One thing to practice.", after: "Try five more balls.", results: "See what changed." };
 
-function FramingDiagram({ observation = false }: { observation?: boolean }) {
-  return <svg className={styles.diagram} viewBox="0 0 420 290" role="img" aria-label={observation ? "Illustrative golfer with hands above a dashed waist-height line. This is a drawing, not analyzed footage." : "Face-on framing example: the golfer’s whole body and club fit inside the picture, with space around them."}>
-    <rect x="18" y="16" width="384" height="258" rx="18" fill="#eaf1ee" />
-    <path d="M40 66V38h30 M350 38h30v28 M40 222v28h30 M350 250h30v-28" fill="none" stroke="#52766b" strokeWidth="3" strokeLinecap="round" />
-    <path d="M55 237h310" stroke="#a4b8af" strokeWidth="2" />
-    <circle cx="207" cy="78" r="18" fill="#0f172a" />
-    <path d="M207 105v69 M207 174l-25 60 M207 174l26 60" fill="none" stroke="#0f172a" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" />
-    {observation ? <>
-      <path d="M207 115l42 17 18-47 M207 116l32-2 28-29" fill="none" stroke="#0f172a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M267 85L155 46l-15 8" fill="none" stroke="#52766b" strokeWidth="5" strokeLinecap="round" />
-      <path d="M75 174h265" stroke="#52766b" strokeWidth="2" strokeDasharray="6 6" />
-      <circle cx="267" cy="85" r="15" fill="none" stroke="#916214" strokeWidth="3" />
-      <text x="79" y="164" fill="#36594c" fontSize="13" fontFamily="sans-serif">Waist height</text>
-    </> : <>
-      <path d="M207 114l-17 42 30 12 M207 114l20 40-7 14" fill="none" stroke="#0f172a" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M220 168l37 66h15" fill="none" stroke="#52766b" strokeWidth="5" strokeLinecap="round" />
-      <circle cx="278" cy="232" r="5" fill="#fff" stroke="#52766b" strokeWidth="1.5" />
-    </>}
+function CameraGuide({ left }: { left: boolean }) {
+  return <svg className={styles.camera} viewBox="0 0 560 260" role="img" aria-label={`Top-down camera guide: stand behind and slightly to the ${left ? "left" : "right"} of the golfer, facing down the range. Stay outside the swing area.`}>
+    <rect x="0" y="0" width="560" height="260" rx="18" fill="#edf2ef" />
+    <path d="M285 198V28m-8 10 8-10 8 10" stroke="#52766b" strokeWidth="2" strokeDasharray="5 5" fill="none" />
+    <text x="305" y="37" fill="#36594c" fontSize="14">Toward the range</text>
+    <g transform={left ? "translate(570 0) scale(-1 1)" : undefined}>
+    <ellipse cx="255" cy="134" rx="70" ry="54" fill="none" stroke="#94a3b8" strokeDasharray="4 5" />
+    <circle cx="235" cy="137" r="15" fill="#0f172a" /><circle cx="285" cy="134" r="5" fill="white" stroke="#52766b" strokeWidth="2" />
+    <path d="M248 140l31-6" stroke="#0f172a" strokeWidth="4" />
+    </g>
+    <text x={left ? 438 : 51} y="111" fill="#475569" fontSize="13">Swing area</text><path d={left ? "M389 114h40" : "M129 114h52"} stroke="#94a3b8" />
+    <g transform={`translate(${left ? 202 : 368} 215)`}><path d={`M0-15L${left ? 110 : -110}-100`} stroke="#52766b" strokeWidth="2" /><rect x="-10" y="-15" width="20" height="30" rx="4" fill="#0f172a" /><circle cx="0" cy="-8" r="2" fill="white" /><text x={left ? 22 : -22} y="5" textAnchor={left ? "start" : "end"} fill="#36594c" fontSize="14">Phone + friend</text></g>
+    <text x="20" y="239" fill="#64748b" fontSize="11">Position guide · not to scale</text>
   </svg>;
 }
 
-export function SwingVideoPreview({ onComplete, onBack }: { onComplete: () => void; onBack: () => void }) {
-  const [step, setStep] = useState(0);
-  const [sample, setSample] = useState<Sample>("review");
+export function SwingVideoPreview({ onExit }: { onExit: () => void }) {
+  const [stage, setStage] = useState<Stage>("setup");
+  const [mode, setMode] = useState<Mode>("sample");
+  const [left, setLeft] = useState(false);
+  const [before, setBefore] = useState<ShotOutcome[]>([]);
+  const [after, setAfter] = useState<ShotOutcome[]>([]);
+  const [selected, setSelected] = useState<ShotOutcome | null>(null);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [help, setHelp] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
-  const headingId = useId();
-  useEffect(() => { heading.current?.focus(); }, [step]);
-  const title = step === 0 ? "Film your swing. Get one thing to work on." : step === 1 ? "Explore an example" : sample === "retake" ? "A clearer view would help" : sample === "unclear" ? "No clear finding is a valid result" : "One observation. One practice idea.";
+  const confirm = useRef<HTMLButtonElement>(null);
+  const recording = stage === "start" || stage === "after";
+  const shots = stage === "after" ? after : before;
+  const shotIndex = editing ?? shots.length;
+  const complete = shots.length === 5 && editing === null;
+  const sample = (stage === "after" ? SAMPLE_AFTER : SAMPLE_START)[Math.min(shotIndex, 4)];
+  const plan = before.length === 5 ? getShotPractice(before) : null;
+  const initial = summarizeShots(before);
+  const final = summarizeShots(after);
+  const feedback = stage === "results" ? getShotPracticeFeedback(before, after) : null;
+  useEffect(() => { heading.current?.focus(); }, [stage]);
+  useEffect(() => { if (recording) heading.current?.focus(); }, [recording, shotIndex, editing]);
+  function begin(nextMode: Mode) { setMode(nextMode); setStage("start"); }
+  function record() {
+    if (!selected || complete) return;
+    const next = editing === null ? [...shots, selected] : shots.map((shot, index) => index === editing ? selected : shot);
+    if (stage === "after") setAfter(next); else setBefore(next);
+    setSelected(null); setEditing(null);
+  }
+  function undo() {
+    if (stage === "after") setAfter(shots.slice(0, -1)); else setBefore(shots.slice(0, -1));
+    setSelected(null); setEditing(null);
+  }
+  const activeStep = stage === "setup" ? 0 : stage === "start" ? 1 : stage === "practice" ? 2 : stage === "after" ? 3 : 4;
 
-  return <section className={styles.preview} aria-labelledby={headingId}>
-    <div className={styles.topline}><span className={styles.badge}>Interactive preview</span><span className={styles.counter}>Preview step {step + 1} of 3</span></div>
-    <h1 id={headingId} ref={heading} tabIndex={-1} className={styles.heading}>{title}</h1>
-    <p className={styles.notice}>Example only. This preview does not record, upload, or analyze your swing.</p>
-    <ol className={styles.progress} aria-label="Preview steps">
-      {["Frame", "Explore", "Practice"].map((label, index) => <li key={label} aria-current={step === index ? "step" : undefined}><span>{index + 1}</span>{label}</li>)}
-    </ol>
+  return <section className={styles.preview} aria-labelledby="shot-practice-title">
+    <div className={styles.topline}><button className={styles.back} onClick={onExit}>← Range Rescue</button><span className={styles.badge}>Prototype · Irons</span></div>
+    <p className={styles.eyebrow}>{stage === "setup" ? "A little help, one shot at a time" : mode === "sample" ? "Sample session · these are example results" : "Your practice · outcomes confirmed by you"}</p>
+    <h1 id="shot-practice-title" ref={heading} tabIndex={-1}>{titles[stage]}</h1>
+    <p className={styles.intro}>{stage === "setup" ? "Replay the shot, notice contact and height, then choose one simple thing to try. Distance can wait." : "Five starting attempts. One practice task. Five more attempts."}</p>
+    <ol className={styles.progress} aria-label="Practice progress">{["Prepare", "First five", "Practice", "Next five", "Compare"].map((label, i) => <li key={label} aria-current={i === activeStep ? "step" : undefined}><span>{i + 1}</span>{label}</li>)}</ol>
 
-    {step === 0 && <>
+    {stage === "setup" && <>
       <div className={styles.card}>
-        <FramingDiagram />
-        <h2>Start with a face-on view</h2>
-        <p>The camera faces your chest, so your whole body and club can be seen.</p>
-        <ul className={styles.tips}>
-          <li>Keep the phone steady, with room around the full swing.</li>
-          <li>Keep the phone and any helper outside the reach of your club and away from the ball’s path.</li>
-          <li>Include the setup, swing, and finish in one short clip.</li>
-        </ul>
-        <p className={styles.small}>No filming needed today. Explore the sample below.</p>
+        <div className={styles.cardHeading}><span className={styles.eyebrow}>A range-friendly camera angle</span><span className={styles.tag}>Rear view</span></div>
+        <h2>From behind, a little to the side.</h2>
+        <p>Ask your friend to look down the range from behind you. Keep the ball and the ground ahead in view, with space above for its flight.</p>
+        <fieldset className={styles.handedness}><legend>Which way do you play?</legend><label><input type="radio" name="shot-handedness" checked={!left} onChange={() => setLeft(false)} /> Right-handed</label><label><input type="radio" name="shot-handedness" checked={left} onChange={() => setLeft(true)} /> Left-handed</label></fieldset>
+        <CameraGuide left={left} />
+        <ul className={styles.tips}><li>Keep the phone steady and everyone outside the swing area and ball’s path. Stay within your bay; skip filming if there is no safe space.</li><li>Include the ball before the swing and a few seconds afterward. Rolling shots matter too.</li><li>Use the same iron, ball position, and tee setup for both sets. Stop if swinging hurts.</li></ul>
       </div>
-      <button type="button" className={styles.primary} onClick={() => setStep(1)}>Explore the sample reviews</button>
+      <div className={styles.paths}>
+        <div className={styles.card}><span className={styles.eyebrow}>Try the experience</span><h2>Explore a sample session</h2><p>Scrub through illustrated traces and confirm five example outcomes. See how the practice and comparison work.</p><button className={styles.primary} onClick={() => begin("sample")}>Explore sample shots →</button></div>
+        <div className={styles.card}><span className={styles.eyebrow}>At the range</span><h2>Use my own shot results</h2><p>Replay a short clip from your device, or record what you saw without a clip. You confirm every outcome.</p><button className={styles.secondary} onClick={() => begin("own")}>Start my practice →</button></div>
+      </div>
+      <p className={styles.note}>Clips play only on this device and are cleared when you confirm or leave a shot. No upload or automatic tracking. Sample traces are illustrations, not measured ball flight. Leaving or refreshing clears your results.</p>
     </>}
 
-    {step === 1 && <>
-      <p>A useful review needs a clear view. See how the experience could respond in three situations.</p>
-      <div className={styles.examples}>
-        {examples.map((example) => <button type="button" className={styles.example} key={example.id} onClick={() => { setSample(example.id); setStep(2); }}>
-          <span className={styles.exampleTitle}>{example.title}<span aria-hidden="true">→</span></span>
-          <span className={styles.small}>{example.description}</span>
-        </button>)}
-      </div>
-      <button type="button" className={styles.secondary} onClick={() => setStep(0)}>Back to framing guide</button>
+    {recording && <>
+      <div className={styles.setHeading}><h2>{complete ? "All five attempts recorded." : `Ball ${shotIndex + 1} of 5`}</h2><span className={styles.tag}>{stage === "start" ? "Starting set" : "After practice"}</span></div>
+      {stage === "after" && plan && <p className={styles.note}>Practice focus: {plan.title}. Keep your club and setup the same.</p>}
+      {!complete && <>
+        <ShotReplay key={`${stage}-${shotIndex}-${editing === null ? "new" : "edit"}`} sample={sample} allowSamples={mode === "sample"} />
+        <div className={styles.card}>
+          <h2>{mode === "sample" ? "Confirm the example outcome" : "What happened to this ball?"}</h2>
+          <p className={styles.note}>{mode === "sample" ? `Example outcome: ${outcomeOptions.find(option => option.id === sample)?.label}. You can change it to explore a different result.` : "Choose what you or your friend could see. A replay can help; it does not automatically detect contact or height."}</p>
+          <div className={styles.outcomes} role="group" aria-label="Shot outcome">{outcomeOptions.map(option => <button key={option.id} aria-pressed={selected === option.id} onClick={() => setSelected(option.id)}><strong>{option.label}</strong><span>{option.detail}</span></button>)}</div>
+          <button className={styles.primary} ref={confirm} disabled={selected === null} onClick={record}>{editing === null ? "Confirm this shot" : "Save correction"}</button>
+          {editing !== null && <button className={styles.back} onClick={() => { setEditing(null); setSelected(null); }}>Cancel correction</button>}
+          <button className={styles.back} aria-expanded={help} onClick={() => setHelp(!help)}>Can’t see the ball?</button>
+          {help && <div className={styles.help}><p>Keep the camera still and include more ground around the ball next time. If the ball disappears, do not guess the rest of its flight.</p><p>Choose Unclear for this attempt and count it. You can film the next shot from a safer, clearer position.</p></div>}
+        </div>
+      </>}
+      {shots.length > 0 && <div className={styles.card}><h2>Your {mode === "sample" ? "example " : ""}shot record</h2><ol className={styles.shotList}>{shots.map((outcome, i) => <li key={i}><span>Ball {i + 1}</span><strong>{outcomeOptions.find(option => option.id === outcome)?.label}</strong><button aria-label={`Edit ball ${i + 1}`} onClick={() => { setEditing(i); setSelected(outcome); }}>Edit</button></li>)}</ol><button className={styles.back} onClick={undo}>Undo last shot</button></div>}
+      {complete && <><p className={styles.note}>Airborne shots also count as contact. Unclear attempts stay in the set and are not counted as confirmed contact.</p><button className={styles.primary} onClick={() => { setSelected(null); setStage(stage === "start" ? "practice" : "results"); }}>{stage === "start" ? "Find my one practice task" : "Compare my two sets"}</button></>}
     </>}
 
-    {step === 2 && <>
-      <div className={styles.card}>
-        <span className={styles.eyebrow}>Sample response · Not your swing</span>
-        {sample === "review" ? <>
-          <figure className={styles.figure}>
-            <FramingDiagram observation />
-            <figcaption>Illustrative frame · 00:02 is an example timestamp, not actual footage.</figcaption>
-          </figure>
-          <h2>What is visible in this example</h2>
-          <p>The hands travel above waist height on the backswing.</p>
-          <p className={styles.small}>A longer swing isn’t automatically a fault. This observation does not explain why a ball was missed.</p>
-          <div className={styles.practice}>
-            <span className={styles.eyebrow}>One thing to try</span>
-            <h2>Make the swing smaller</h2>
-            <p>Without a ball, rehearse three gentle swings with your hands traveling only to about waist height on each side.</p>
-          </div>
-          <p className={styles.small}>Then try five balls with the same club and setup. Record contact and height to see what happens.</p>
-        </> : sample === "retake" ? <>
-          <h2>The hands leave the picture</h2>
-          <p>In this example, part of the swing is out of view. A review would need another clip with more space around the golfer.</p>
-          <p className={styles.small}>Move the camera farther away while keeping it in a safe position. Check that the full swing fits before recording.</p>
-        </> : <>
-          <h2>There isn’t enough evidence to choose a change</h2>
-          <p>A review should say when it cannot make a useful observation. It doesn’t mean your swing is right or wrong.</p>
-          <p className={styles.small}>You can still try the usual small-swing practice and compare your next five balls.</p>
-        </>}
-      </div>
-      {sample === "retake" ? <>
-        <button type="button" className={styles.primary} onClick={() => setStep(0)}>Revisit the framing guide</button>
-        <button type="button" className={styles.secondary} onClick={onComplete}>Continue with usual practice</button>
-      </> : <button type="button" className={styles.primary} onClick={onComplete}>{sample === "review" ? "Try the small-swing practice" : "Continue with usual practice"}</button>}
-      <button type="button" className={styles.secondary} onClick={() => setStep(1)}>Explore another example</button>
+    {stage === "practice" && plan && <>
+      <div className={styles.stats}><div><strong>{initial.contact}<small>/5</small></strong><span>Confirmed contact</span></div><div><strong>{initial.airborne}<small>/5</small></strong><span>Airborne</span></div></div>
+      <div className={styles.practice}><span className={styles.eyebrow}>{mode === "sample" ? "Based on your example selections" : "Based on the outcomes you confirmed"}</span><h2>{plan.title}</h2><p>{plan.observation}</p><div className={styles.rule} /><h3>Your next task</h3><p>{plan.instruction}</p><h3>What to notice</h3><p>{plan.measure}</p></div>
+      <p className={styles.note}>This is a practice experiment, not a diagnosis of your swing. Keep the club and setup the same. If either changes, start a new session.</p>
+      <button className={styles.primary} onClick={() => {
+        if (plan.id === "clarify") { setBefore([]); setAfter([]); setSelected(null); setEditing(null); setStage("start"); }
+        else setStage("after");
+      }}>{plan.id === "clarify" ? "Record a fresh starting set" : mode === "sample" ? "Explore the next five example shots" : "I'm ready for five more balls"}</button>
+      <button className={styles.back} onClick={() => setStage("start")}>Review starting outcomes</button>
     </>}
-    <div className={styles.footer}>
-      <button type="button" className={styles.textButton} onClick={onBack}>← Back to starting shots</button>
-      {step !== 2 && <button type="button" className={styles.textButton} onClick={onComplete}>Skip preview and practice</button>}
-    </div>
+
+    {stage === "results" && feedback && <>
+      <div className={styles.practice}><span className={styles.eyebrow}>{mode === "sample" ? "Example comparison" : "Your comparison"}</span><h2>{feedback.title}</h2><table className={styles.table}><caption>Two sets of five attempts</caption><thead><tr><th scope="col">What you saw</th><th scope="col">Start</th><th scope="col">After</th></tr></thead><tbody><tr><th scope="row">Contact</th><td>{initial.contact}/5</td><td>{final.contact}/5</td></tr><tr><th scope="row">Airborne</th><td>{initial.airborne}/5</td><td>{final.airborne}/5</td></tr></tbody></table><p>{feedback.next}</p></div>
+      <p className={styles.note}>{mode === "sample" ? "These are sample results, not evidence that your swing improved. " : "One small set does not prove lasting improvement. "}Airborne counts as contact. Unclear results prevent a fair improvement claim.</p>
+      <button className={styles.primary} onClick={onExit}>Finish practice</button>
+      <button className={styles.secondary} onClick={() => { setBefore([]); setAfter([]); setSelected(null); setEditing(null); setStage("setup"); }}>Start a fresh session</button>
+      <button className={styles.back} onClick={() => setStage("after")}>Review comparison outcomes</button>
+    </>}
+    {stage !== "setup" && <p className={styles.sessionNote}>{mode === "sample" ? "Illustrated sample session" : "Local session · no uploads"} · Results clear when you leave or refresh.</p>}
   </section>;
 }
