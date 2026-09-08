@@ -102,7 +102,7 @@ export default function RangeRescuePage() {
               <div className={styles.beginnerAction}>
                 <button type="button" onClick={() => setBeginnerSession(true)}><span>{club === "driver" ? "Start guided driver practice" : "Start guided beginner practice"}</span><span aria-hidden="true">→</span></button>
                 <p>Not sure what’s going wrong? This is a good place to begin.</p>
-                {club === "iron" && process.env.NEXT_PUBLIC_SWING_VIDEO_PREVIEW === "true" && <>
+                {club === "iron" && process.env.NEXT_PUBLIC_SWING_VIDEO_PREVIEW !== "false" && <>
                   <button type="button" onClick={() => setVideoPreview(true)}><span>Film a shot. Find your next step.</span><span aria-hidden="true">→</span></button>
                   <p>Shot tracking prototype · Mark the ball in your clip and try tracking on this device.</p>
                 </>}

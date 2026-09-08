@@ -4,11 +4,11 @@
 
 The owner chose local-first analysis: record/select a video, tap the ball, analyze movement on the device, and confirm the outcome. External AI APIs are not required for this experiment. The unused cloud integration was removed before commit; no clips were sent, no API key configured, and no billing enabled.
 
-This remains a local prototype on `codex/range-rescue-video-preview`. Do not push, merge, or publish until the owner reviews it and explicitly authorizes that next step.
+The owner authorized full available QC followed by push and merge, with real range footage and native phone recording reserved for their trial. This is an experimental feature, not a validated golf-video diagnosis.
 
 ## Try it
 
-With `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=true`, open `/range-rescue`, select Irons, choose “Film a shot. Find your next step.”, then “Start my practice”. The flag remains false in `.env.example`.
+Open `/range-rescue`, select Irons, choose “Film a shot. Find your next step.”, then “Start my practice”. The experimental entry is enabled by default; `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=false` at build time hides it. `.env.example` documents the enabled default.
 
 Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Use a steady, rear-offset view in a safe position within the bay.
 
@@ -50,4 +50,5 @@ Next evaluate real range clips with manual ball-position annotations: measure ho
 
 ## Rollback
 
-Disable the preview flag and rebuild, or revert the feature commits. There is no migration or cloud resource to remove. Preserve the production domain and `archive/pre-revival-2026-08-23`. Remote CI, hosted preview, merge, and publishing are deferred until explicit authorization.
+Disable the preview flag and rebuild, or revert the feature commits. There is no migration or cloud resource to remove. Preserve the production domain and `archive/pre-revival-2026-08-23`. Remote CI and a successful Vercel preview are required before the authorized merge. See the release QC record for evidence and remaining trial limitations.
+

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { findBallSeed, stepBallTrack } from "./local-ball-tracking.ts";
+import { findBallSeed, stepBallTrack, trackBallInVideo } from "./local-ball-tracking.ts";
 
 function frame(width = 160, height = 120, background = () => 25) {
   const data = new Uint8ClampedArray(width * height * 4);
@@ -110,4 +110,94 @@ test("unchanged textured background permits clear local ball movement", () => {
   assert.ok(result.state);
   assert.equal(result.state.x, 170);
   assert.equal(result.state.y, 115);
+});
+
+// Exercise the browser lifecycle boundary without claiming to test real codecs.
+function videoHarness(t, { moving = true, failSeek = false } = {}) {
+  class Video extends EventTarget {
+    videoWidth = 160;
+    videoHeight = 120;
+    duration = .4;
+    readyState = 2;
+    currentSrc = "blob:original";
+    isConnected = true;
+    paused = false;
+    time = 0;
+    get currentTime() { return this.time; }
+    set currentTime(value) {
+      this.time = value;
+      queueMicrotask(() => this.dispatchEvent(new Event(failSeek ? "error" : "seeked")));
+    }
+    pause() { this.paused = true; }
+  }
+  const video = new Video();
+  const canvas = {
+    width: 0, height: 0,
+    getContext: () => ({
+      drawImage() {},
+      getImageData: () => dot(frame(), 80 + (moving ? Math.round(video.currentTime * 60) : 0), 70),
+    }),
+  };
+  const previous = Object.getOwnPropertyDescriptor(globalThis, "document");
+  Object.defineProperty(globalThis, "document", { configurable: true, value: { createElement: () => canvas } });
+  t.after(() => {
+    if (previous) Object.defineProperty(globalThis, "document", previous);
+    else delete globalThis.document;
+  });
+  return { video, canvas, signal: new AbortController().signal, seed: { x: 80 / 159, y: 70 / 119 } };
+}
+
+test("video analysis reports detected motion and restores the replay and canvas", async t => {
+  const { video, canvas, signal, seed } = videoHarness(t);
+  const progress = [];
+  const result = await trackBallInVideo(video, seed, { signal, onProgress: value => progress.push(value) });
+  assert.equal(result.status, "tracked");
+  assert.ok(result.points.length > 2);
+  assert.ok(result.points.at(-1).x > result.points[0].x);
+  assert.equal(progress.at(-1), 100);
+  assert.equal(video.paused, true);
+  assert.equal(video.currentTime, 0);
+  assert.equal(canvas.width, 0);
+  assert.equal(canvas.height, 0);
+});
+
+test("video analysis distinguishes no visible motion from a confirmed miss", async t => {
+  const { video, signal, seed } = videoHarness(t, { moving: false });
+  const result = await trackBallInVideo(video, seed, { signal, onProgress() {} });
+  assert.equal(result.status, "no_motion");
+  assert.match(result.detail, /does not mean you missed/);
+});
+
+test("canceling an active analysis rejects and releases the canvas and replay", async t => {
+  const { video, canvas, seed } = videoHarness(t);
+  const controller = new AbortController();
+  await assert.rejects(trackBallInVideo(video, seed, {
+    signal: controller.signal,
+    onProgress: () => controller.abort(),
+  }), { name: "AbortError" });
+  assert.equal(video.currentTime, 0);
+  assert.equal(canvas.width, 0);
+  assert.equal(canvas.height, 0);
+});
+
+test("a decode failure rejects and releases analysis resources", async t => {
+  const { video, canvas, signal, seed } = videoHarness(t, { failSeek: true });
+  await assert.rejects(trackBallInVideo(video, seed, { signal, onProgress() {} }), /Could not decode/);
+  assert.equal(video.currentTime, 0);
+  assert.equal(canvas.width, 0);
+});
+
+test("cleanup does not rewind a replacement clip after cancellation", async t => {
+  const { video, canvas, seed } = videoHarness(t);
+  const controller = new AbortController();
+  await assert.rejects(trackBallInVideo(video, seed, {
+    signal: controller.signal,
+    onProgress: () => {
+      video.currentSrc = "blob:replacement";
+      video.time = .2;
+      controller.abort();
+    },
+  }), { name: "AbortError" });
+  assert.equal(video.currentTime, .2);
+  assert.equal(canvas.width, 0);
 });
