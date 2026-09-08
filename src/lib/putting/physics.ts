@@ -6,12 +6,13 @@ export const COURSE: Course = {
   cup: { x: 250, y: 105, radius: 12 }, start: { x: 110, y: 385 },
   name: "Warm-up", bankRequired: false, obstacles: [],
 };
-export const COURSE_VERSION = "five-hole-v1";
+export const COURSE_VERSION = "five-hole-v2";
 export const MAX_STROKES = 5;
 export const HOLES: readonly Course[] = [
   COURSE,
   { ...COURSE, name: "Around the corner", bankRequired: true, start: { x: 100, y: 375 }, cup: { x: 100, y: 145, radius: 12 }, obstacles: [{ x: 20, y: 235, width: 165, height: 22 }] },
-  { ...COURSE, name: "The gate", bankRequired: true, start: { x: 260, y: 390 }, cup: { x: 95, y: 100, radius: 12 }, obstacles: [{ x: 20, y: 255, width: 120, height: 22 }, { x: 218, y: 255, width: 122, height: 22 }] },
+  // Clearing the gate is enough: a clean approach must not require a rebound.
+  { ...COURSE, name: "The gate", bankRequired: false, start: { x: 260, y: 390 }, cup: { x: 95, y: 100, radius: 12 }, obstacles: [{ x: 20, y: 255, width: 120, height: 22 }, { x: 218, y: 255, width: 122, height: 22 }] },
   { ...COURSE, name: "Zigzag", bankRequired: true, start: { x: 85, y: 400 }, cup: { x: 275, y: 90, radius: 12 }, obstacles: [{ x: 20, y: 290, width: 175, height: 20 }, { x: 165, y: 175, width: 175, height: 20 }] },
   { ...COURSE, name: "The finale", bankRequired: true, start: { x: 270, y: 405 }, cup: { x: 260, y: 85, radius: 12 }, obstacles: [{ x: 145, y: 305, width: 195, height: 20 }, { x: 20, y: 195, width: 175, height: 20 }, { x: 215, y: 135, width: 125, height: 20 }] },
 ];

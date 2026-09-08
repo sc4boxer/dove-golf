@@ -82,7 +82,7 @@ test("all five holes have reproducible complete routes within the shot allowance
     assert.equal(ball.banked, false);
     for (const shot of solutions[index]) ball = settle(strike(ball, shot.angle, shot.power), course);
     assert.equal(ball.sunk, true, course.name);
-    assert.equal(ball.banked, course.bankRequired);
+    if (course.bankRequired) assert.equal(ball.banked, true);
     assert.equal(ball.x, course.cup.x);
     assert.equal(ball.y, course.cup.y);
   }
@@ -92,12 +92,38 @@ test("all five holes have reproducible complete routes within the shot allowance
     { strokes: 5, sunk: true, points: 100 },
   ] });
 });
-test("every challenge blocks the straight start-to-cup putt", () => {
-  for (const course of HOLES.slice(1)) {
+test("bank-required challenges block the straight start-to-cup putt", () => {
+  for (const course of HOLES.filter(course => course.bankRequired)) {
     const ball = createBall(course);
     const angle = Math.atan2(course.cup.x - ball.x, ball.y - course.cup.y) * 180 / Math.PI;
     for (let power = 1; power <= 100; power++) assert.equal(settle(strike(ball, angle, power), course).sunk, false, `${course.name} ${power}`);
   }
+});
+test("hole 3 accepts a clean putt through the gate without a bank at common frame rates", () => {
+  const course = HOLES[2];
+  const angle = Math.atan2(course.cup.x - course.start.x, course.start.y - course.cup.y) * 180 / Math.PI;
+  for (const fps of [30, 60, 120]) {
+    for (const power of [81, 82, 83, 84, 85, 86]) {
+      let ball = strike(createBall(course), angle, power);
+      for (let tick = 0; tick < fps * 10 && isMoving(ball); tick++) ball = step(ball, 1 / fps, course);
+      assert.equal(ball.sunk, true, `${fps} fps, power ${power}`);
+      assert.equal(ball.banked, false);
+      assert.equal(ball.x, course.cup.x);
+      assert.equal(ball.y, course.cup.y);
+    }
+  }
+  const shots = solutions.map(hole => [...hole]);
+  shots[2] = [{ angle, power: 83 }];
+  const result = replayRound(shots);
+  assert.deepEqual(result.holes[2], { strokes: 1, sunk: true, points: 500 });
+  assert.equal(result.score, 1700);
+});
+test("hole 3 still rejects fast crossings and near misses without a bank", () => {
+  const course = HOLES[2];
+  const approach = { ...createBall(course), x: course.cup.x - 30, y: course.cup.y, vx: 80 };
+  assert.equal(step(approach, 1, course).sunk, true);
+  assert.equal(step({ ...approach, vx: 300 }, 0.2, course).sunk, false);
+  assert.equal(step({ ...approach, y: course.cup.y + 11 }, 1, course).sunk, false);
 });
 test("later cups require a bank, preserve it between shots, and reset next hole", () => {
   const course = HOLES[1];
