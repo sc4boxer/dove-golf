@@ -14,7 +14,7 @@ Each hole allows five putts. Sinking the ball or exhausting the allowance opens 
 | 4 | Zigzag | Staggered barriers require more positioning. |
 | 5 | The finale | Three barriers protect the cup and require a longer route. |
 
-Holes 2–5 require at least one rebound from a wall or barrier **during that hole** before the cup accepts the ball. The requirement is visible before putting and changes to a completion cue after a bank. A completed bank persists across subsequent putts and resets on the next hole. Barrier placement also blocks direct start-to-cup putts; players can take positioning shots.
+Holes 2, 4, and 5 require at least one rebound from a wall or barrier **during that hole** before the cup accepts the ball. The requirement is visible before putting and changes to a completion cue after a bank. A completed bank persists across subsequent putts and resets on the next hole. Hole 3 accepts a clean approach through the gate without a rebound; the other challenge holes block direct start-to-cup putts and allow positioning shots.
 
 A hole scores 500, 400, 300, 200, or 100 points for sinking in one through five putts. A hole left unfinished after five attempts scores zero. The round adds all five hole scores, with a nominal maximum of 2,500 points. There is no speed bonus or timer. The harder layouts are not a promise that every hole is achievable in one shot.
 
@@ -36,7 +36,9 @@ See [Verified putting leaderboard](putting-leaderboard.md) for API contracts, ra
 
 ## Validation and release
 
-The focused suite in `src/lib/putting/physics.test.js` passes 14 tests. It covers analytical stopping distance, input validation, all walls, slow capture/fast overshoot, timestep consistency, obstacle faces and corners, occluded cup capture, bank persistence/reset, scoring, and invalid/incomplete replay logs. A sweep of 300 maximum-power trajectories checks bounds and barrier exclusion. Direct start-to-cup attempts at every integer power from 1 through 100 fail on the four challenge holes.
+The focused suite in `src/lib/putting/physics.test.js` has 16 tests. It covers analytical stopping distance, input validation, all walls, slow capture/fast overshoot, timestep consistency, obstacle faces and corners, occluded cup capture, bank persistence/reset, scoring, and invalid/incomplete replay logs. A sweep of 300 maximum-power trajectories checks bounds and barrier exclusion. Direct start-to-cup attempts at every integer power from 1 through 100 fail on the three bank-required holes. Hole 3 regression tests cover clean gate approaches at 30/60/120 fps, fast crossings, near misses, and server replay scoring.
+
+The hole 3 cup fix increments the course version to `five-hole-v2`. The UI automatically stops showing a bank requirement on this hole. Versioned leaderboard queries keep existing v1 scores stored separately from new v2 scores; existing v1 round tokens cannot submit under v2 rules. No database migration is needed. Roll back by reverting this fix, which restores the v1 rules and leaderboard view without deleting either version's scores.
 
 The reproducible `solutions` fixture completes the five courses in 1, 2, 2, 4, and 5 shots at the same fixed timestep as the UI and server, totaling 1,600 points. This verifies feasibility, not an optimal route or a guarantee of perceived difficulty. Real player feedback should guide subsequent tuning and version changes.
 
