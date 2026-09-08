@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { autoTrackBallInVideo, type TrackResult } from "@/lib/range-rescue/local-ball-tracking";
+import { MAX_VIDEO_BYTES, isValidVideoDuration } from "@/lib/range-rescue/video-limits";
 import styles from "./ShotReplay.module.css";
 
 type Sample = "air" | "contact" | "miss" | "unsure";
@@ -124,8 +125,8 @@ export default function ShotReplay({ sample, club = "iron", allowSamples = true,
     const file = event.target.files?.[0];
     if (!file) return;
     clearLocal();
-    if (file.size > 50 * 1024 * 1024) {
-      setError("This video is too large. Choose a clip under 50 MB.");
+    if (file.size > MAX_VIDEO_BYTES) {
+      setError("This video is too large. Choose a clip up to 250 MB.");
       return;
     }
     if (file.type && !file.type.startsWith("video/")) {
@@ -190,8 +191,8 @@ export default function ShotReplay({ sample, club = "iron", allowSamples = true,
             onLoadedMetadata={(event) => {
               if (objectUrl.current !== local.url) return;
               const duration = event.currentTarget.duration;
-              if (!Number.isFinite(duration) || duration <= 0 || duration > 30) {
-                failLocal("Choose a video up to 30 seconds long. Trim your clip and try again.");
+              if (!isValidVideoDuration(duration)) {
+                failLocal("Choose a video up to 10 seconds long. Trim your clip and try again.");
               }
             }}
             onLoadedData={(event) => {
@@ -307,7 +308,7 @@ export default function ShotReplay({ sample, club = "iron", allowSamples = true,
           <p id={`${id}-camera`} className={styles.privacy}>Supported phones open the camera. Other devices may open a file picker.</p>
         </details>
         {local && <button type="button" className={styles.remove} onClick={() => { clearLocal(); requestAnimationFrame(() => fileInput.current?.focus()); }}>Remove video</button>}
-        <p id={`${id}-privacy`} className={styles.privacy}>Up to 30 seconds · 50 MB. Video stays on this device and clears when you confirm or leave this shot.</p>
+        <p id={`${id}-privacy`} className={styles.privacy}>Keep your clip under 10 seconds · Up to 250 MB. Video stays on this device and clears when you confirm or leave this shot.</p>
       </div>}
     </section>
   );

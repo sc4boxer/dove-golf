@@ -301,11 +301,11 @@ test("automatic analysis restores the replay on decode failure", async t => {
 });
 
 test("automatic analysis searches beyond the opening seconds for a late shot", async t => {
-  const { video, signal } = videoHarness(t, { frameAt: time => dot(frame(), 30 + Math.round(Math.max(0, time - 20) * 30), 95) });
-  video.duration = 22;
+  const { video, signal } = videoHarness(t, { frameAt: time => dot(frame(), 30 + Math.round(Math.max(0, time - 8) * 30), 95) });
+  video.duration = 10;
   const result = await autoTrackBallInVideo(video, { signal, onProgress() {} });
   assert.ok(result.track);
-  assert.ok(result.track.points[0].time >= 20);
+  assert.ok(result.track.points[0].time >= 8);
 });
 
 test("automatic analysis can return a partial visible path but describes the loss", async t => {
