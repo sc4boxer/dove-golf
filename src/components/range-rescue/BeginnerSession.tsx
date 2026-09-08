@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { RescueVisualGuide } from "./RescueVisualGuide";
+import { DriverPracticeGuide } from "./DriverPracticeGuide";
+import type { RangeRescueClub } from "@/lib/range-rescue/plans";
 import { getSessionFeedback, summarizeShots, type ShotOutcome } from "@/lib/range-rescue/beginner-session";
 import styles from "./BeginnerSession.module.css";
 
@@ -13,7 +15,8 @@ const outcomes: { value: ShotOutcome; label: string }[] = [
   { value: "unsure", label: "I couldn’t tell what happened" },
 ];
 
-export function BeginnerSession({ onExit }: { onExit: () => void }) {
+export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void; club?: RangeRescueClub }) {
+  const driver = club === "driver";
   const [stage, setStage] = useState(0);
   const [before, setBefore] = useState<ShotOutcome[]>([]);
   const [after, setAfter] = useState<ShotOutcome[]>([]);
@@ -27,28 +30,28 @@ export function BeginnerSession({ onExit }: { onExit: () => void }) {
   }, [stage, shots.length]);
   const initial = summarizeShots(before);
   const final = summarizeShots(after);
-  const feedback = stage === 4 ? getSessionFeedback(before, after) : null;
+  const feedback = stage === 4 ? getSessionFeedback(before, after, club) : null;
 
   return <section className={styles.session} aria-labelledby="session-heading">
     <button className={styles.back} onClick={onExit}>← Leave session</button>
-    <p className={styles.kicker}>Beginner practice · Step {stage + 1} of 5</p>
-    <h1 ref={heading} tabIndex={-1} id="session-heading">{stages[stage]}</h1>
+    <p className={styles.kicker}>{driver ? "Driver practice" : "Beginner iron practice"} · Step {stage + 1} of 5</p>
+    <h1 ref={heading} tabIndex={-1} id="session-heading">{driver && stage === 2 ? "Easy driver practice" : stages[stage]}</h1>
     <p className={styles.note}>About 10–15 minutes. Go at your own pace. Your results stay on this page and clear when you leave or refresh.</p>
     {stage === 0 && <>
-      <h2>Today’s goal: touch the ball, then find a little height</h2>
+      <h2>{driver ? "Today’s goal: make contact from the tee" : "Today’s goal: touch the ball, then find a little height"}</h2>
       <p>Distance and direction can wait. We’ll compare five starting shots with five shots after one simple exercise.</p>
       <ol className={styles.instructions}>
-        <li>Choose a club marked 9, PW, or SW if you have one. Otherwise use an iron you feel comfortable holding, or ask range staff to help choose one.</li>
+        <li>{driver ? "Use your driver and a tee intended for it. Ask range staff to help choose a suitable tee height if you are unsure." : "Choose a club marked 9, PW, or SW if you have one. Otherwise use an iron you feel comfortable holding, or ask range staff to help choose one."}</li>
         <li>Stay inside your hitting area, face the range, and check that nobody is within reach of your club. Stop if a swing hurts.</li>
-        <li>Place one ball on the mat or grass. Stand with feet about shoulder-width apart, bend forward comfortably from your hips, and let the club rest behind the ball with both hands on the handle.</li>
-        <li>Use the same club and ball position for both sets. If you need a low tee to begin, use it for both sets.</li>
+        <li>{driver ? "Place the ball on the tee, forward in your stance near the inside of your lead heel—the foot nearer the target. Stand comfortably, bend from your hips, and set the driver behind the ball." : "Place one ball on the mat or grass. Stand with feet about shoulder-width apart, bend forward comfortably from your hips, and let the club rest behind the ball with both hands on the handle."}</li>
+        <li>{driver ? "Keep the same driver, tee height, and ball position for both sets. If you change the setup, leave this session and begin with a fresh starting set." : "Use the same club and ball position for both sets. If you need a low tee to begin, use it for both sets."}</li>
       </ol>
       <button className={styles.primary} onClick={() => setStage(1)}>I’m ready for five starting shots</button>
     </>}
     {(stage === 1 || stage === 3) && <>
-      <h2>{stage === 1 ? "Take five comfortable shots" : "Take five shots with the small swing"}</h2>
-      <p>{stage === 1 ? "Use your current comfortable swing. After each attempt, record what happened—even a miss counts." : "Let your hands travel only to about waist height going back and forward. After each attempt, record what happened."}</p>
-      <p id="shot-help">“Into the air” means you saw the ball lift off the ground, even briefly. A rolling ball still counts as contact. If you couldn’t tell, choose that option without guessing. Stay inside your hitting area.</p>
+      <h2>{stage === 1 ? "Take five comfortable shots" : driver ? "Take five easy tee shots" : "Take five shots with the small swing"}</h2>
+      <p>{stage === 1 ? "Use your current comfortable swing. After each attempt, record what happened—even a miss counts." : driver ? "Use a shorter backswing at an easy pace and finish in balance. Keep the driver, tee height, and ball position the same. Record each attempt." : "Let your hands travel only to about waist height going back and forward. After each attempt, record what happened."}</p>
+      <p id="shot-help">{driver ? "“Into the air” means the ball flew above the ground beyond the tee, even briefly. Starting on a raised tee does not count. A ball that only rolls still counts as contact." : "“Into the air” means you saw the ball lift off the ground, even briefly. A rolling ball still counts as contact."} If you couldn’t tell, choose that option without guessing. Stay inside your hitting area.</p>
       <div className={styles.recorder}>
         <p role="status">{shots.length < 5 ? `Ball ${shots.length + 1} of 5: what happened?` : "All five attempts recorded."}</p>
         {shots.length < 5 && <div className={styles.choices} aria-describedby="shot-help">
@@ -62,10 +65,10 @@ export function BeginnerSession({ onExit }: { onExit: () => void }) {
       <button ref={continueButton} className={styles.primary} disabled={shots.length !== 5} onClick={() => setStage(stage + 1)}>{stage === 1 ? "Show me the practice exercise" : "Compare my results"}</button>
     </>}
     {stage === 2 && <>
-      <h2>One change: make the swing smaller</h2>
-      <p>Without a ball, make three gentle swings. Let your hands travel only to about waist height on each side. Feel the club lightly brush the grass or mat, and finish standing comfortably.</p>
-      <p>A smaller movement gives you a simpler task to repeat. It may help contact; it does not guarantee the ball will lift. You do not need to scoop the ball upward.</p>
-      <RescueVisualGuide id="thin-or-top" practiceOnly onStart={() => setStage(3)} />
+      <h2>{driver ? "One change: shorten your backswing" : "One change: make the swing smaller"}</h2>
+      <p>{driver ? "Without a ball, rehearse three easy swings with a shorter backswing than usual. Let the driver travel above the mat or grass and finish comfortably in balance." : "Without a ball, make three gentle swings. Let your hands travel only to about waist height on each side. Feel the club lightly brush the grass or mat, and finish standing comfortably."}</p>
+      <p>{driver ? "Keep your tee height and ball position unchanged for the next set. This is a contact experiment; more height does not tell us whether your driver launch or distance is optimal." : "A smaller movement gives you a simpler task to repeat. It may help contact; it does not guarantee the ball will lift. You do not need to scoop the ball upward."}</p>
+      {driver ? <DriverPracticeGuide practiceOnly onStart={() => setStage(3)} /> : <RescueVisualGuide id="thin-or-top" practiceOnly onStart={() => setStage(3)} />}
     </>}
     {feedback && <>
       <h2>{feedback.title}</h2>

@@ -1,0 +1,32 @@
+.guide {
+  margin: 2px 0 18px;
+  overflow: hidden;
+  border: 1px solid var(--rr-border, #e2e8f0);
+  border-radius: 26px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+
+.figure { margin: 12px 12px 0; padding-bottom: 15px; border-radius: 20px; background: var(--rr-surface, #f8fafc); }
+.diagram { display: block; width: 100%; height: auto; }
+.figure figcaption { margin: 0 18px; color: var(--rr-body, #475569); font-size: 12px; line-height: 1.5; }
+.ground { fill: none; stroke: #cbd5e1; stroke-width: 3; stroke-linecap: round; }
+.tee { fill: none; stroke: #64748b; stroke-width: 3; stroke-linecap: round; }
+.ball { fill: #fff; stroke: var(--ink, #0f172a); stroke-width: 2.5; }
+.shaft { fill: none; stroke: var(--ink, #0f172a); stroke-width: 5; stroke-linecap: round; }
+.head { fill: var(--rr-accent, #0f172a); }
+.labelLine { fill: none; stroke: #94a3b8; stroke-width: 1.5; }
+.label { fill: var(--rr-body, #475569); font: 600 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+.copy { padding: 24px 22px 22px; }
+.kicker { margin: 0 0 8px !important; color: var(--rr-accent, #0f172a) !important; font-size: 11px !important; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.copy h2 { margin: 0; color: var(--ink, #0f172a); font-size: clamp(1.7rem, 6vw, 2.5rem); font-weight: 650; letter-spacing: -.045em; line-height: 1.08; }
+.copy > p:not(.kicker) { margin: 15px 0 0; color: var(--rr-body, #475569); font-size: 15px; line-height: 1.6; }
+.cue { padding: 16px; border-radius: 16px; background: var(--rr-surface, #f8fafc); }
+.primary { width: 100%; min-height: 50px; margin-top: 20px; padding: 12px 18px; border: 0; border-radius: 15px; background: var(--ink, #0f172a); color: #fff; font-size: 13px; font-weight: 750; cursor: pointer; }
+.primary:focus-visible { outline: 3px solid #475569; outline-offset: 3px; }
+
+@media (max-width: 480px) {
+  .guide { border-radius: 22px; }
+  .figure { margin-inline: 8px; }
+  .copy { padding: 20px 17px; }
+}

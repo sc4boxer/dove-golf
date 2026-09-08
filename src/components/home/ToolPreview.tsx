@@ -45,7 +45,7 @@ export function ToolPreview({ id, animate, onStart, onComplete }: ToolPreviewPro
     <div className={styles.contact}><MissVisual id="thin-or-top" large /><span>Spot the miss.<br />Try one change.</span></div>
     <div className={styles.fiveBalls} aria-label="Five attempts, one step at a time">{[1, 2, 3, 4, 5].map((ball) => <span key={ball} style={{ animationDelay: `${0.3 + (ball - 1) * 0.9}s` }}>{ball}</span>)}</div>
     <div className={styles.takeaway}>
-      <p className={styles.takeawayLabel}>Example practice step</p>
+      <p className={styles.takeawayLabel}>Example iron practice</p>
       <p>Try five waist-high swings. Count how many balls get airborne.</p>
     </div>
   </div>;
