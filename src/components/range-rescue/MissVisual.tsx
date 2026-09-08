@@ -1,7 +1,24 @@
-import type { RangeRescuePlanId } from "@/lib/range-rescue/plans";
+import type { RangeRescueClub, RangeRescuePlanId } from "@/lib/range-rescue/plans";
 import styles from "./MissVisual.module.css";
 
-export function MissVisual({ id, large = false }: { id: RangeRescuePlanId; large?: boolean }) {
+export function MissVisual({ id, large = false, club = "iron" }: { id: RangeRescuePlanId; large?: boolean; club?: RangeRescueClub }) {
+  if (club === "driver" && (id === "ground-first" || id === "thin-or-top")) {
+    const groundFirst = id === "ground-first";
+    return (
+      <div className={`${styles.visual} ${large ? styles.large : ""}`} aria-hidden="true">
+        <svg viewBox="0 0 96 62">
+          <path className={styles.turf} d="M10 48 H86" />
+          <path className={styles.teeStem} d="M62 48 V32 M57 32 Q62 36 67 32" />
+          <circle className={styles.ball} cx="62" cy="26" r="6" />
+          <path className={styles.club} d={groundFirst ? "M19 12 L37 39" : "M22 8 L47 23"} />
+          <path className={styles.driverHead} d={groundFirst ? "M32 37 Q28 44 36 45 H45 V38 Z" : "M43 21 Q39 28 47 29 H56 V22 Z"} />
+          <path className={styles.trouble} d={groundFirst ? "M28 48 q9 -7 20 0" : "M57 22 H69"} />
+          {!groundFirst && <path className={styles.motion} d="M70 30 Q77 39 86 40" />}
+        </svg>
+        <span>{groundFirst ? "Ground before tee" : "Low off the tee"}</span>
+      </div>
+    );
+  }
   if (id === "ground-first") {
     return (
       <div className={`${styles.visual} ${large ? styles.large : ""}`} aria-hidden="true">

@@ -20,3 +20,26 @@ test("feedback adapts to improvement, repeatability, struggle, and regression", 
   assert.match(getSessionFeedback(set("air"), set("contact")).next, /low tee/);
   assert.match(getSessionFeedback(set("air"), ["air", "air", "air", "miss", "miss"]).title, /simple/);
 });
+
+test("driver keeps the same comparison rules with club-appropriate next steps", () => {
+  const set = (value) => Array(5).fill(value);
+  const cases = [
+    [set("unsure"), set("air")],
+    [set("miss"), set("contact")],
+    [set("air"), set("air")],
+    [set("miss"), set("miss")],
+    [set("air"), set("contact")],
+    [set("air"), ["air", "air", "air", "miss", "miss"]],
+  ];
+  for (const [before, after] of cases) {
+    const original = getSessionFeedback(before, after);
+    assert.deepEqual(getSessionFeedback(before, after, "iron"), original);
+    const driver = getSessionFeedback(before, after, "driver");
+    assert.equal(driver.title, original.title, "club choice does not change scoring");
+    assert.match(driver.next, /driver/);
+    assert.doesNotMatch(driver.next, /low tee|grass|mat|brush/i);
+  }
+  assert.match(getSessionFeedback(set("unsure"), set("air"), "driver").next, /cannot compare/);
+  assert.match(getSessionFeedback(set("air"), set("contact"), "driver").next, /new starting set/);
+  assert.throws(() => getSessionFeedback([], set("air"), "driver"), /five shots/);
+});

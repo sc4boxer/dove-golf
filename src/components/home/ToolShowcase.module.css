@@ -2,14 +2,16 @@
 .selectorLabel { display: flex; justify-content: space-between; gap: 12px; margin: 0 5px 9px; color: #64748b; font-size: 11px; }
 .selectorLabel > span:first-child { font-weight: 600; color: #475569; }
 .tabs { position: relative; isolation: isolate; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 5px; gap: 4px; border: 1px solid #e2e8f0; border-radius: 18px; background: #f8fafc; touch-action: pan-y pinch-zoom; user-select: none; }
-.tabIndicator { position: absolute; z-index: -1; top: 5px; bottom: 5px; left: 5px; width: calc((100% - 18px) / 3); border: 1px solid #bae6fd; border-radius: 13px; background: #e0f2fe; box-shadow: 0 1px 2px rgb(15 23 42 / .04); transform: translateX(calc(var(--selected-tab) * (100% + 4px))); transition: transform 260ms ease; pointer-events: none; }
+.tabIndicator { position: absolute; z-index: -1; top: 5px; bottom: 5px; left: 5px; width: calc((100% - 18px) / 3); border: 1px solid #bae6fd; border-radius: 13px; background: #e0f2fe; box-shadow: 0 1px 2px rgb(15 23 42 / .04); transform: translateX(calc(var(--selected-tab) * (100% + 4px))); transition: transform 380ms cubic-bezier(.22, 1, .36, 1); pointer-events: none; }
 .tabs button { min-height: 48px; border-radius: 13px; padding: 10px 6px; color: #475569; font-size: 14px; font-weight: 600; line-height: 1.35; cursor: pointer; transition: color 180ms ease, background 180ms ease; }
 .tabs button[aria-selected="true"] { color: #0c4a6e; }
 .tabs button:not([aria-selected="true"]):hover { background: #e2e8f0; color: #0f172a; }
 .panels { display: grid; margin-top: 16px; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; background: white; touch-action: pan-y pinch-zoom; }
-.panel { grid-area: 1 / 1; min-width: 0; display: grid; grid-template-columns: 1.15fr 1fr; visibility: hidden; pointer-events: none; }
-.active { visibility: visible; pointer-events: auto; animation: panel-enter 260ms ease both; }
-@keyframes panel-enter { from { opacity: .6; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+/* Keep every panel in the same grid cell to preserve the card's height. The
+   outgoing panel becomes inert immediately, but stays visible for its fade.
+   CSS transitions can reverse mid-flight without animation timers or remounts. */
+.panel { grid-area: 1 / 1; min-width: 0; display: grid; grid-template-columns: 1.15fr 1fr; visibility: hidden; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity 180ms ease-out, transform 320ms cubic-bezier(.22, 1, .36, 1), visibility 0s linear 320ms; }
+.active { visibility: visible; opacity: 1; transform: translateY(0); pointer-events: auto; transition: opacity 320ms ease-out, transform 380ms cubic-bezier(.22, 1, .36, 1), visibility 0s; }
 .copy { display: flex; flex-direction: column; align-items: flex-start; padding: 32px; }
 .eyebrow { margin: 0; font-size: 11px; letter-spacing: .13em; text-transform: uppercase; font-weight: 650; color: #64748b; }
 .copy h2 { margin: 16px 0 0; max-width: 390px; font-size: clamp(27px, 3.5vw, 36px); font-weight: 600; line-height: 1.12; letter-spacing: -.035em; }
@@ -35,5 +37,5 @@
   .visual { border-left: 0; border-top: 1px solid #e2e8f0; padding: 18px 24px; min-height: 180px; }
 }
 @media (max-width: 360px) { .tabs button { font-size: 12px; } .copy { padding: 20px; } .browse { font-size: 11px; } .browse > div { gap: 4px; } }
-@media (prefers-reduced-motion: reduce) { .tabIndicator, .tabs button { transition: none; } .active { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tabIndicator, .tabs button, .panel { transition: none; } .panel { transform: none; } }
 

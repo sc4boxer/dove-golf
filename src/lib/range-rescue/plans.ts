@@ -9,6 +9,7 @@ export const RANGE_RESCUE_PLAN_IDS = [
 ] as const;
 
 export type RangeRescuePlanId = (typeof RANGE_RESCUE_PLAN_IDS)[number];
+export type RangeRescueClub = "iron" | "driver";
 
 export type RangeRescuePlan = {
   id: RangeRescuePlanId;
@@ -102,7 +103,84 @@ export const RANGE_RESCUE_PLANS: readonly RangeRescuePlan[] = [
   },
 ] as const;
 
-export function getRangeRescuePlan(id: RangeRescuePlanId) {
-  return RANGE_RESCUE_PLANS.find((plan) => plan.id === id);
+const DRIVER_SETUP = "Use your driver with the ball on a tee. Ask range staff for a suitable tee if needed. Start with the ball near the inside of your lead foot (the foot nearer the target), and keep that position and tee height consistent for the set.";
+
+// Driver guidance keeps setup and strike observations separate from diagnoses.
+// Sources: PGA, Find the Fairway More Off the Tee; Titleist Learning Lab, Gear Effect.
+export const DRIVER_RANGE_RESCUE_PLANS: readonly RangeRescuePlan[] = [
+  {
+    id: "ground-first",
+    optionLabel: "I hit the ground before the teed ball",
+    title: "Practice reaching the teed ball",
+    summary: "The driver ball sits above the ground. Work on reaching it without trying to strike the turf.",
+    reset: DRIVER_SETUP,
+    change: "Try a shorter, easy swing and finish in balance. Let the club reach the teed ball; do not try to take a divot or lift the ball with your hands.",
+    test: ["Rehearse 2 easy swings in your own bay", "Hit 5 balls with the same tee height", "Notice whether the club reaches the ball before the ground"],
+    better: "Count how many of 5 shots reach the ball without hitting the ground first. Compare with your starting shots; one extra is a useful observation.",
+    fallback: "If the club keeps hitting the ground first, pause and ask a range instructor to check your driver setup. If you change the setup, record a new starting set before comparing results.",
+  },
+  {
+    id: "thin-or-top",
+    optionLabel: "My drive stays low or rolls",
+    title: "Start with contact on the tee",
+    summary: "A low drive alone cannot tell us the cause. Keep the tee setup consistent and look for contact and a little height.",
+    reset: DRIVER_SETUP,
+    change: "Use a shorter, easy swing toward a wide range target. Finish in balance and let the driver meet the teed ball without trying to scoop it into the air.",
+    test: ["Rehearse 2 easy swings in your own bay", "Hit 5 balls with the same tee height", "Notice which balls become airborne, even briefly"],
+    better: "Count how many of 5 balls get into the air. Compare with your starting shots; height is an observation, not a diagnosis of your swing.",
+    fallback: "Ask range staff or a coach to check that the tee suits your driver. If the tee height or ball position changes, begin a new starting set. Do not add speed to force the ball up.",
+  },
+  {
+    id: "starts-left",
+    optionLabel: "My drive starts left",
+    title: "Give your driver a clear target",
+    summary: "Starting left is an observation, not a swing diagnosis. Begin with an aim check.",
+    reset: DRIVER_SETUP,
+    change: "From inside your bay, choose a target in a wide, safe range area. Aim the center of the driver face toward it, then settle your feet alongside the ball-to-target line. Make an easy swing.",
+    test: ["Check your target before each swing", "Hit 5 balls with the same tee height", "Watch the initial direction before the ball curves"],
+    better: "Count how many of 5 drives start toward your target. Compare with your starting shots; the landing point is a separate observation.",
+    fallback: "Keep the target and tee setup, and try 3 shorter, easy swings. If the start stays left, take that observation to a coach instead of assuming a grip or swing-path fault.",
+  },
+  {
+    id: "starts-right",
+    optionLabel: "My drive starts right",
+    title: "Use a nearby mark for driver aim",
+    summary: "Starting right is an observation, not a swing diagnosis. A nearby mark can make your aim easier to repeat.",
+    reset: DRIVER_SETUP,
+    change: "From inside your bay, find an existing mark ahead of the ball on the line to a wide range target. Aim the center of the driver face toward it, then settle your feet alongside that line. Make an easy swing.",
+    test: ["Check the nearby mark before each swing", "Hit 5 balls with the same tee height", "Watch the initial direction before the ball curves"],
+    better: "Count how many of 5 drives start toward your target. Compare with your starting shots; the landing point is a separate observation.",
+    fallback: "Keep the target and tee setup, and try 3 shorter, easy swings. If the start stays right, take that observation to a coach instead of assuming a grip or swing-path fault.",
+  },
+  ...(["left", "right"] as const).map((direction): RangeRescuePlan => ({
+    id: `curves-${direction}`,
+    optionLabel: `My drive curves ${direction}`,
+    title: "Watch the curve with an easier swing",
+    summary: "Driver curvature can also be influenced by where the ball meets the face. The bend alone does not identify a swing fault.",
+    reset: DRIVER_SETUP,
+    change: "Choose a wide, safe range target. Try a shorter, easy driver swing and finish in balance. Keep the same tee setup while you watch the flight.",
+    test: ["Rehearse 2 easy swings in your own bay", "Hit 5 balls with the same tee height", `Notice whether the ball bends ${direction} less than before`],
+    better: "Count how many of 5 shots bend less than your starting shots. Shorter shots may bend less because they travel less; this does not prove the curve is fixed.",
+    fallback: "If the bend is hard to judge, try 3 easy swings and record contact only. A coach can check strike location and delivery together before suggesting a correction.",
+  })),
+  {
+    id: "no-pattern",
+    optionLabel: "I am not sure, or I keep missing with driver",
+    title: "Make driver contact your first goal",
+    summary: "You do not need to name a fault or hit far. Start by noticing whether the driver reaches the ball.",
+    reset: DRIVER_SETUP,
+    change: "Make a shorter, easy swing and finish comfortably in balance. Keep your only goal as contact with the teed ball.",
+    test: ["Rehearse 2 easy swings in your own bay", "Hit 5 balls with the same tee height", "Count contact even when the ball only rolls"],
+    better: "Count how many of 5 swings make contact. Compare with your starting shots; one extra counts as progress, even if it rolls.",
+    fallback: "Try 3 even shorter, easy swings with the same tee setup. If you still miss, pause and ask a coach to help with driver setup. Any setup change needs a new starting set.",
+  },
+];
+
+export function getRangeRescuePlans(club: RangeRescueClub = "iron"): readonly RangeRescuePlan[] {
+  return club === "driver" ? DRIVER_RANGE_RESCUE_PLANS : RANGE_RESCUE_PLANS;
+}
+
+export function getRangeRescuePlan(id: RangeRescuePlanId, club: RangeRescueClub = "iron") {
+  return getRangeRescuePlans(club).find((plan) => plan.id === id);
 }
 

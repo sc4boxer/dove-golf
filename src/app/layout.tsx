@@ -83,8 +83,8 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConsentManager measurementId={GA_ID} />
         {children}
+        <ConsentManager measurementId={GA_ID} />
       </body>
     </html>
   );

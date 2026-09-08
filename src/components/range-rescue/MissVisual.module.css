@@ -22,6 +22,8 @@
 .flightPath { fill: none; stroke: var(--rr-accent, #0f172a); stroke-width: 4; stroke-linecap: round; }
 .randomPath { fill: none; stroke: var(--rr-accent, #0f172a); stroke-width: 3; stroke-linecap: round; stroke-dasharray: 3 4; }
 .tee { fill: var(--ink); }
+.teeStem { fill: none; stroke: #64748b; stroke-width: 2; stroke-linecap: round; }
+.driverHead { fill: var(--ink); }
 .landing { fill: #b45309; }
 
 .large { width: 150px; min-height: 112px; padding: 9px; justify-self: start; }

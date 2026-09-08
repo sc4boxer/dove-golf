@@ -73,6 +73,16 @@
 }
 
 .chooser, .result { flex: 1; }
+.clubChoice { margin: 0 0 24px; border: 0; padding: 0; }
+.clubChoice legend { font-size: 14px; font-weight: 650; margin-bottom: 10px; }
+.clubChoice p { margin: 10px 0 0; color: var(--rr-body); font-size: 13px; line-height: 1.5; }
+.clubOptions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 5px; border: 1px solid var(--rr-border); border-radius: 16px; background: var(--rr-surface); }
+.clubOptions label { position: relative; cursor: pointer; }
+.clubOptions input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.clubOptions span { display: flex; align-items: center; justify-content: center; min-height: 48px; border: 1px solid transparent; border-radius: 11px; font-size: 14px; font-weight: 650; color: var(--rr-body); }
+.clubOptions label:hover span { background: #e0f2fe; }
+.clubOptions input:checked + span { border-color: #bae6fd; color: #0c4a6e; background: #e0f2fe; }
+.clubOptions input:focus-visible + span { outline: 3px solid #475569; outline-offset: 2px; }
 .beginnerCard {
   display: grid;
   gap: 16px;

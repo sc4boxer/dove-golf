@@ -33,6 +33,15 @@
   .banner { right: 10px; bottom: 10px; left: 10px; width: calc(100% - 20px); grid-template-columns: 1fr; gap: 15px; padding: 18px; border-radius: 18px; }
   .actions { display: grid; grid-template-columns: 1fr 1fr; }
   .actions button { width: 100%; }
+  .reopen {
+    position: static;
+    display: block;
+    min-height: 44px;
+    margin: 12px auto calc(16px + env(safe-area-inset-bottom, 0px));
+    padding: 0 16px;
+    box-shadow: none;
+    font-size: 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

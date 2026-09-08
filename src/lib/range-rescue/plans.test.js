@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { RANGE_RESCUE_PLAN_IDS, RANGE_RESCUE_PLANS, getRangeRescuePlan } from "./plans.ts";
+import { RANGE_RESCUE_PLAN_IDS, RANGE_RESCUE_PLANS, getRangeRescuePlan, getRangeRescuePlans } from "./plans.ts";
 
 assert.equal(RANGE_RESCUE_PLANS.length, 7, "keep existing plan IDs available to saved links and visual guidance");
 assert.deepEqual(RANGE_RESCUE_PLANS.map((plan) => plan.id), RANGE_RESCUE_PLAN_IDS);
@@ -32,3 +32,27 @@ for (const id of ["curves-left", "curves-right"]) {
 }
 
 console.log("range rescue content tests passed");
+
+assert.equal(getRangeRescuePlans(), RANGE_RESCUE_PLANS, "existing consumers keep the original iron plans");
+assert.equal(getRangeRescuePlans("iron"), RANGE_RESCUE_PLANS);
+const driverPlans = getRangeRescuePlans("driver");
+assert.deepEqual(driverPlans.map((plan) => plan.id), RANGE_RESCUE_PLAN_IDS, "driver covers every existing observation");
+for (const plan of driverPlans) {
+  assert.equal(getRangeRescuePlan(plan.id, "driver"), plan);
+  assert.notEqual(plan, getRangeRescuePlan(plan.id), "driver guidance is isolated from iron guidance");
+  assert.equal(plan.test.length, 3);
+  assert.ok(plan.test.some((step) => /hit 5 balls/i.test(step)));
+  for (const field of [plan.optionLabel, plan.title, plan.summary, plan.reset, plan.change, plan.better, plan.fallback]) {
+    assert.ok(field.trim().length > 0);
+  }
+  assert.match(plan.reset, /driver.*tee/i);
+  assert.match(plan.reset, /lead foot/);
+  assert.match(plan.better, /of 5/);
+  assert.match(plan.better, /starting shots/);
+  assert.doesNotMatch(JSON.stringify(plan), /low tee|brush.*(?:mat|grass)|practice iron|club marked|hands.*waist/i, "driver never inherits the iron exercise");
+}
+for (const id of ["curves-left", "curves-right"]) {
+  assert.match(getRangeRescuePlan(id, "driver").summary, /where the ball meets the face/);
+  assert.match(getRangeRescuePlan(id, "driver").better, /does not prove/);
+}
+assert.match(getRangeRescuePlan("no-pattern", "driver").fallback, /new starting set/);
