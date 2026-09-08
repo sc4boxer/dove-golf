@@ -1,3 +1,4 @@
+import { isValidVideoDuration } from "./video-limits.ts";
 export type TrackPoint = { x: number; y: number; time: number };
 export type PixelFrame = { width: number; height: number; data: Uint8ClampedArray };
 type Blob = { x: number; y: number; area: number; light: number };
@@ -111,7 +112,7 @@ function seekVideo(video: HTMLVideoElement, time: number, signal: AbortSignal) {
 }
 
 export async function trackBallInVideo(video: HTMLVideoElement, seed: { x: number; y: number }, { signal, onProgress }: { signal: AbortSignal; onProgress: (progress: number) => void }): Promise<TrackResult> {
-  if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration) || video.duration <= 0 || video.duration > 30) throw new Error("Choose a playable clip up to 30 seconds long.");
+  if (!video.videoWidth || !video.videoHeight || !isValidVideoDuration(video.duration)) throw new Error("Choose a playable clip up to 10 seconds long.");
   const start = video.currentTime;
   const source = video.currentSrc || video.src;
   if (video.duration - start < .15) throw new Error("Move the replay to just before the shot, then mark the ball again.");
@@ -205,7 +206,7 @@ export function searchAutomaticBall(previous: AutomaticBallSearch | undefined, f
 
 export async function autoTrackBallInVideo(video: HTMLVideoElement, { signal, onProgress }: { signal: AbortSignal; onProgress: (progress: number) => void }): Promise<{ track: TrackResult | null; detail: string }> {
   signal.throwIfAborted();
-  if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration) || video.duration <= 0 || video.duration > 30) throw new Error("Choose a playable clip up to 30 seconds long.");
+  if (!video.videoWidth || !video.videoHeight || !isValidVideoDuration(video.duration)) throw new Error("Choose a playable clip up to 10 seconds long.");
   const originalTime = video.currentTime;
   const source = video.currentSrc || video.src;
   video.pause();
