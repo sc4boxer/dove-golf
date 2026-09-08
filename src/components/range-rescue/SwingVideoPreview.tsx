@@ -91,10 +91,10 @@ export function SwingVideoPreview({ onExit, club = "iron" }: { onExit: () => voi
         <ul className={styles.tips}><li>Keep the phone steady and everyone outside the swing area and ball’s path. Stay within your bay; skip filming if there is no safe space.</li><li>Include the ball before the swing and a few seconds afterward. Rolling shots matter too.</li><li>{club === "driver" ? "Use your driver with a suitable tee. Keep the same driver, tee height, and ball position for both sets." : "Use the same iron, ball position, and grass, mat, or tee setup for both sets."} Stop if swinging hurts.</li></ul>
       </div>
       <div className={`${styles.card} ${styles.startCard}`}>
-        <span className={styles.eyebrow}>At the range</span><h2>Film your shot.</h2><p>Record or select a short clip. Your device will look for the ball and its movement automatically. Replay the detected moment, check the path, and confirm what happened.</p>
+        <span className={styles.eyebrow}>At the range</span><h2>Film your shot.</h2><p>Record or choose a short clip. We’ll look for the shot moment on your device. Replay it, then confirm whether the ball got airborne, rolled, or stayed in place.</p>
         <div className={styles.startActions}><button className={styles.primary} onClick={() => begin("own")}>Start my practice →</button><button className={styles.demoLink} onClick={() => begin("sample")}>See a demo with sample shots</button></div>
       </div>
-      <p className={styles.note}>Clips and tracking stay on this device. No API key or upload. Tracking is experimental and may lose the ball; you confirm each outcome. Clips clear when you confirm or leave a shot. Sample traces are illustrations. Leaving or refreshing clears your results.</p>
+      <p className={styles.note}>Video stays on your device and clears when you confirm or leave a shot. The experimental check helps find the shot moment; you confirm the outcome. Demo shots are illustrations. Leaving or refreshing clears your results.</p>
     </>}
 
     {recording && <>
@@ -104,7 +104,7 @@ export function SwingVideoPreview({ onExit, club = "iron" }: { onExit: () => voi
         <ShotReplay key={`${club}-${stage}-${shotIndex}-${editing === null ? "new" : "edit"}`} sample={sample} allowSamples={mode === "sample"} club={club} />
         <div className={styles.card}>
           <h2>{mode === "sample" ? "Confirm the example outcome" : "What happened to this ball?"}</h2>
-          <p className={styles.note}>{mode === "sample" ? `Example outcome: ${outcomeOptions.find(option => option.id === sample)?.label}. You can change it to explore a different result.` : "Choose what you or your friend could see. A replay can help; it does not automatically detect contact or height."}</p>
+          <p className={styles.note}>{mode === "sample" ? `Example outcome: ${outcomeOptions.find(option => option.id === sample)?.label}. You can change it to explore a different result.` : "Confirm what you see in the replay. The video check finds movement; it does not classify the result."}</p>
           <div className={styles.outcomes} role="group" aria-label="Shot outcome">{outcomeOptions.map(option => <button key={option.id} aria-pressed={selected === option.id} onClick={() => setSelected(option.id)}><strong>{option.label}</strong><span>{club === "driver" && option.id === "air" ? "Flew beyond the tee, even briefly" : option.detail}</span></button>)}</div>
           <button className={styles.primary} ref={confirm} disabled={selected === null} onClick={record}>{editing === null ? "Confirm this shot" : "Save correction"}</button>
           {editing !== null && <button className={styles.back} onClick={() => { setEditing(null); setSelected(null); }}>Cancel correction</button>}

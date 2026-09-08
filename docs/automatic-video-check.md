@@ -1,4 +1,6 @@
-# Automatic video check trial
+The final release removes optional marking and the real-video path overlay. See `video-review-release.md` for the final experience and release checks.
+
+# Automatic video check trial (historical QC)
 
 Selecting a playable local clip now starts ball acquisition and tracking automatically for irons and driver. The normal path does not expose a marking step. Successful detection offers a replay button that jumps to the detected moment; optional marking is available under “Help locate the ball (optional)”. Recording outcomes and choosing coaching remain user-confirmed. This iteration does not automatically classify airborne/contact/missed results.
 
