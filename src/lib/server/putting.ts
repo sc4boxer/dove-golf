@@ -52,8 +52,11 @@ export async function submitScore(request: Request, body: unknown): Promise<Veri
   fail(error);
   return entry(data as Record<string, unknown>);
 }
-export async function listScores(period: "weekly" | "alltime") {
-  const { data, error } = await database().rpc("putting_leaderboard", { p_version: COURSE_VERSION, p_weekly: period === "weekly" });
+export type ScoreEdition = "current" | "original";
+export async function listScores(period: "weekly" | "alltime", edition: ScoreEdition = "current") {
+  // Read the original board in place; never relabel scores or change replay rules.
+  const version = edition === "original" ? "five-hole-v1" : COURSE_VERSION;
+  const { data, error } = await database().rpc("putting_leaderboard", { p_version: version, p_weekly: period === "weekly" });
   fail(error);
   return ((data ?? []) as Record<string, unknown>[]).map(entry);
 }

@@ -97,3 +97,36 @@ test("weekly default and all-time query forward exact board choice", async () =>
   assert.equal(h.calls[0].args.p_weekly, true);
   assert.equal(h.calls[1].args.p_weekly, false);
 });
+
+test("original leaderboard returns stored history without relabeling or rewriting it", async () => {
+  const original = { id: "old-score", initials: "JSC", score: 1600, rank: 2, created_at: "2026-09-07T12:00:00Z", course_version: "five-hole-v1" };
+  const h = harness(async (name, args) => ({ data: args.p_version === "five-hole-v1" ? [original] : [], error: null }));
+  const response = await h.scores.GET(new Request("https://dovegolf.fit/api/putting/scores?edition=original&period=alltime"));
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { ok: true, edition: "original", period: "alltime", entries: [{ id: "old-score", initials: "JSC", score: 1600, rank: 2, achievedAt: "2026-09-07T12:00:00Z", courseVersion: "five-hole-v1" }] });
+  assert.equal(h.calls.length, 1);
+  assert.equal(h.calls[0].name, "putting_leaderboard");
+  assert.equal(h.calls[0].args.p_version, "five-hole-v1");
+  assert.equal(h.calls[0].args.p_weekly, false);
+  await h.scores.GET(new Request("https://dovegolf.fit/api/putting/scores?edition=original&period=weekly"));
+  assert.equal(h.calls[1].args.p_version, "five-hole-v1");
+  assert.equal(h.calls[1].args.p_weekly, true);
+});
+
+test("default and unknown editions keep the current leaderboard", async () => {
+  const h = harness(async () => ({ data: [], error: null }));
+  for (const suffix of ["", "?edition=current", "?edition=five-hole-v1", "?edition=unknown"]) {
+    const response = await h.scores.GET(new Request(`https://dovegolf.fit/api/putting/scores${suffix}`));
+    assert.equal((await response.json()).edition, "current");
+    assert.equal(h.calls.at(-1).args.p_version, "five-hole-v2");
+  }
+});
+
+test("reading history never permits posting new scores under old rules", async () => {
+  const h = harness(async (name, args) => name === "putting_submit_score" ? { data: { id: "new-score", initials: args.p_initials, score: args.p_score, rank_at_submission: 1, created_at: "2026-09-08T12:00:00Z", course_version: args.p_version }, error: null } : { data: [], error: null });
+  await h.scores.GET(new Request("https://dovegolf.fit/api/putting/scores?edition=original"));
+  const response = await h.scores.POST(request({ token, initials: "JSC", shots, edition: "original", courseVersion: "five-hole-v1" }));
+  assert.equal(response.status, 201);
+  assert.equal((await response.json()).entry.courseVersion, "five-hole-v2");
+  assert.equal(h.calls.find(call => call.name === "putting_submit_score").args.p_version, "five-hole-v2");
+});

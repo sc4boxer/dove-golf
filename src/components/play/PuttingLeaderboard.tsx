@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Shot } from "@/lib/putting/physics";
+import type { ScoreEdition } from "@/lib/server/putting";
 import ScoreShare from "@/components/putting/ScoreShare";
 import styles from "./PuttingGame.module.css";
 
@@ -10,10 +11,13 @@ type Result = {strokes: number; points: number; sunk: boolean};
 
 export function PuttingLeaderboard({results, shots, complete, getToken}: {results: Result[]; shots: Shot[][]; complete: boolean; getToken: () => Promise<string>}) {
   const [period, setPeriod] = useState("weekly");
+  const [edition, setEdition] = useState<ScoreEdition>("current");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [refresh, setRefresh] = useState(0);
+  const [loadedQuery, setLoadedQuery] = useState("");
+  const query = `${period}:${edition}:${refresh}`;
   const [initials, setInitials] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
@@ -23,17 +27,17 @@ export function PuttingLeaderboard({results, shots, complete, getToken}: {result
     async function load() {
       setLoading(true); setLoadError("");
       try {
-        const response = await fetch(`/api/putting/scores?period=${period}`, {signal: controller.signal});
+        const response = await fetch(`/api/putting/scores?period=${period}&edition=${edition}`, {signal: controller.signal});
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Leaderboard unavailable. Your game still works.");
-        setEntries(data.entries);
+        if (!controller.signal.aborted) setEntries(data.entries);
       } catch (error) {
         if (!controller.signal.aborted) setLoadError(error instanceof Error ? error.message : "Could not load scores.");
-      } finally { if (!controller.signal.aborted) setLoading(false); }
+      } finally { if (!controller.signal.aborted) { setLoading(false); setLoadedQuery(query); } }
     }
     void load();
     return () => controller.abort();
-  }, [period, refresh]);
+  }, [period, edition, refresh, query]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,7 +48,7 @@ export function PuttingLeaderboard({results, shots, complete, getToken}: {result
       const response = await fetch("/api/putting/scores", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({token, initials, shots})});
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Could not post your score. Try again.");
-      setSaved(data.entry); setRefresh(value => value + 1);
+      setSaved(data.entry); setEdition("current"); setRefresh(value => value + 1);
     } catch (error) { setSaveError(error instanceof Error ? error.message : "Could not post your score. Try again."); }
     finally { setSaving(false); }
   }
@@ -65,9 +69,14 @@ export function PuttingLeaderboard({results, shots, complete, getToken}: {result
     <section className={styles.panel} aria-labelledby="leaderboard-title">
       <p className={styles.eyebrow}>The putting arcade</p>
       <h2 id="leaderboard-title">High scores</h2>
+      <div className={styles.editions} aria-label="Leaderboard course">
+        <button type="button" aria-pressed={edition === "current"} onClick={() => setEdition("current")}>Current course</button>
+        <button type="button" aria-pressed={edition === "original"} onClick={() => { setEdition("original"); setPeriod("alltime"); }}>Original course</button>
+      </div>
+      <p className={styles.help}>{edition === "original" ? "Scores from before the hole 3 cup fix, with their original course rankings." : "Earlier high scores are saved under Original course."}</p>
       <div className={styles.periods} aria-label="Leaderboard period">{["weekly", "alltime"].map(value => <button key={value} aria-pressed={period === value} onClick={() => setPeriod(value)}>{value === "weekly" ? "This week" : "All time"}</button>)}</div>
       <p className={styles.help}>{period === "weekly" ? "Week starts Monday at 00:00 UTC." : "Scores from this course edition."} Equal scores share a rank.</p>
-      {loading ? <p role="status">Loading scores…</p> : loadError ? <div><p role="status" className={styles.error}>{loadError}</p><button className={styles.secondary} onClick={() => setRefresh(value => value + 1)}>Retry leaderboard</button></div> : entries.length === 0 ? <p className={styles.description}>The board is open. Finish five holes and set the first score.</p> : <div className={styles.tableWrap}><table className={styles.scoreTable}><caption className="sr-only">{period === "weekly" ? "This week’s" : "All time"} top ten scores</caption><thead><tr><th>Rank</th><th>Initials</th><th>Points</th><th>Date</th></tr></thead><tbody>{entries.map(entry => <tr key={entry.id} className={entry.id === saved?.id ? styles.yourScore : undefined}><td>#{entry.rank}</td><th scope="row">{entry.initials}{entry.id === saved?.id && <span className="sr-only"> — your score</span>}</th><td>{entry.score.toLocaleString()}</td><td>{new Date(entry.achievedAt).toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"})}</td></tr>)}</tbody></table></div>}
+      {loading || loadedQuery !== query ? <p role="status">Loading scores…</p> : loadError ? <div><p role="status" className={styles.error}>{loadError}</p><button className={styles.secondary} onClick={() => setRefresh(value => value + 1)}>Retry leaderboard</button></div> : entries.length === 0 ? <p className={styles.description}>{edition === "original" ? (period === "weekly" ? "No original-course scores this week. Choose All time to view earlier scores." : "No original-course scores were found.") : "The board is open. Finish five holes and set the first score."}</p> : <div className={styles.tableWrap}><table className={styles.scoreTable}><caption className="sr-only">{edition === "original" ? "Original course" : "Current course"} · {period === "weekly" ? "This week’s" : "All time"} top ten scores</caption><thead><tr><th>Rank</th><th>Initials</th><th>Points</th><th>Date</th></tr></thead><tbody>{entries.map(entry => <tr key={entry.id} className={entry.id === saved?.id ? styles.yourScore : undefined}><td>#{entry.rank}</td><th scope="row">{entry.initials}{entry.id === saved?.id && <span className="sr-only"> — your score</span>}</th><td>{entry.score.toLocaleString()}</td><td>{new Date(entry.achievedAt).toLocaleDateString("en-US", {month: "short", day: "numeric", timeZone: "UTC"})}</td></tr>)}</tbody></table></div>}
     </section>
   </div>;
 }
