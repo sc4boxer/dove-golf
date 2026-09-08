@@ -241,7 +241,7 @@ export function PuttingGame() {
       {!finished && <button className={styles.secondary} onClick={() => reset()}>Start a fresh round</button>}
       </details>
       <p className={styles.help}>Round score: <strong>{results.reduce((sum, result) => sum + result.points, 0).toLocaleString()} / 2,500</strong>. Sink in one putt for 500 points, then 100 fewer per extra putt. An unfinished hole scores zero.</p>
-      <p className={styles.help}>On holes 2–5, bounce off a wall or barrier at least once during the hole to unlock the cup. You can use a putt to get into position.</p>
+      <p className={styles.help}>On holes 2, 4, and 5, bounce off a wall or barrier at least once during the hole to unlock the cup. On hole 3, aim through the gate — no bounce required. You can use a putt to get into position.</p>
       <details className={styles.help}><summary>Controls &amp; a small hint</summary><p id="putting-keyboard">On the green, use ← / → to aim and ↑ / ↓ for power. Press Enter or Space to putt. Escape cancels a drag. You can also tap the sliders and Putt button.</p><p>0° points up; positive angles turn right. Walls bounce. The cup catches a slow ball; a fast one can roll straight over it. This is a flat game green, not a real-world putting lesson.</p></details>
     </div>
     <PuttingLeaderboard key={visit} results={results} shots={completedShots} getToken={getToken} complete={finished && hole === HOLES.length - 1} />
