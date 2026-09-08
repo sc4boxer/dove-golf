@@ -5,7 +5,7 @@ import { MissVisual } from "@/components/range-rescue/MissVisual";
 import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 import styles from "./ToolPreview.module.css";
 
-export const TOOL_PREVIEW_DURATION_MS = { range: 5200, flight: 2800, equipment: 4500 } as const;
+export const TOOL_PREVIEW_DURATION_MS = { range: 6300, flight: 4000, equipment: 5600 } as const;
 
 type ToolPreviewProps = {
   id: keyof typeof TOOL_PREVIEW_DURATION_MS;
@@ -44,18 +44,27 @@ export function ToolPreview({ id, animate, onStart, onComplete }: ToolPreviewPro
     <div className={styles.previewTop}><span>Your next five balls</span><span aria-hidden="true">01—05</span></div>
     <div className={styles.contact}><MissVisual id="thin-or-top" large /><span>Spot the miss.<br />Try one change.</span></div>
     <div className={styles.fiveBalls} aria-label="Five attempts, one step at a time">{[1, 2, 3, 4, 5].map((ball) => <span key={ball} style={{ animationDelay: `${0.3 + (ball - 1) * 0.9}s` }}>{ball}</span>)}</div>
-    <p>One clear thing to practice.</p>
+    <div className={styles.takeaway}>
+      <p className={styles.takeawayLabel}>Example practice step</p>
+      <p>Try five waist-high swings. Count how many balls get airborne.</p>
+    </div>
   </div>;
 
-  if (id === "flight") return <div ref={root} className={styles.flightPreview}>
+  if (id === "flight") return <div ref={root} className={`${styles.flightPreview} ${animationClass}`}>
     <p className={styles.previewTop}>Start direction + curve</p>
     <BallFlightChart key={String(playing)} shape="fade" compact staticRender={!playing} className={styles.flightChart} />
-    <p>An example flight, viewed from above.</p>
+    <div className={styles.takeaway}>
+      <p className={styles.takeawayLabel}>Example reading · right-handed</p>
+      <p>Starts on line, then curves right: a fade.</p>
+    </div>
   </div>;
 
   return <div ref={root} className={`${styles.equipmentPreview} ${animationClass}`}>
     <p className={`${styles.previewTop} ${styles.equipmentHeading}`}>A clearer equipment check</p>
     {["Your current club", "The pattern you see", "One change to test"].map((label, i) => <div className={styles.checkRow} key={label} style={{ animationDelay: `${0.3 + i * 0.9}s` }}><span aria-hidden="true">0{i + 1}</span><strong>{label}</strong></div>)}
-    <p>Observe first. Test before buying.</p>
+    <div className={styles.takeaway}>
+      <p className={styles.takeawayLabel}>Example equipment check</p>
+      <p>Test one club change. Compare the strike pattern before buying.</p>
+    </div>
   </div>;
 }
