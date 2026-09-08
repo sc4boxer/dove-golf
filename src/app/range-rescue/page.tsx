@@ -12,6 +12,7 @@ import { MissVisual } from "@/components/range-rescue/MissVisual";
 import { RescueVisualGuide } from "@/components/range-rescue/RescueVisualGuide";
 import { ProductFeedback } from "@/components/feedback/ProductFeedback";
 import { BeginnerSession } from "@/components/range-rescue/BeginnerSession";
+import { SwingVideoPreview } from "@/components/range-rescue/SwingVideoPreview";
 import { DriverPracticeGuide } from "@/components/range-rescue/DriverPracticeGuide";
 import { track } from "@/lib/analytics/ga";
 import styles from "./range-rescue.module.css";
@@ -20,6 +21,7 @@ export default function RangeRescuePage() {
   const [club, setClub] = useState<RangeRescueClub>("iron");
   const [selectedId, setSelectedId] = useState<RangeRescuePlanId | null>(null);
   const [beginnerSession, setBeginnerSession] = useState(false);
+  const [videoPreview, setVideoPreview] = useState(false);
   const chooserHeading = useRef<HTMLHeadingElement>(null);
   const returnToChooser = useRef(false);
   const resultHeading = useRef<HTMLHeadingElement>(null);
@@ -28,16 +30,17 @@ export default function RangeRescuePage() {
 
   useEffect(() => {
     if (selectedPlan) resultHeading.current?.focus();
-    else if (!beginnerSession && returnToChooser.current) {
+    else if (!beginnerSession && !videoPreview && returnToChooser.current) {
       chooserHeading.current?.focus();
       returnToChooser.current = false;
     }
-  }, [selectedPlan, beginnerSession]);
+  }, [selectedPlan, beginnerSession, videoPreview]);
 
   function showChooser() {
     returnToChooser.current = true;
     setSelectedId(null);
     setBeginnerSession(false);
+    setVideoPreview(false);
   }
 
   function startFiveBallRescue() {
@@ -69,7 +72,7 @@ export default function RangeRescuePage() {
           <span className={styles.privateNote}>No account needed</span>
         </header>
 
-        {beginnerSession ? <BeginnerSession key={club} club={club} onExit={showChooser} /> : !selectedPlan ? (
+        {videoPreview ? <SwingVideoPreview onExit={showChooser} /> : beginnerSession ? <BeginnerSession key={club} club={club} onExit={showChooser} /> : !selectedPlan ? (
           <section className={styles.chooser} aria-labelledby="rescue-heading">
             <div className={styles.intro}>
               <p className={styles.eyebrow}>A little help at the range</p>
@@ -99,6 +102,10 @@ export default function RangeRescuePage() {
               <div className={styles.beginnerAction}>
                 <button type="button" onClick={() => setBeginnerSession(true)}><span>{club === "driver" ? "Start guided driver practice" : "Start guided beginner practice"}</span><span aria-hidden="true">→</span></button>
                 <p>Not sure what’s going wrong? This is a good place to begin.</p>
+                {club === "iron" && process.env.NEXT_PUBLIC_SWING_VIDEO_PREVIEW !== "false" && <>
+                  <button type="button" onClick={() => setVideoPreview(true)}><span>Film a shot. Find your next step.</span><span aria-hidden="true">→</span></button>
+                  <p>Shot tracking prototype · Mark the ball in your clip and try tracking on this device.</p>
+                </>}
               </div>
             </div>
 
