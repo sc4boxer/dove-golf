@@ -13,9 +13,17 @@ The game works without a database. Posting and the leaderboard require the exist
 
 - `POST /api/putting/round`, JSON `{}` returns `{ok,token,courseVersion,expiresAt}`. The 256-bit random bearer token expires in two hours; only its SHA-256 hash is stored.
 - `POST /api/putting/scores`, JSON `{token,initials,shots}` returns `{ok,entry,period:"weekly"}`. Shots are five arrays of `{angle,power}`. The shared deterministic simulation computes points and verifies every hole. Client-supplied score and rank are never trusted. A round inserts at most one score; retrying the identical result returns the original entry. Tokens are not tied to an IP, so changing mobile networks during play works.
-- `GET /api/putting/scores?period=weekly|alltime` returns `{ok,entries,period}`. Weekly starts Monday 00:00 UTC. Entries contain `id,initials,score,rank,achievedAt,courseVersion`. Equal points share competition rank (1,1,3); the ten displayed entries are ordered by points, then oldest first. Multiple rounds from the same initials are allowed: initials are not verified identities.
+- `GET /api/putting/scores?period=weekly|alltime&edition=current|original` returns `{ok,entries,period,edition}`. Omitted or unknown editions use the current course. Original reads the retained `five-hole-v1` board. Weekly starts Monday 00:00 UTC. Entries contain `id,initials,score,rank,achievedAt,courseVersion`. Equal points share competition rank (1,1,3); the ten displayed entries are ordered by points, then oldest first. Multiple rounds from the same initials are allowed: initials are not verified identities.
 - Submission rank is saved once as the weekly rank at that moment. Certificates use that historical rank and timestamp, not a permanent claim to current first place. List results calculate current rank. `getVerifiedScore(id)` returns only unhidden verified records for share cards.
 - Course/physics changes must increment `COURSE_VERSION`; boards are separated by version. Older certificates retain their version and dated result.
+
+## Original course history
+
+The hole 3 cup fix advanced the course to `five-hole-v2`. Existing v1 records were not removed by that release, but the current-only leaderboard stopped displaying them. The course selector now exposes the original board through the existing read-only RPC. Choosing Original course opens All time so earlier dates remain discoverable; both period filters remain available. New submissions always use the current engine and switch the display back to the current board after saving.
+
+No data rewrite or migration is needed: original IDs, dates, points, and course labels remain stored in place, and ranks are calculated within their original course. Loading or failed requests never display a previous course's entries under the newly selected course. Reverting the history-view change hides the selector again but does not remove either board's records.
+
+History-view validation: full lint, 16 putting physics tests, 11 backend tests, 12 visual tests, and production build passed. Backend tests exercise the real handlers with a mocked database transport, including preserved historical fields, period filtering, unknown-edition fallback, and current-only submissions. Browser checks at 390px and 1280px cover course/period selection, original-course default to All time, keyboard focus, and the unavailable-service state. Stored production rows and the hosted history response remain unverified until the change is deployed; no production database was queried or modified during local validation.
 
 ## Abuse, privacy, and moderation
 
