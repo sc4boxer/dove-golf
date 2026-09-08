@@ -15,6 +15,7 @@ function blobs(frame: PixelFrame, cx: number, cy: number, radius: number, thresh
   const x1 = Math.min(frame.width - 1, Math.ceil(cx + radius)), y1 = Math.min(frame.height - 1, Math.ceil(cy + radius));
   const w = x1 - x0 + 1, h = y1 - y0 + 1;
   const seen = new Uint8Array(w * h);
+  const queue = new Int32Array(w * h);
   const bright = (x: number, y: number) => {
     const i = (y * frame.width + x) * 4;
     const r = frame.data[i], g = frame.data[i + 1], b = frame.data[i + 2];
@@ -26,16 +27,18 @@ function blobs(frame: PixelFrame, cx: number, cy: number, radius: number, thresh
     if (seen[index]) continue;
     seen[index] = 1;
     if (!bright(x, y)) continue;
-    const queue = [[x, y]]; let area = 0, sx = 0, sy = 0, light = 0;
+    queue[0] = index;
+    let queued = 1, area = 0, sx = 0, sy = 0, light = 0;
     let minX = x, maxX = x, minY = y, maxY = y;
-    for (let head = 0; head < queue.length; head++) {
-      const [px, py] = queue[head]; area++; sx += px; sy += py; light += gray(frame, px, py);
+    for (let head = 0; head < queued; head++) {
+      const px = queue[head] % w + x0, py = Math.floor(queue[head] / w) + y0;
+      area++; sx += px; sy += py; light += gray(frame, px, py);
       minX = Math.min(minX, px); maxX = Math.max(maxX, px); minY = Math.min(minY, py); maxY = Math.max(maxY, py);
       for (const [nx, ny] of [[px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) {
         if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
         const ni = (ny - y0) * w + nx - x0;
         if (seen[ni]) continue;
-        seen[ni] = 1; if (bright(nx, ny)) queue.push([nx, ny]);
+        seen[ni] = 1; if (bright(nx, ny)) queue[queued++] = ni;
       }
     }
     const bw = maxX - minX + 1, bh = maxY - minY + 1;
@@ -95,7 +98,7 @@ export function stepBallTrack(state: BallTrackState, frame: PixelFrame): { state
 
 function seekVideo(video: HTMLVideoElement, time: number, signal: AbortSignal) {
   signal.throwIfAborted();
-  if (Math.abs(video.currentTime - time) < .001 && video.readyState >= 2) return Promise.resolve();
+  if (!video.seeking && Math.abs(video.currentTime - time) < .001 && video.readyState >= 2) return Promise.resolve();
   return new Promise<void>((resolve, reject) => {
     const cleanup = () => { clearTimeout(timer); video.removeEventListener("seeked", done); video.removeEventListener("error", fail); signal.removeEventListener("abort", abort); };
     const done = () => { cleanup(); resolve(); };
@@ -123,6 +126,8 @@ export async function trackBallInVideo(video: HTMLVideoElement, seed: { x: numbe
   try {
     signal.throwIfAborted();
     await seekVideo(video, start, signal);
+    signal.throwIfAborted();
+    if ((video.currentSrc || video.src) !== source) throw new DOMException("The selected clip changed", "AbortError");
     let state = findBallSeed(grab(), seed);
     points.push({ x: state.x / (canvas.width - 1), y: state.y / (canvas.height - 1), time: start });
     const count = Math.min(90, Math.floor((video.duration - start - .01) * 30));
@@ -131,6 +136,8 @@ export async function trackBallInVideo(video: HTMLVideoElement, seed: { x: numbe
       signal.throwIfAborted();
       if (performance.now() - startedAt > 20000) throw new Error("Tracking took too long on this device. Try a shorter clip.");
       await seekVideo(video, start + i / 30, signal);
+      signal.throwIfAborted();
+      if ((video.currentSrc || video.src) !== source) throw new DOMException("The selected clip changed", "AbortError");
       const next = stepBallTrack(state, grab());
       onProgress(Math.round(i / count * 100));
       if (!next.state) return { points, status: next.stopped!, detail: next.stopped === "camera_moved" ? "The background moved too much to keep a reliable candidate. Keep the phone still and try again. No flight has been inferred." : "The candidate was lost or became ambiguous. The line stops at the last candidate position; nothing has been filled in." };
@@ -145,5 +152,108 @@ export async function trackBallInVideo(video: HTMLVideoElement, seed: { x: numbe
   } finally {
     canvas.width = 0; canvas.height = 0;
     if ((video.currentSrc || video.src) === source && video.isConnected) video.currentTime = start;
+  }
+}
+
+type SearchCandidate = { ball: BallTrackState; stillFrames: number; lastStillTime: number; launch?: TrackPoint; movingFrames: number };
+export type AutomaticBallSearch = { candidates: SearchCandidate[]; previous: PixelFrame; time: number };
+export type AutomaticBallSearchStep = { search: AutomaticBallSearch; seed?: TrackPoint; problem?: "camera_moved" | "ambiguous" };
+
+/** A stationary bright object must become one uniquely moving candidate. This is not ball identification. */
+export function searchAutomaticBall(previous: AutomaticBallSearch | undefined, frame: PixelFrame, time: number): AutomaticBallSearchStep {
+  validateFrame(frame);
+  const centerAlpha = frame.data[(Math.floor(frame.height / 2) * frame.width + Math.floor(frame.width / 2)) * 4 + 3];
+  if (frame.data[3] === 0 && centerAlpha === 0) throw new Error("The video frame is not ready to read. Try checking the video again.");
+  if (!Number.isFinite(time) || time < 0 || previous && time <= previous.time) throw new Error("Analysis frames must advance in time.");
+  const search: AutomaticBallSearch = { candidates: [], previous: frame, time };
+  if (previous && (previous.previous.width !== frame.width || previous.previous.height !== frame.height)) throw new Error("Analysis frame size changed.");
+  if (previous && backgroundMoved(previous.previous, frame, { x: -100, y: -100, area: 0, light: 0 })) return { search, problem: "camera_moved" };
+  const visible = blobs(frame, frame.width / 2, frame.height / 2, Math.max(frame.width, frame.height), 155, 150);
+  // Crowded images are a reason to ask for help, rather than silently favoring the first blob.
+  if (visible.length > 12) return { search, problem: "ambiguous" };
+  for (const candidate of previous?.candidates ?? []) {
+    const next = stepBallTrack(candidate.ball, frame);
+    if (!next.state) continue;
+    const distance = Math.hypot(next.state.x - candidate.ball.originX, next.state.y - candidate.ball.originY);
+    const updated: SearchCandidate = { ...candidate, ball: next.state };
+    if (!candidate.launch && distance < 3) {
+      updated.stillFrames++;
+      updated.lastStillTime = time;
+    } else if (candidate.stillFrames >= 3) {
+      updated.launch ??= { x: candidate.ball.originX / (frame.width - 1), y: candidate.ball.originY / (frame.height - 1), time: candidate.lastStillTime };
+      if (Math.hypot(next.state.vx, next.state.vy) >= 2) updated.movingFrames++;
+    } else {
+      // An object already moving when it appears has no observed ball-at-address evidence.
+      continue;
+    }
+    search.candidates.push(updated);
+  }
+  const moving = search.candidates.filter(candidate => candidate.launch && candidate.movingFrames > 0);
+  if (moving.length > 1) return { search, problem: "ambiguous" };
+  const ready = moving.find(candidate => candidate.movingFrames >= 3 && Math.hypot(candidate.ball.x - candidate.ball.originX, candidate.ball.y - candidate.ball.originY) >= 6);
+  if (ready) return { search, seed: ready.launch };
+  for (const blob of visible) {
+    if (search.candidates.some(candidate => Math.hypot(candidate.ball.x - blob.x, candidate.ball.y - blob.y) < 9)) continue;
+    if (search.candidates.length >= 12) return { search, problem: "ambiguous" };
+    search.candidates.push({
+      ball: { ...blob, vx: 0, vy: 0, originX: blob.x, originY: blob.y, initialArea: blob.area, threshold: Math.max(145, Math.min(220, blob.light - 40)), previous: frame },
+      stillFrames: 1, lastStillTime: time, movingFrames: 0,
+    });
+  }
+  return { search };
+}
+
+export async function autoTrackBallInVideo(video: HTMLVideoElement, { signal, onProgress }: { signal: AbortSignal; onProgress: (progress: number) => void }): Promise<{ track: TrackResult | null; detail: string }> {
+  signal.throwIfAborted();
+  if (!video.videoWidth || !video.videoHeight || !Number.isFinite(video.duration) || video.duration <= 0 || video.duration > 30) throw new Error("Choose a playable clip up to 30 seconds long.");
+  const originalTime = video.currentTime;
+  const source = video.currentSrc || video.src;
+  video.pause();
+  const ratio = Math.min(1, 640 / Math.max(video.videoWidth, video.videoHeight));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(video.videoWidth * ratio); canvas.height = Math.round(video.videoHeight * ratio);
+  const startedAt = performance.now();
+  try {
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) throw new Error("This browser cannot read video frames. You can still record your outcome.");
+    let search: AutomaticBallSearch | undefined;
+    const count = Math.floor((video.duration - .01) * 10);
+    // Some browsers report loadeddata/readyState 4 while drawImage still reads a transparent
+    // initial surface. An actual seek and return ensures decoding before the first comparison.
+    await seekVideo(video, Math.min(.05, video.duration / 2), signal);
+    for (let i = 0; i <= count; i++) {
+      signal.throwIfAborted();
+      if ((video.currentSrc || video.src) !== source) throw new DOMException("The selected clip changed", "AbortError");
+      if (performance.now() - startedAt > 25000) throw new Error("Automatic tracking took too long on this device. Try a shorter clip or help locate the ball.");
+      await seekVideo(video, i / 10, signal);
+      signal.throwIfAborted();
+      if ((video.currentSrc || video.src) !== source) throw new DOMException("The selected clip changed", "AbortError");
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const frame = context.getImageData(0, 0, canvas.width, canvas.height);
+      const result = searchAutomaticBall(search, frame, i / 10);
+      search = result.search;
+      onProgress(Math.round(i / Math.max(1, count) * 65));
+      signal.throwIfAborted();
+      if (result.problem) return { track: null, detail: result.problem === "camera_moved"
+        ? "The camera or background moved too much to isolate the ball. Try a steadier clip, or help locate the ball."
+        : "More than one bright candidate could be the ball. Help locate your ball or try a clearer clip." };
+      if (!result.seed) continue;
+      await seekVideo(video, result.seed.time, signal);
+      signal.throwIfAborted();
+      if ((video.currentSrc || video.src) !== source) throw new DOMException("The selected clip changed", "AbortError");
+      const track = await trackBallInVideo(video, result.seed, { signal, onProgress: progress => onProgress(65 + Math.round(progress * .35)) });
+      signal.throwIfAborted();
+      if ((video.currentSrc || video.src) !== source) throw new DOMException("The selected clip changed", "AbortError");
+      const first = track.points[0];
+      const movement = first ? Math.max(...track.points.map(point => Math.hypot((point.x - first.x) * canvas.width, (point.y - first.y) * canvas.height))) : 0;
+      if (track.status === "camera_moved" || track.status === "no_motion" || track.points.length < 4 || movement < 6) return { track: null, detail: "A possible ball was found, but its movement could not be followed reliably. Help locate the ball or try a clearer clip." };
+      onProgress(100);
+      return { track, detail: `A bright candidate was found automatically and followed. ${track.status === "lost" ? "The line stops at the last detected position; nothing beyond it has been inferred. " : ""}Check the replay to confirm it is your ball; this does not establish contact or flight.` };
+    }
+    onProgress(100);
+    return { track: null, detail: "No single ball could be followed from rest into clear movement. This does not mean you missed. Try a clearer clip or help locate the ball." };
+  } finally {
+    canvas.width = 0; canvas.height = 0;
+    if ((video.currentSrc || video.src) === source && video.isConnected) video.currentTime = originalTime;
   }
 }

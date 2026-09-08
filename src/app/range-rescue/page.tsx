@@ -104,7 +104,7 @@ export default function RangeRescuePage() {
                 <p>Not sure what’s going wrong? This is a good place to begin.</p>
                 {process.env.NEXT_PUBLIC_SWING_VIDEO_PREVIEW !== "false" && <>
                   <button type="button" onClick={() => setVideoPreview(true)}><span>Film a shot. Find your next step.</span><span aria-hidden="true">→</span></button>
-                  <p>Shot tracking prototype · Mark the ball in your clip and try tracking on this device.</p>
+                  <p>Experimental video check · Choose a clip and let your device look for the ball automatically.</p>
                 </>}
               </div>
             </div>

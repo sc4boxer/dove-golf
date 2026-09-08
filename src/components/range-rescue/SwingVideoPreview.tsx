@@ -91,7 +91,7 @@ export function SwingVideoPreview({ onExit, club = "iron" }: { onExit: () => voi
         <ul className={styles.tips}><li>Keep the phone steady and everyone outside the swing area and ball’s path. Stay within your bay; skip filming if there is no safe space.</li><li>Include the ball before the swing and a few seconds afterward. Rolling shots matter too.</li><li>{club === "driver" ? "Use your driver with a suitable tee. Keep the same driver, tee height, and ball position for both sets." : "Use the same iron, ball position, and grass, mat, or tee setup for both sets."} Stop if swinging hurts.</li></ul>
       </div>
       <div className={`${styles.card} ${styles.startCard}`}>
-        <span className={styles.eyebrow}>At the range</span><h2>Film your shot.</h2><p>Record or select a short clip, mark the ball, and let this device look for its movement. Check the candidate path and confirm what happened.</p>
+        <span className={styles.eyebrow}>At the range</span><h2>Film your shot.</h2><p>Record or select a short clip. Your device will look for the ball and its movement automatically. Replay the detected moment, check the path, and confirm what happened.</p>
         <div className={styles.startActions}><button className={styles.primary} onClick={() => begin("own")}>Start my practice →</button><button className={styles.demoLink} onClick={() => begin("sample")}>See a demo with sample shots</button></div>
       </div>
       <p className={styles.note}>Clips and tracking stay on this device. No API key or upload. Tracking is experimental and may lose the ball; you confirm each outcome. Clips clear when you confirm or leave a shot. Sample traces are illustrations. Leaving or refreshing clears your results.</p>

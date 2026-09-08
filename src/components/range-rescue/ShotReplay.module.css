@@ -40,4 +40,5 @@
 .tracking progress { width: 100%; accent-color: #456857; }
 .trackResult { padding: 16px; margin-top: 16px; background: #eef4ed; border: 1px solid #cedecc; border-radius: 12px; }
 .trackResult strong { font-size: .9375rem; color: #243c30; }
+.trackResult .trackButton { margin:12px 0; }
 @media (max-width: 380px) { .controls { gap: 9px; padding-inline: 12px; } .sourceBar, .upload { padding: 12px; } }

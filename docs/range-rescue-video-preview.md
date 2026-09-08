@@ -2,7 +2,7 @@
 
 ## Current direction
 
-The owner chose local-first analysis: record/select a video, tap the ball, analyze movement on the device, and confirm the outcome. External AI APIs are not required for this experiment. The unused cloud integration was removed before commit; no clips were sent, no API key configured, and no billing enabled.
+The owner chose local-first analysis: record/select a video, automatically find and follow a possible ball on the device, and confirm the outcome. Manual marking is now optional fallback assistance. External AI APIs are not required for this experiment. The unused cloud integration was removed before commit; no clips were sent, no API key configured, and no billing enabled.
 
 The owner authorized full available QC followed by push and merge, with real range footage and native phone recording reserved for their trial. This is an experimental feature, not a validated golf-video diagnosis.
 
@@ -12,15 +12,15 @@ Open `/range-rescue`, select Irons or Driver, choose “Film a shot. Find your n
 
 Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Film from the back of the bay, well behind the swing area, looking straight down the range along the intended ball path. The diagram uses the same camera direction for either handedness. Skip filming if there is no safe position.
 
-Pause just before the ball moves. Choose “Mark the ball”, tap its center, then choose “Track ball movement on this device”. Keyboard users can move the crosshair with arrows and confirm with Enter; Escape cancels marking. Tracking inspects the next three seconds at most. A candidate path appears only from positions extracted from the selected video's frames. Replay to check whether the candidate was the ball, then confirm Airborne, Rolled, Missed, or Unclear yourself.
+Selecting a playable clip starts automatic analysis. It searches for a small bright object that is stationary before moving and rejects ambiguous or camera-moving footage. A successful result offers “Replay detected movement”, which jumps to the detected moment. “Help locate the ball (optional)” opens the previous marking flow if needed. Detection does not assign Airborne, Rolled, Missed, or Unclear; the user still confirms the observed shot outcome. Real range accuracy is unvalidated.
 
 Real-video practice is the primary action. A small “See a demo with sample shots” link opens the optional illustrated session. It starts with an airborne shot; club impact and ball launch are synchronized. Missed shots explicitly explain why the ball stays in place. Driver samples use a tee. Sample animation has no connection to local tracking or real shot results.
 
 ## What the local analysis does
 
-`local-ball-tracking.ts` reads decoded video frames through a browser canvas, scaled to a maximum 640-pixel dimension. A tapped seed anchors a compact bright component. The tracker checks nearby candidates against motion, brightness, area, shape, and ambiguity limits, and compares background patches for camera movement. It stops when the candidate disappears, becomes ambiguous, or the background moves too much. It never bridges a detection gap or extrapolates a flight.
+`local-ball-tracking.ts` reads decoded video frames through a browser canvas, scaled to a maximum 640-pixel dimension. Automatic search scans from the beginning at ten samples per second, retaining at most twelve compact bright candidates. A candidate must be stationary for three sampled frames and then move across three frames with at least six pixels of displacement. Multiple moving candidates, excessive background motion, or a crowded bright scene produce uncertainty rather than a selected ball. The detected starting point is refined with the existing tracker. Optional marking supplies a seed directly. Neither route establishes ball identity or extrapolates a flight.
 
-At most 90 frame samples over three seconds are inspected. Source videos with lower frame rates may repeat decoded frames; the algorithm does not turn those into motion/speed measurements. A four-second seek timeout and overall processing time check bound slow-device work. Cancellation stops processing and restores the starting replay position. All processing happens in this browser; the site server only serves the application.
+Automatic search checks up to 300 samples over a clip of at most thirty seconds, then refines at most 90 frame samples over three seconds. Source videos with lower frame rates may repeat decoded frames; the algorithm does not turn those into speed measurements. The scan has a 25-second processing budget, refinement has a 20-second budget, and an outstanding seek can take up to four seconds. A decoded seek roundtrip prevents a browser's transparent first surface from being mistaken for camera movement. Cancellation stops processing and restores the original replay position. All processing happens in this browser; the site server only serves the application.
 
 The first version is intended for a small light-colored ball and a steady camera. Colored balls, bright mats/clothing, blur, occlusion, rapid motion, very small balls, busy ranges, or handheld footage may fail or produce the wrong candidate. A user tap narrows the search but does not establish the candidate's identity. Thresholds are hypotheses tested on synthetic data, not validated golf-video accuracy.
 
