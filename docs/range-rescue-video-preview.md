@@ -50,6 +50,8 @@ No AI provider has been selected. Gemini supports video input, but its developer
 
 Feature branch and review deployment only. The preview adds no backend service or migration. Disable the preview flag and rebuild to remove its entry, or revert the feature commit. Preserve established routes, metadata, analytics, lead capture, scoring, and the archive branch. Before production merge, require successful CI, a Vercel preview, and explicit publication approval.
 
+The implementation is committed locally on `codex/range-rescue-video-preview`. Automatic approval review rejected pushing to `https://github.com/sc4boxer/dove-golf.git` because it requires explicit authorization for exporting repository source to that destination. No push, draft PR, hosted preview, or production deployment occurred.
+
 ## Validation
 
 Local verification passed: dependency install, full lint, seven Range Rescue tests, thirteen production-contract checks, and production build with placeholder backend settings and network access for existing Google Fonts. The literal `node --test src/lib/visual/*.test.js` fails on TypeScript imports under Node 22.17; rerunning with `--experimental-strip-types` passes all twelve visual tests.
