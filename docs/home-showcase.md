@@ -28,3 +28,9 @@ At widths up to 620px, Privacy choices appears in normal document flow after pag
 Validation for this follow-up: full lint, 11 homepage tests, 12 visual tests (with local Node type stripping enabled), and production build passed. Browser QC at desktop, 390px, and 320px covered readable preview takeaways, keyboard selection/focus, automatic preview progression, tool-guide navigation, leaderboard failure fallback, and mobile privacy reopening/saving. Empty, real-score, malformed-response, and wrong-edition cases are covered by focused unit tests. Physical touch, screen readers, and OS-level reduced motion were not exercised. Local preview uses port 3113; Vercel and CI must be checked before production merge.
 
 No dependencies, database migrations, or credentials are added. Rollback is a revert of this feature commit.
+
+## Prompts integrated into the carousel
+
+The separate What are you working on? guide is removed. Its three questions now appear above the matching headings in the main sliding cards: Struggling with contact?, Confused by your curve?, and Considering a club change?. Existing tab controls, previews, launch destinations and hero CTA analytics stay unchanged. The removed guide links no longer emit their retired home_tool_guide placement events.
+
+Validation: full lint, 11 homepage tests, 12 visual tests, and production build passed. Desktop and 320px browser checks confirmed prompt fit, removal of the duplicate section, and keyboard selection. This changes copy placement only; no data or module logic changes.

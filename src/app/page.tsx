@@ -3,7 +3,6 @@ import { SITE_SLOGAN, SITE_DESCRIPTION } from "@/lib/siteCopy";
 import Link from "next/link";
 import { ToolShowcase } from "@/components/home/ToolShowcase";
 import { ScoreChallenge } from "@/components/home/ScoreChallenge";
-import { TrackLink } from "@/components/analytics/TrackLink";
 
 
 export const metadata: Metadata = {
@@ -57,20 +56,6 @@ export default function HomePage() {
           <p className="mt-5 max-w-xl text-base leading-7 text-slate-600">{SITE_DESCRIPTION}</p>
         </section>
         <ToolShowcase />
-        <section className="mt-8 mb-8" aria-labelledby="choose-tool-heading">
-          <h2 id="choose-tool-heading" className="text-base font-semibold tracking-tight">What are you working on?</h2>
-          <p className="mt-1 text-sm text-slate-600">Choose a starting point for your next session.</p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {[
-              { question: "Struggling with contact?", name: "Range Rescue", href: "/range-rescue", module: "range_rescue" },
-              { question: "Confused by your curve?", name: "Ball Flight Decoder", href: "/tools/ball-flight-decoder", module: "ball_flight_decoder" },
-              { question: "Considering a club change?", name: "Equipment Fit", href: "/diagnostic", module: "dovefit" },
-            ].map(tool => <TrackLink key={tool.module} href={tool.href} eventParams={{ module: tool.module, placement: "home_tool_guide", version: "revival_v2" }} className="group rounded-2xl border border-slate-200 p-4 hover:border-sky-200 hover:bg-sky-50 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-700">
-              <span className="block text-sm font-medium text-slate-800">{tool.question}</span>
-              <span className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-600">Open {tool.name}<span aria-hidden="true" className="text-sky-700">→</span></span>
-            </TrackLink>)}
-          </div>
-        </section>
         <aside className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6" aria-labelledby="putting-break-heading">
           <div><h2 id="putting-break-heading" className="text-base font-semibold tracking-tight">A little break between shots.</h2><p className="mt-1 text-sm leading-6 text-slate-600">Putting Break · Five holes. Bank shots. High scores.</p><ScoreChallenge /></div>
           <Link href="/play/putting" className="inline-flex min-h-12 shrink-0 items-center justify-center gap-5 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800">Play a quick hole <span aria-hidden>→</span></Link>
