@@ -2,27 +2,27 @@
 
 ## Current direction
 
-The owner chose local-first analysis: record/select a video, tap the ball, analyze movement on the device, and confirm the outcome. External AI APIs are not required for this experiment. The unused cloud integration was removed before commit; no clips were sent, no API key configured, and no billing enabled.
+The owner chose local-first analysis: record/select a video, automatically find and follow a possible ball on the device, and confirm the outcome. There is no manual marking step. External AI APIs are not required for this experiment. The unused cloud integration was removed before commit; no clips were sent, no API key configured, and no billing enabled.
 
 The owner authorized full available QC followed by push and merge, with real range footage and native phone recording reserved for their trial. This is an experimental feature, not a validated golf-video diagnosis.
 
 ## Try it
 
-Open `/range-rescue`, select Irons, choose “Film a shot. Find your next step.”, then “Start my practice”. The experimental entry is enabled by default; `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=false` at build time hides it. `.env.example` documents the enabled default.
+Open `/range-rescue`, select Irons or Driver, choose “Film a shot. Find your next step.”, then “Start my practice”. The experimental entry is enabled by default; `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=false` at build time hides it. `.env.example` documents the enabled default.
 
-Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Use a steady, rear-offset view in a safe position within the bay.
+Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Film from the back of the bay, well behind the swing area, looking straight down the range along the intended ball path. The diagram uses the same camera direction for either handedness. Skip filming if there is no safe position.
 
-Pause just before the ball moves. Choose “Mark the ball”, tap its center, then choose “Track ball movement on this device”. Keyboard users can move the crosshair with arrows and confirm with Enter; Escape cancels marking. Tracking inspects the next three seconds at most. A candidate path appears only from positions extracted from the selected video's frames. Replay to check whether the candidate was the ball, then confirm Airborne, Rolled, Missed, or Unclear yourself.
+Selecting a playable clip starts automatic analysis. It searches for a small bright object that is stationary before moving and rejects ambiguous or camera-moving footage. A successful result offers “Replay shot moment”, which jumps to the detected moment. If no clear moment is found, the user can replay the clip or choose another video. No trace is drawn over real footage. Detection does not assign Airborne, Rolled, Missed, or Unclear; the user still confirms the observed shot outcome. Real range accuracy is unvalidated.
 
-The separate sample-session mode remains illustrated and clearly labeled. It has no connection to the local tracking algorithm or real shot results.
+Real-video practice is the primary action. A small “See a demo with sample shots” link opens the optional illustrated session. It starts with an airborne shot; club impact and ball launch are synchronized. Missed shots explicitly explain why the ball stays in place. Driver samples use a tee. Sample animation has no connection to local tracking or real shot results.
 
 ## What the local analysis does
 
-`local-ball-tracking.ts` reads decoded video frames through a browser canvas, scaled to a maximum 640-pixel dimension. A tapped seed anchors a compact bright component. The tracker checks nearby candidates against motion, brightness, area, shape, and ambiguity limits, and compares background patches for camera movement. It stops when the candidate disappears, becomes ambiguous, or the background moves too much. It never bridges a detection gap or extrapolates a flight.
+`local-ball-tracking.ts` reads decoded video frames through a browser canvas, scaled to a maximum 640-pixel dimension. Automatic search scans from the beginning at ten samples per second, retaining at most twelve compact bright candidates. A candidate must be stationary for three sampled frames and then move across three frames with at least six pixels of displacement. Multiple moving candidates, excessive background motion, or a crowded bright scene produce uncertainty rather than a selected ball. The detected starting point is refined with the existing tracker. The detected seed is internal; users do not mark the ball. This does not establish ball identity or extrapolate a flight.
 
-At most 90 frame samples over three seconds are inspected. Source videos with lower frame rates may repeat decoded frames; the algorithm does not turn those into motion/speed measurements. A four-second seek timeout and overall processing time check bound slow-device work. Cancellation stops processing and restores the starting replay position. All processing happens in this browser; the site server only serves the application.
+Automatic search checks up to 300 samples over a clip of at most thirty seconds, then refines at most 90 frame samples over three seconds. Source videos with lower frame rates may repeat decoded frames; the algorithm does not turn those into speed measurements. The scan has a 25-second processing budget, refinement has a 20-second budget, and an outstanding seek can take up to four seconds. A decoded seek roundtrip prevents a browser's transparent first surface from being mistaken for camera movement. Cancellation stops processing and restores the original replay position. All processing happens in this browser; the site server only serves the application.
 
-The first version is intended for a small light-colored ball and a steady camera. Colored balls, bright mats/clothing, blur, occlusion, rapid motion, very small balls, busy ranges, or handheld footage may fail or produce the wrong candidate. A user tap narrows the search but does not establish the candidate's identity. Thresholds are hypotheses tested on synthetic data, not validated golf-video accuracy.
+The first version is intended for a small light-colored ball and a steady camera. Colored balls, bright mats/clothing, blur, occlusion, rapid motion, very small balls, busy ranges, or handheld footage may fail or produce the wrong candidate. Thresholds are hypotheses tested on synthetic data, not validated golf-video accuracy.
 
 Image-space movement does not prove contact or height. In particular, no movement or a lost track must never be labeled a miss. There is no measured distance, launch angle, speed, trajectory in 3D, or swing-fault diagnosis. The user still confirms outcomes before the existing local practice rules select an exercise.
 
@@ -30,7 +30,7 @@ Image-space movement does not prove contact or height. In particular, no movemen
 
 Record five starting attempts, correct/undo entries as needed, choose one controlled task, then record five more attempts and compare. Any unclear starting attempt requires a fresh baseline. No-contact suggests smaller contact practice; limited airborne results suggest the small-swing brush exercise; repeatable airborne results suggest keeping the same easy swing. These are practice choices, not validated readiness grades. Unclear comparison results prevent improvement claims.
 
-The same iron and setup must be used across sets. Normal beginner/driver flows, public routes, canonical URLs, analytics, lead capture, and deterministic scoring remain unchanged.
+The selected club and setup must stay the same across sets. Driver practice preserves the same driver, tee height, and ball position and uses a shorter easy swing above the mat instead of the iron brush exercise. Driver outcomes count flight beyond the tee, not the raised starting position. Normal guided beginner/driver flows, public routes, canonical URLs, analytics, lead capture, and deterministic scoring remain unchanged.
 
 ## Privacy and lifecycle
 
@@ -51,4 +51,3 @@ Next evaluate real range clips with manual ball-position annotations: measure ho
 ## Rollback
 
 Disable the preview flag and rebuild, or revert the feature commits. There is no migration or cloud resource to remove. Preserve the production domain and `archive/pre-revival-2026-08-23`. Remote CI and a successful Vercel preview are required before the authorized merge. See the release QC record for evidence and remaining trial limitations.
-
