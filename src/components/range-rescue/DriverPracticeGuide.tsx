@@ -1,4 +1,5 @@
 import type { RangeRescuePlan } from "@/lib/range-rescue/plans";
+import { DriverSwingAnimation } from "./DriverSwingAnimation";
 import styles from "./DriverPracticeGuide.module.css";
 
 export function DriverPracticeGuide({
@@ -12,7 +13,7 @@ export function DriverPracticeGuide({
 }) {
   return (
     <section className={styles.guide} aria-label="Driver practice guide">
-      <figure className={styles.figure}>
+      {practiceOnly ? <DriverSwingAnimation /> : <figure className={styles.figure}>
         <svg className={styles.diagram} viewBox="0 0 560 220" role="img" aria-label="Side view of a driver beside a ball on a tee, with the clubhead above the mat. Setup reference only.">
           <path className={styles.ground} d="M52 177 H508" />
           <path className={styles.tee} d="M333 177 V144 M324 143 Q333 149 342 143" />
@@ -24,7 +25,7 @@ export function DriverPracticeGuide({
           <text className={styles.label} x="58" y="201">grass or mat</text>
         </svg>
         <figcaption>Driver setup reference · Tee height varies with your club and range tee.</figcaption>
-      </figure>
+      </figure>}
       <div className={styles.copy}>
         <p className={styles.kicker}>{practiceOnly ? "An easy driver rehearsal" : "Your driver practice"}</p>
         <h2>{practiceOnly ? "Keep it easy. Finish in balance." : "One cue. Five teed balls."}</h2>

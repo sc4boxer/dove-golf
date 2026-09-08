@@ -20,3 +20,11 @@ Full lint, Range Rescue domain tests (all seven driver plans and driver feedback
 Browser checks at desktop, 390px and 320px cover club selection, a complete driver session with two sets of five, disabled progression for incomplete sets, undo, accurate results, finishing, driver quick-rescue focus, keyboard club switching, and restored iron instructions. Homepage rapid tab reversals and keyboard selection preserve one interactive panel; its CSS crossfade and settling movement are interruptible and preserve card height. Reduced-motion styles disable transitions. Physical touch, screen-reader announcements and OS-level reduced-motion emulation remain unverified.
 
 No schema, stored scores, course rules, dependencies, routes, or canonical metadata change. Review the PR/Vercel preview before production merge. Revert the feature commit to roll back.
+
+## Animated beginner guide
+
+The guided driver's practice step now includes a one-pass, 4.6-second animation: shorter backswing, sweep through the teed ball, then controlled finish. The example ball moves away from the tee as the club reaches it, and three readable cues highlight in order. This is an illustrative tee shot, not a predicted trajectory or a full-body swing model. The driver remains above the ground.
+
+The sequence starts when at least 30% of the figure is visible. Replay picture restarts the illustration and brings it into view without changing the recorded baseline. Reduced-motion users see the static diagram and three cues without autoplay or a replay control. Quick-rescue plans retain their existing setup reference; only the beginner practice step uses the new animation.
+
+Validation for this follow-up: full lint, Range Rescue tests, visual tests, and production build passed. Desktop and 320px browser QC verified animation start/finish, replay, readable cues, and keyboard progression to the next five-shot recorder with focus on its heading. OS-level reduced-motion and physical touch were not exercised; the reduced-motion CSS was reviewed. No scoring, recorded data, or guidance rules change.
