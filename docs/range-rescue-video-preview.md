@@ -8,13 +8,13 @@ The owner authorized full available QC followed by push and merge, with real ran
 
 ## Try it
 
-Open `/range-rescue`, select Irons, choose “Film a shot. Find your next step.”, then “Start my practice”. The experimental entry is enabled by default; `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=false` at build time hides it. `.env.example` documents the enabled default.
+Open `/range-rescue`, select Irons or Driver, choose “Film a shot. Find your next step.”, then “Start my practice”. The experimental entry is enabled by default; `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=false` at build time hides it. `.env.example` documents the enabled default.
 
-Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Use a steady, rear-offset view in a safe position within the bay.
+Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Film from the back of the bay, well behind the swing area, looking straight down the range along the intended ball path. The diagram uses the same camera direction for either handedness. Skip filming if there is no safe position.
 
 Pause just before the ball moves. Choose “Mark the ball”, tap its center, then choose “Track ball movement on this device”. Keyboard users can move the crosshair with arrows and confirm with Enter; Escape cancels marking. Tracking inspects the next three seconds at most. A candidate path appears only from positions extracted from the selected video's frames. Replay to check whether the candidate was the ball, then confirm Airborne, Rolled, Missed, or Unclear yourself.
 
-The separate sample-session mode remains illustrated and clearly labeled. It has no connection to the local tracking algorithm or real shot results.
+Real-video practice is the primary action. A small “See a demo with sample shots” link opens the optional illustrated session. It starts with an airborne shot; club impact and ball launch are synchronized. Missed shots explicitly explain why the ball stays in place. Driver samples use a tee. Sample animation has no connection to local tracking or real shot results.
 
 ## What the local analysis does
 
@@ -30,7 +30,7 @@ Image-space movement does not prove contact or height. In particular, no movemen
 
 Record five starting attempts, correct/undo entries as needed, choose one controlled task, then record five more attempts and compare. Any unclear starting attempt requires a fresh baseline. No-contact suggests smaller contact practice; limited airborne results suggest the small-swing brush exercise; repeatable airborne results suggest keeping the same easy swing. These are practice choices, not validated readiness grades. Unclear comparison results prevent improvement claims.
 
-The same iron and setup must be used across sets. Normal beginner/driver flows, public routes, canonical URLs, analytics, lead capture, and deterministic scoring remain unchanged.
+The selected club and setup must stay the same across sets. Driver practice preserves the same driver, tee height, and ball position and uses a shorter easy swing above the mat instead of the iron brush exercise. Driver outcomes count flight beyond the tee, not the raised starting position. Normal guided beginner/driver flows, public routes, canonical URLs, analytics, lead capture, and deterministic scoring remain unchanged.
 
 ## Privacy and lifecycle
 
@@ -51,4 +51,3 @@ Next evaluate real range clips with manual ball-position annotations: measure ho
 ## Rollback
 
 Disable the preview flag and rebuild, or revert the feature commits. There is no migration or cloud resource to remove. Preserve the production domain and `archive/pre-revival-2026-08-23`. Remote CI and a successful Vercel preview are required before the authorized merge. See the release QC record for evidence and remaining trial limitations.
-

@@ -5,16 +5,16 @@ import { trackBallInVideo } from "@/lib/range-rescue/local-ball-tracking";
 import styles from "./ShotReplay.module.css";
 
 type Sample = "air" | "contact" | "miss" | "unsure";
-type Props = { sample: Sample; allowSamples?: boolean; onSourceChange?: (source: "sample" | "local") => void };
+type Props = { sample: Sample; club?: "iron" | "driver"; allowSamples?: boolean; onSourceChange?: (source: "sample" | "local") => void };
 
 const descriptions: Record<Sample, string> = {
   air: "Sample: the ball lifts above the ground. The line illustrates its visible flight.",
   contact: "Sample: the ball moves forward along the ground.",
-  miss: "Sample: the ball stays in place after the swing.",
+  miss: "Missed-ball example: the club passes the ball, which stays in place.",
   unsure: "Sample: the ball is lost from view. There is no reliable trace or outcome to show.",
 };
 
-export default function ShotReplay({ sample, allowSamples = true, onSourceChange }: Props) {
+export default function ShotReplay({ sample, club = "iron", allowSamples = true, onSourceChange }: Props) {
   const id = useId();
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -163,17 +163,35 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
     onSourceChange?.("local");
   }
 
-  const flight = Math.max(0, Math.min(1, (progress - 20) / 75));
+  // The club reaches the ball at 38%; every visible launch uses that same moment.
+  const flight = Math.max(0, Math.min(1, (progress - 38) / 57));
+  const launchY = club === "driver" ? 300 : 308;
+  const poses = [
+    { at: 0, hands: [267, 253], elbow: [243, 247], tip: [316, launchY] },
+    { at: 22, hands: [267, 179], elbow: [248, 190], tip: [207, 137] },
+    { at: 38, hands: [267, 253], elbow: [243, 247], tip: [316, sample === "miss" ? launchY - 12 : launchY] },
+    { at: 62, hands: [238, 169], elbow: [197, 202], tip: [172, 139] },
+    { at: 100, hands: [238, 169], elbow: [197, 202], tip: [172, 139] },
+  ];
+  const nextPose = poses.findIndex((pose) => pose.at > progress);
+  const poseIndex = nextPose === -1 ? poses.length - 1 : nextPose;
+  const fromPose = poses[Math.max(0, poseIndex - 1)];
+  const toPose = poses[poseIndex];
+  const poseAmount = (progress - fromPose.at) / (toPose.at - fromPose.at);
+  const interpolate = (from: number[], to: number[]) => from.map((value, index) => value + (to[index] - value) * poseAmount);
+  const hands = interpolate(fromPose.hands, toPose.hands);
+  const elbow = interpolate(fromPose.elbow, toPose.elbow);
+  const tip = interpolate(fromPose.tip, toPose.tip);
   const hasTrace = sample === "air" || sample === "contact";
   const ballX = sample === "air" ? 322 + 76 * flight : 322 + 24 * flight;
   const ballY = sample === "air"
-    ? (1 - flight) ** 2 * 308 + 2 * (1 - flight) * flight * -55 + flight ** 2 * 157
-    : 308 - 98 * flight;
+    ? (1 - flight) ** 2 * launchY + 2 * (1 - flight) * flight * -55 + flight ** 2 * 157
+    : 308 - 98 * flight - (308 - launchY) * Math.max(0, 1 - flight * 12);
   const tracePoints = Array.from({ length: 61 }, (_, index) => {
     const t = flight * index / 60;
     return sample === "air"
-      ? `${322 + 76 * t},${(1 - t) ** 2 * 308 + 2 * (1 - t) * t * -55 + t ** 2 * 157}`
-      : `${322 + 24 * t},${308 - 98 * t}`;
+      ? `${322 + 76 * t},${(1 - t) ** 2 * launchY + 2 * (1 - t) * t * -55 + t ** 2 * 157}`
+      : `${322 + 24 * t},${308 - 98 * t - (308 - launchY) * Math.max(0, 1 - t * 12)}`;
   }).join(" ");
 
   return (
@@ -248,21 +266,23 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
             <path d="m126 296 213-4 57 68H90z" fill="#627d69" />
             <path d="m137 303 196-4 36 52H111z" fill="#728e78" stroke="#a8bcaa" />
             <ellipse cx="234" cy="330" rx="57" ry="10" fill="#405649" opacity=".25" />
-            {/* A quiet silhouette establishes the rear-view filming position. */}
+            {club === "driver" && <path d="M322 305v8m-3-8h6" stroke="#e6d1aa" strokeWidth="2" fill="none" />}
+            {/* Interpolated poses keep the club movement and ball launch synchronized. */}
             <g fill="none" strokeLinecap="round" strokeLinejoin="round">
               <path d="m217 267-13 57m33-57 18 55" stroke="#354551" strokeWidth="17" />
               <path d="m201 329 17 1m33-2 16 1" stroke="#f7f8f3" strokeWidth="10" />
               <path d="m218 206-5 59h34l-8-59" fill="#e7ede5" stroke="#d9e2d8" strokeWidth="8" />
               <circle cx="226" cy="188" r="16" fill="#bda28b" />
               <path d="M211 181q5-20 28-7l4 12h-33" fill="#344c43" stroke="#344c43" strokeWidth="3" />
-              <path d={progress > 20 ? "m214 215-17-13 41-33m0 45-3-22 3-23" : "m215 214 28 33 24 6m-28-39 14 28 14 11"} stroke="#bda28b" strokeWidth="9" />
-              <path d={progress > 20 ? "m238 170-51-34-15 3" : "m267 253 47 54 10 1"} stroke="#66757c" strokeWidth="3" />
+              <path d={`M215 214L${elbow.join(" ")}L${hands.join(" ")}M239 214L${hands.join(" ")}`} stroke="#bda28b" strokeWidth="9" />
+              <path d={`M${hands.join(" ")}L${tip.join(" ")}l8 0`} stroke="#66757c" strokeWidth="3" />
+              {club === "driver" && <ellipse cx={tip[0] + 4} cy={tip[1]} rx="6" ry="3.5" fill="#354551" />}
             </g>
             {hasTrace && flight > 0 && <>
               <polyline points={tracePoints} stroke="#f8fbeb" strokeWidth="6" fill="none" strokeLinecap="round" />
               <polyline points={tracePoints} stroke="#4a735c" strokeWidth="2.5" fill="none" strokeLinecap="round" />
             </>}
-            {(sample !== "unsure" || progress < 25) && <circle cx={hasTrace ? ballX : 322} cy={hasTrace ? ballY : 308} r="4.5" fill="white" stroke="#48604d" strokeWidth="1.5" />}
+            {(sample !== "unsure" || flight < .1) && <circle cx={hasTrace ? ballX : sample === "unsure" ? 322 + 76 * flight : 322} cy={hasTrace ? ballY : sample === "unsure" ? launchY - 250 * flight : launchY} r="4.5" fill="white" stroke="#48604d" strokeWidth="1.5" />}
             <rect x="18" y="18" width="126" height="28" rx="14" fill="#ffffff" fillOpacity=".9" />
             <text x="31" y="37" fill="#41564c" fontSize="12" fontFamily="system-ui, sans-serif">BEHIND THE GOLFER</text>
           </svg>

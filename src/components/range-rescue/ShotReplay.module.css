@@ -5,18 +5,18 @@
 .empty { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 28px; text-align: center; color: #527064; background: #f1f5f0; }
 .empty strong { color: #243c30; font-size: 1rem; }
 .empty p { max-width: 300px; margin: 0; font-size: .875rem; line-height: 1.6; color: #475569; }
-.controls { display: flex; align-items: center; gap: 14px; padding: 12px 16px 0; }
+.controls { display: flex; align-items: center; gap: 14px; padding: 16px 16px 0; }
 .replay .play { min-width: 72px; min-height: 44px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; color: #0f172a; font: inherit; font-size: .875rem; font-weight: 650; cursor: pointer; }
 .play:hover { background: #f1f5f3; }
 .timeline { flex: 1; display: flex; align-items: center; min-height: 44px; }
 .timeline input { width: 100%; accent-color: #456857; cursor: pointer; min-height: 32px; margin: 0; }
 .percentage { font-size: .75rem; color: #475569; font-variant-numeric: tabular-nums; width: 34px; text-align: right; }
-.replay .caption { padding: 0 16px; margin: 9px 0 16px; color: #475569; font-size: .8125rem; line-height: 1.6; }
+.replay .caption { padding: 0 16px; margin: 12px 0 20px; color: #475569; font-size: .8125rem; line-height: 1.6; }
 .upload { padding: 16px; background: #fafbf9; border-top: 1px solid #e2e8f0; }
 .fileLabel { display: block; font-size: .875rem; font-weight: 650; margin-bottom: 10px; }
 .fileInput { display: block; width: 100%; min-height: 44px; color: #475569; font: inherit; font-size: .8125rem; }
 .fileInput::file-selector-button { padding: 10px 13px; margin-right: 10px; border: 1px solid #94a3b8; border-radius: 9px; background: white; color: #0f172a; font: inherit; cursor: pointer; }
-.replay .privacy { margin: 8px 0 0; color: #475569; font-size: .75rem; line-height: 1.65; }
+.replay .privacy { margin: 12px 0 0; color: #475569; font-size: .75rem; line-height: 1.65; }
 .replay .remove { min-height: 44px; border: 0; padding: 8px 0; background: transparent; color: #344d42; text-decoration: underline; text-underline-offset: 3px; font: inherit; font-size: .8125rem; cursor: pointer; }
 .replay .filename { overflow-wrap: anywhere; margin: 0 0 12px; font-size: .8125rem; font-weight: 650; }
 .replay .error { margin: 12px 0 0; padding: 12px; color: #8b2929; background: #fff0ed; border-radius: 8px; font-size: .8125rem; line-height: 1.6; }
@@ -33,7 +33,7 @@
 .tracking { margin-top: 16px; padding-top: 18px; border-top: 1px solid #dce5de; }
 .tracking h3 { margin: 0 0 8px; color: #243c30; font-size: .9375rem; }
 .tracking p { margin: 8px 0; font-size: .8125rem; line-height: 1.65; color: #475569; }
-.trackActions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.trackActions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 .replay .trackButton { min-height: 44px; padding: 10px 16px; border: 1px solid #456857; border-radius: 10px; background: #456857; color: white; font: inherit; font-size: .8125rem; font-weight: 650; cursor: pointer; }
 .replay .trackButton:hover:not(:disabled) { background: #344d42; }
 .replay .trackButton:disabled { opacity: .55; cursor: not-allowed; }
