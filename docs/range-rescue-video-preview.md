@@ -1,43 +1,53 @@
-# Range Rescue shot replay prototype
+# Range Rescue: local shot tracking experiment
 
-## Current product
+## Current direction
 
-Film a shot. Find your next step. This prototype replaces the earlier face-on swing review with a rear-view, outcome-first experience for beginner iron practice. It keeps Range Rescue's typography, white/slate cards, muted green accents, navigation, and existing before/after semantics. The normal beginner and driver sessions remain separate and unchanged.
+The owner chose local-first analysis: record/select a video, tap the ball, analyze movement on the device, and confirm the outcome. External AI APIs are not required for this experiment. The unused cloud integration was removed before commit; no clips were sent, no API key configured, and no billing enabled.
 
-The owner requested a near-complete local prototype before pushing, merging, or publishing. This iteration stays local on `codex/range-rescue-video-preview`. No remote push or deployment is authorized by this build request.
+This remains a local prototype on `codex/range-rescue-video-preview`. Do not push, merge, or publish until the owner reviews it and explicitly authorizes that next step.
 
 ## Try it
 
-Enable `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=true` locally and restart/rebuild. At `/range-rescue`, choose Irons, then “Film a shot. Find your next step.” The default flag in `.env.example` remains false. The flag is a discoverability switch, not an authentication boundary.
+With `NEXT_PUBLIC_SWING_VIDEO_PREVIEW=true`, open `/range-rescue`, select Irons, choose “Film a shot. Find your next step.”, then “Start my practice”. The flag remains false in `.env.example`.
 
-1. Prepare: rear, offset camera placement with right/left-handed diagrams; safe bay positioning; include the ground and the ball's initial movement.
-2. Choose a sample session or your own practice. These modes do not mix results or media.
-3. Review five shots. Samples have scrubbable, paused-by-default illustrated replays; own practice can replay a device-local video or work without a clip. Confirm Airborne, Rolled, Missed, or Unclear. Correct any recorded outcome or undo the last attempt.
-4. Choose one controlled practice task from the confirmed set. Any unclear starting attempt requires a fresh baseline; no-contact suggests small contact practice; limited airborne results suggest the existing small-swing brush exercise; repeated airborne results suggest repeating the easy swing. These are practice choices, not diagnoses or validated readiness grades.
-5. Record five further outcomes and compare confirmed contact and airborne counts. Sample comparisons are labeled examples; unknown comparison outcomes prevent improvement claims. Review/correct comparison outcomes or start fresh.
+Choose a clip from the device or use “Or record a new shot”. Supported mobile browsers may open their native camera; desktop browsers may present a file chooser. No permission is requested automatically. Use a steady, rear-offset view in a safe position within the bay.
 
-## Media and evidence boundaries
+Pause just before the ball moves. Choose “Mark the ball”, tap its center, then choose “Track ball movement on this device”. Keyboard users can move the crosshair with arrows and confirm with Enter; Escape cancels marking. Tracking inspects the next three seconds at most. A candidate path appears only from positions extracted from the selected video's frames. Replay to check whether the candidate was the ball, then confirm Airborne, Rolled, Missed, or Unclear yourself.
 
-No camera request, upload, model call, inference, or automatic tracking exists in this prototype. SVG sample trajectories are illustrations, not measured flight. There is no distance, height, speed, club-path, or impact-angle measurement. A miss sample has a stationary ball; an unclear sample supplies no invented trajectory.
+The separate sample-session mode remains illustrated and clearly labeled. It has no connection to the local tracking algorithm or real shot results.
 
-Own clips use temporary browser object URLs and native playback controls. Sample traces never overlay own clips. Files are limited to 50 MiB and 30 seconds with MIME/metadata/decode checks and a metadata-loading timeout. Actual format support depends on the browser; MP4 is suggested as a fallback. Clips are released on replacement, removal, confirmation, switching shots, or leaving the component. Editing an outcome requires selecting its clip again. Original files on the user's device are not deleted. No file contents or outcomes are added to analytics.
+## What the local analysis does
 
-Session results remain in React memory and clear on exit or refresh. No storage service, account, migration, environment credential, or production configuration is added. Privacy/lead routes and existing analytics events are preserved.
+`local-ball-tracking.ts` reads decoded video frames through a browser canvas, scaled to a maximum 640-pixel dimension. A tapped seed anchors a compact bright component. The tracker checks nearby candidates against motion, brightness, area, shape, and ambiguity limits, and compares background patches for camera movement. It stops when the candidate disappears, becomes ambiguous, or the background moves too much. It never bridges a detection gap or extrapolates a flight.
 
-## Architecture and verification
+At most 90 frame samples over three seconds are inspected. Source videos with lower frame rates may repeat decoded frames; the algorithm does not turn those into motion/speed measurements. A four-second seek timeout and overall processing time check bound slow-device work. Cancellation stops processing and restores the starting replay position. All processing happens in this browser; the site server only serves the application.
 
-`ShotReplay` handles illustrated replay and local media. `SwingVideoPreview` owns preparation, mode separation, five-shot state, editing, practice, and comparison. `shot-practice.ts` validates exactly five outcomes and reuses `summarizeShots` plus `getSessionFeedback`; repeat-task feedback preserves the existing easy swing rather than incorrectly referring to a newly introduced smaller swing. The original beginner component is restored to its pre-preview version.
+The first version is intended for a small light-colored ball and a steady camera. Colored balls, bright mats/clothing, blur, occlusion, rapid motion, very small balls, busy ranges, or handheld footage may fail or produce the wrong candidate. A user tap narrows the search but does not establish the candidate's identity. Thresholds are hypotheses tested on synthetic data, not validated golf-video accuracy.
 
-Focused tests cover input validation (including sparse arrays), unclear data, all practice branches, unchanged inputs, and feedback consistency. Browser verification covers a complete sample session, confirmed counts, correction/undo, no-data gating, unclear-baseline restart, reset, driver isolation, keyboard controls, 320px mobile and 1280px desktop. Synthetic local files exercise valid replay, removal, broken video, excessive duration, and excessive size; no personal video was used. The metadata timeout is implemented but not forced in browser testing. Native mobile camera recording and iPhone/Android codec coverage remain unverified.
+Image-space movement does not prove contact or height. In particular, no movement or a lost track must never be labeled a miss. There is no measured distance, launch angle, speed, trajectory in 3D, or swing-fault diagnosis. The user still confirms outcomes before the existing local practice rules select an exercise.
 
-Validation: full lint, Range Rescue tests, production-contract tests, and production build pass. The literal visual test command fails on TypeScript imports under installed Node 22.17; all visual tests pass with `--experimental-strip-types`. Build uses placeholder backend settings and network access for the existing Google Fonts. No dependencies or lockfiles changed. Remote CI/Vercel preview and real-world beginner/coach validation are not yet performed. Screenshots in `artifacts/shot-replay-prototype/` document the new design; older swing-video screenshots represent the superseded concept.
+## Practice flow
 
-## Next step after prototype review
+Record five starting attempts, correct/undo entries as needed, choose one controlled task, then record five more attempts and compare. Any unclear starting attempt requires a fresh baseline. No-contact suggests smaller contact practice; limited airborne results suggest the small-swing brush exercise; repeatable airborne results suggest keeping the same easy swing. These are practice choices, not validated readiness grades. Unclear comparison results prevent improvement claims.
 
-Evaluate consented rear-view range clips before promising tracking. Begin with detection of initial ball movement and user-confirmed outcomes; full-flight tracking is a separate feasibility project. Test busy backgrounds, other balls, moving phones, rolling shots, loss of visibility, body/club occlusion, and left/right-handed recordings. Stop observed traces when evidence ends. Any estimated continuation must be labeled and must not become a measured coaching claim.
+The same iron and setup must be used across sets. Normal beginner/driver flows, public routes, canonical URLs, analytics, lead capture, and deterministic scoring remain unchanged.
 
-If a real analysis service is selected, define provider terms, audience suitability, private direct uploads, owner-scoped access, bounded background jobs, retry/cancel semantics, spending limits, and verified deletion of storage/provider copies. Coach-defined evaluation and independent clips are required before accuracy claims. None of that service is implemented here.
+## Privacy and lifecycle
+
+The replay accepts clips up to 50 MiB and 30 seconds with MIME/metadata/decode checks. Supported codecs depend on the browser. Files use temporary object URLs; frame buffers and tracking points remain in local memory. There is no fetch, upload endpoint, external model, account, API fee, or credential for this feature.
+
+Clips clear on replacement, removal, shot confirmation, navigation to another shot, or leaving the component. Editing requires selecting a clip again. Removing a clip does not delete the original device file. Results clear on exit/refresh. No frame contents, file names, trajectories, or outcomes are added to analytics. Native camera software may save recordings to the device according to its own settings.
+
+## Validation and remaining work
+
+Synthetic pixel tests cover moving/stationary balls, disappearance, equally plausible candidates, an oversized bright occluder, invalid or ambiguous seeds, frame dimensions, translated backgrounds, and a static-background control. Browser testing uses locally generated moving-ball, stationary-ball, and disappearing-ball MP4s. Actual video-frame processing produced the expected tentative track/loss/no-movement outcomes. This is not evidence of accuracy on real golf footage.
+
+Full lint, Range Rescue tests, production-contract checks, and build pass. The literal visual test command fails on TypeScript imports in Node 22.17; visual tests pass with `--experimental-strip-types`. Build uses placeholder backend settings and network access for existing Google Fonts. No application dependencies or lockfiles changed.
+
+Browser verification covers local loading, keyboard marking, actual tracking, restored starting time, cancellation, replacement/removal, and mobile/desktop layout. Earlier prototype checks cover correction/undo, baseline uncertainty, full comparison, invalid/overlong/oversized clips, reset, and driver isolation. Native phone camera capture, broad iPhone/Android codec coverage, low-end-device performance, and real range tracking accuracy remain unverified. Synthetic screenshots are in `artifacts/local-ball-tracking/`.
+
+Next evaluate real range clips with manual ball-position annotations: measure how often the intended ball is acquired, when identity is lost, how quickly the algorithm stops, false tracks, processing time, and whether users understand uncertainty. Include rolling shots, misses, both handednesses, mat glare, camera movement, and busy backgrounds. Have qualified coaches review any future new exercise rules. Consider different local algorithms or a hosted model only if evidence shows a benefit.
 
 ## Rollback
 
-Disable the preview flag and rebuild, or revert this feature's commits. No data migration is necessary. Preserve the production domain, main branch behavior, and `archive/pre-revival-2026-08-23`. Review the prototype first; a hosted PR preview, merge, and publication are later steps requiring explicit authorization and successful CI.
+Disable the preview flag and rebuild, or revert the feature commits. There is no migration or cloud resource to remove. Preserve the production domain and `archive/pre-revival-2026-08-23`. Remote CI, hosted preview, merge, and publishing are deferred until explicit authorization.

@@ -85,9 +85,9 @@ export function SwingVideoPreview({ onExit }: { onExit: () => void }) {
       </div>
       <div className={styles.paths}>
         <div className={styles.card}><span className={styles.eyebrow}>Try the experience</span><h2>Explore a sample session</h2><p>Scrub through illustrated traces and confirm five example outcomes. See how the practice and comparison work.</p><button className={styles.primary} onClick={() => begin("sample")}>Explore sample shots →</button></div>
-        <div className={styles.card}><span className={styles.eyebrow}>At the range</span><h2>Use my own shot results</h2><p>Replay a short clip from your device, or record what you saw without a clip. You confirm every outcome.</p><button className={styles.secondary} onClick={() => begin("own")}>Start my practice →</button></div>
+        <div className={styles.card}><span className={styles.eyebrow}>At the range</span><h2>Try tracking my shot</h2><p>Record or select a short clip, mark the ball, and let this device look for its movement. Check the candidate path and confirm what happened.</p><button className={styles.secondary} onClick={() => begin("own")}>Start my practice →</button></div>
       </div>
-      <p className={styles.note}>Clips play only on this device and are cleared when you confirm or leave a shot. No upload or automatic tracking. Sample traces are illustrations, not measured ball flight. Leaving or refreshing clears your results.</p>
+      <p className={styles.note}>Clips and tracking stay on this device. No API key or upload. Tracking is experimental and may lose the ball; you confirm each outcome. Clips clear when you confirm or leave a shot. Sample traces are illustrations. Leaving or refreshing clears your results.</p>
     </>}
 
     {recording && <>

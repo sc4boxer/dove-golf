@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
+import { trackBallInVideo } from "@/lib/range-rescue/local-ball-tracking";
 import styles from "./ShotReplay.module.css";
 
 type Sample = "air" | "contact" | "miss" | "unsure";
@@ -23,6 +24,28 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
   const objectUrl = useRef<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const progressRef = useRef(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const captureInput = useRef<HTMLInputElement>(null);
+  const markerRef = useRef<HTMLButtonElement>(null);
+  const markButtonRef = useRef<HTMLButtonElement>(null);
+  const trackButtonRef = useRef<HTMLButtonElement>(null);
+  const markerFocusTarget = useRef<"track" | "mark" | null>(null);
+  const trackingRef = useRef<AbortController | null>(null);
+  const [marking, setMarking] = useState(false);
+  const [cursor, setCursor] = useState({ x: .5, y: .5 });
+  const [seed, setSeed] = useState<{ x: number; y: number; time: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [trackProgress, setTrackProgress] = useState(0);
+  const [trackResult, setTrackResult] = useState<Awaited<ReturnType<typeof trackBallInVideo>> | null>(null);
+  const [trackMessage, setTrackMessage] = useState("");
+
+  useEffect(() => {
+    if (marking) markerRef.current?.focus();
+    else if (markerFocusTarget.current) {
+      (markerFocusTarget.current === "track" ? trackButtonRef : markButtonRef).current?.focus();
+      markerFocusTarget.current = null;
+    }
+  }, [marking]);
 
   // All samples start paused, including when reduced motion is requested.
   useEffect(() => {
@@ -43,6 +66,7 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
   }, [playing]);
 
   useEffect(() => () => {
+    trackingRef.current?.abort();
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
   }, []);
 
@@ -60,13 +84,59 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
   }, [local, ready]);
 
   function clearLocal() {
+    trackingRef.current?.abort();
+    trackingRef.current = null;
+    setBusy(false);
+    setSeed(null);
+    setMarking(false);
+    setTrackResult(null);
+    setTrackMessage("");
+    setTrackProgress(0);
     if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
     objectUrl.current = null;
     setLocal(null);
     setReady(false);
     setError("");
     if (fileInput.current) fileInput.current.value = "";
+    if (captureInput.current) captureInput.current.value = "";
     onSourceChange?.("sample");
+  }
+
+  function confirmMarker(point: { x: number; y: number }) {
+    const video = videoRef.current;
+    if (!video || !ready) return;
+    setCursor(point);
+    setSeed({ ...point, time: video.currentTime });
+    markerFocusTarget.current = "track";
+    setMarking(false);
+    setTrackResult(null);
+    setTrackMessage("Ball marked. Track its movement, or mark it again to adjust.");
+  }
+
+  async function trackClip() {
+    const video = videoRef.current;
+    if (!video || !seed || busy || !ready) return;
+    if (Math.abs(video.currentTime - seed.time) > .025) {
+      setSeed(null);
+      setTrackMessage("The replay position changed. Pause just before the ball moves and mark it again.");
+      return;
+    }
+    const controller = new AbortController();
+    trackingRef.current = controller;
+    setBusy(true);
+    setTrackProgress(0);
+    setTrackResult(null);
+    setTrackMessage("");
+    try {
+      const result = await trackBallInVideo(video, seed, { signal: controller.signal, onProgress: (value) => {
+        if (trackingRef.current === controller && !controller.signal.aborted) setTrackProgress(value);
+      } });
+      if (trackingRef.current === controller && !controller.signal.aborted) setTrackResult(result);
+    } catch {
+      if (trackingRef.current === controller && !controller.signal.aborted) setTrackMessage("This clip could not be tracked. Try marking the ball again, or replay and confirm the outcome yourself.");
+    } finally {
+      if (trackingRef.current === controller) { trackingRef.current = null; setBusy(false); }
+    }
   }
 
   function failLocal(message: string) {
@@ -110,14 +180,16 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
     <section className={styles.replay} aria-label="Shot replay">
       <div className={styles.sourceBar}>
         <span className={styles.sourceDot} aria-hidden="true" />
-        <span>{!allowSamples ? "Local replay only · confirm the outcome yourself" : "Illustrated sample · not measured flight"}</span>
+        <span>{!allowSamples ? "Replay and track on this device · no upload" : "Illustrated sample · not measured flight"}</span>
       </div>
       {local ? (
         <div className={styles.localPlayer}>
+          <div className={styles.videoStage}>
           <video
+            ref={videoRef}
             key={local.url}
             src={local.url}
-            controls
+            controls={!busy && !marking}
             playsInline
             preload="metadata"
             aria-label={`Local shot replay: ${local.name}`}
@@ -132,6 +204,22 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
               if (objectUrl.current === local.url) failLocal("This browser could not play that video. Try an MP4 clip, or record what you saw without a video.");
             }}
           />
+          {ready && (seed || marking || trackResult) && <svg className={styles.trackOverlay} viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
+            {trackResult && trackResult.points.length > 1 && <polyline points={trackResult.points.map((point) => `${point.x * 1000},${point.y * 1000}`).join(" ")} fill="none" stroke="#fff" strokeWidth="3" vectorEffect="non-scaling-stroke" />}
+            {(marking || seed) && <g stroke="#ffe88a" strokeWidth="2" vectorEffect="non-scaling-stroke">
+              <path d={`M${(marking ? cursor.x : seed!.x) * 1000 - 15},${(marking ? cursor.y : seed!.y) * 1000}h30M${(marking ? cursor.x : seed!.x) * 1000},${(marking ? cursor.y : seed!.y) * 1000 - 15}v30`} />
+            </g>}
+          </svg>}
+          {marking && <button ref={markerRef} type="button" className={styles.markerSurface} aria-label="Mark the ball: tap its center, or use arrow keys to move the crosshair and Enter to confirm" onClick={(event) => {
+            if (event.detail === 0) { confirmMarker(cursor); return; }
+            const bounds = event.currentTarget.getBoundingClientRect();
+            confirmMarker({ x: Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width)), y: Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height)) });
+          }} onKeyDown={(event) => {
+            const moves: Record<string, [number, number]> = { ArrowLeft: [-.01, 0], ArrowRight: [.01, 0], ArrowUp: [0, -.01], ArrowDown: [0, .01] };
+            if (moves[event.key]) { event.preventDefault(); const [x, y] = moves[event.key]; setCursor((point) => ({ x: Math.max(0, Math.min(1, point.x + x)), y: Math.max(0, Math.min(1, point.y + y)) })); }
+            if (event.key === "Escape") { event.preventDefault(); markerFocusTarget.current = "mark"; setMarking(false); }
+          }} />}
+          </div>
           {!ready && <p role="status">Checking your video…</p>}
         </div>
       ) : !allowSamples ? (
@@ -201,9 +289,36 @@ export default function ShotReplay({ sample, allowSamples = true, onSourceChange
         {local && <p className={styles.filename}>{local.name}</p>}
         <label htmlFor={`${id}-video`} className={styles.fileLabel}>{local ? "Choose a different video" : "Choose a video from this device"}</label>
         <input ref={fileInput} className={styles.fileInput} id={`${id}-video`} type="file" accept="video/*" onChange={chooseVideo} aria-describedby={`${id}-privacy`} />
-        <p id={`${id}-privacy`} className={styles.privacy}>Up to 30 seconds · 50 MB. Nothing is uploaded or analyzed. The clip clears when you confirm or leave this shot; select it again if you edit the result.</p>
+        <label htmlFor={`${id}-capture`} className={styles.fileLabel}>Or record a new shot</label>
+        <input ref={captureInput} className={styles.fileInput} id={`${id}-capture`} type="file" accept="video/*" capture="environment" onChange={chooseVideo} aria-describedby={`${id}-camera ${id}-privacy`} />
+        <p id={`${id}-camera`} className={styles.privacy}>Supported phones open the camera when you choose this option. On a desktop, a file picker may open instead.</p>
+        <p id={`${id}-privacy`} className={styles.privacy}>Up to 30 seconds · 50 MB. Replay and tracking happen on this device. Nothing is uploaded. The clip clears when you confirm or leave this shot; select it again if you edit the result.</p>
         {local && <button type="button" className={styles.remove} onClick={() => { clearLocal(); fileInput.current?.focus(); }}>Remove video</button>}
         {error && <p className={styles.error} role="alert">{error}</p>}
+        {local && ready && <div className={styles.tracking}>
+          <h3>Follow the ball&apos;s first movement</h3>
+          <p>Pause just before the ball moves, then mark its center. This experimental tracker looks for a candidate path in your video. Check it against the replay; it may follow the wrong object or lose the ball.</p>
+          <p>Best with a small light-colored ball and a steady camera. Checks up to three seconds after your marked frame.</p>
+          <div className={styles.trackActions}>
+            <button ref={markButtonRef} type="button" className={styles.trackButton} disabled={busy} onClick={() => {
+              videoRef.current?.pause(); setCursor(seed ? { x: seed.x, y: seed.y } : { x: .5, y: .5 });
+              setMarking(true); setTrackResult(null); setTrackMessage("");
+            }}>{seed ? "Mark the ball again" : "Mark the ball"}</button>
+            {seed && !marking && <button ref={trackButtonRef} type="button" className={styles.trackButton} disabled={busy} onClick={trackClip}>Track ball movement on this device</button>}
+            {marking && <button type="button" className={styles.remove} onClick={() => { markerFocusTarget.current = "mark"; setMarking(false); }}>Cancel marking</button>}
+            {busy && <button type="button" className={styles.remove} onClick={() => {
+              trackingRef.current?.abort(); setTrackMessage("Tracking canceled. Your video stays on this device.");
+            }}>Cancel tracking</button>}
+          </div>
+          {marking && <p role="status">Tap the ball&apos;s center in the video. With a keyboard, move the crosshair using arrow keys, then press Enter. Escape cancels.</p>}
+          {busy && <div role="status"><p>Checking video frames… {Math.round(trackProgress)}%</p><progress max="100" value={trackProgress} aria-label="Video frames checked" /></div>}
+          {trackMessage && <p role="status">{trackMessage}</p>}
+          {trackResult && <div className={styles.trackResult} role="status">
+            <strong>{{ tracked: "Candidate path · check against replay", lost: "Lost the ball candidate", camera_moved: "Camera movement interrupted tracking", no_motion: "No clear movement followed" }[trackResult.status]}</strong>
+            <p>{trackResult.detail}</p>
+            <p>Confirm what happened below to choose your next practice task.</p>
+          </div>}
+        </div>}
       </div>}
     </section>
   );
