@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { RescueVisualGuide } from "./RescueVisualGuide";
 import { DriverPracticeGuide } from "./DriverPracticeGuide";
+import { track } from "@/lib/analytics/ga";
 import type { RangeRescueClub } from "@/lib/range-rescue/plans";
 import { getSessionFeedback, summarizeShots, type ShotOutcome } from "@/lib/range-rescue/beginner-session";
 import styles from "./BeginnerSession.module.css";
@@ -46,7 +47,10 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
         <li>{driver ? "Place the ball on the tee, forward in your stance near the inside of your lead heel—the foot nearer the target. Stand comfortably, bend from your hips, and set the driver behind the ball." : "Place one ball on the mat or grass. Stand with feet about shoulder-width apart, bend forward comfortably from your hips, and let the club rest behind the ball with both hands on the handle."}</li>
         <li>{driver ? "Keep the same driver, tee height, and ball position for both sets. If you change the setup, leave this session and begin with a fresh starting set." : "Use the same club and ball position for both sets. If you need a low tee to begin, use it for both sets."}</li>
       </ol>
-      <button className={styles.primary} onClick={() => setStage(1)}>I’m ready for five starting shots</button>
+      <button className={styles.primary} onClick={() => {
+        track("dov_range_rescue_beginner_started", { club });
+        setStage(1);
+      }}>I’m ready for five starting shots</button>
     </>}
     {(stage === 1 || stage === 3) && <>
       <h2>{stage === 1 ? "Take five comfortable shots" : driver ? "Take five easy tee shots" : "Take five shots with the small swing"}</h2>
@@ -62,7 +66,10 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
           <button className={styles.back} onClick={() => setShots((previous) => previous.slice(0, -1))}>Undo last ball</button>
         </>}
       </div>
-      <button ref={continueButton} className={styles.primary} disabled={shots.length !== 5} onClick={() => setStage(stage + 1)}>{stage === 1 ? "Show me the practice exercise" : "Compare my results"}</button>
+      <button ref={continueButton} className={styles.primary} disabled={shots.length !== 5} onClick={() => {
+        if (stage === 3) track("dov_range_rescue_beginner_completed", { club });
+        setStage(stage + 1);
+      }}>{stage === 1 ? "Show me the practice exercise" : "Compare my results"}</button>
     </>}
     {stage === 2 && <>
       <h2>{driver ? "One change: shorten your backswing" : "One change: make the swing smaller"}</h2>

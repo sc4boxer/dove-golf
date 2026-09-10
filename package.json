@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "audit:seo": "node scripts/seo-audit.mjs",
+    "test:seo": "node --test scripts/seo-audit.test.mjs",
     "test:contract": "node --test tests/production-contract.test.mjs",
     "test:home": "node --experimental-strip-types --test src/app/page.contract.test.mjs src/components/home/*.test.mjs",
     "test:visual": "node --test src/lib/visual/*.test.js",

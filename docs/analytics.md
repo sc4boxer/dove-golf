@@ -60,6 +60,13 @@ track("dov_cta_clicked", {
 ```
 
 ## Verification in GA4
+Range Rescue acquisition and beginner-session events:
+- `dov_cta_clicked` with `module: range_rescue`, `placement: home_hero_primary` for the homepage action.
+- `dov_range_rescue_beginner_started` when the golfer starts the first five shots.
+- `dov_range_rescue_beginner_completed` when the golfer requests the comparison after both sets.
+- Beginner events include only `club` (`iron` or `driver`), never shot outcomes, video data, or personal information. They use the existing consent-managed analytics integration.
+- Completion means reaching the comparison, not an improvement in golfing ability. Compare landing-page acquisition with tool engagement; do not equate clicks with completed sessions.
+
 1. Open GA4 **Realtime** and **DebugView** for property `G-XPWFEER0PV`.
 2. Run the app locally and keep browser devtools open.
 3. Execute each funnel:
