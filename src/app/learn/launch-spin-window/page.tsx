@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Launch and Spin Window for Repeatable Flight",
   description:
     "Build a repeatable launch-spin corridor by understanding strike location, dynamic loft, and why peak numbers can mislead.",
-  alternates: { canonical: "/learn/launch-spin-window" },
-};
+  path: "/learn/launch-spin-window",
+  type: "article",
+});
 
 export default function LaunchSpinWindowPage() {
   return (

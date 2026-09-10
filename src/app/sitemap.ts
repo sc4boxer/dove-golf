@@ -27,10 +27,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...PATTERN_ORDER.map((pattern) => `/learn/ball-flight/${pattern}`),
   ];
 
-  return routes.map((route) => ({
-    url: new URL(route, baseUrl).toString(),
-    lastModified: new Date(),
-    changeFrequency: route === "/" ? "weekly" : "monthly",
-    priority: route === "/" ? 1 : 0.8,
-  }));
+  return routes.map((route) => {
+    const isPrimary = route === "/" || route === "/clinic" || route === "/diagnostic";
+    const isSupport = route === "/about" || route === "/privacy" || route === "/play/putting";
+
+    return {
+      url: new URL(route, baseUrl).toString(),
+      changeFrequency: route === "/" ? "weekly" : "monthly",
+      priority: route === "/" ? 1 : isPrimary ? 0.9 : isSupport ? 0.4 : 0.8,
+    };
+  });
 }

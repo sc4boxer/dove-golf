@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { BallFlightDecoder } from "@/components/tools/ball-flight-decoder/BallFlightDecoder";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Free Golf Ball Flight Decoder",
   description:
     "Identify a right-handed golf shot from its start direction, curve, and strike location—then see a transparent face/path interpretation and one practical test.",
-  alternates: { canonical: "/tools/ball-flight-decoder" },
-};
+  path: "/tools/ball-flight-decoder",
+});
 
 export default function BallFlightDecoderPage() {
   return (

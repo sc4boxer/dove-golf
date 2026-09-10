@@ -1,13 +1,11 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Free Golf Equipment Diagnostic",
   description:
     "Run a free golf fitting diagnostic to get personalized recommendations for driver, iron, and wedge setup.",
-  alternates: {
-    canonical: "/diagnostic",
-  },
-};
+  path: "/diagnostic",
+});
 
 export default function DiagnosticLayout({
   children,

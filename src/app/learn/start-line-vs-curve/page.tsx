@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 import { BallFlightChart } from "@/components/visuals/BallFlightChart";
 import type { BallFlightChartShape } from "@/lib/visual/ballFlightChartPaths";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Start Line vs Curve in Golf Ball Flight",
   description:
     "Learn the two observations behind a golf ball flight: where it starts and which way it curves. See clear right-handed examples before reading face and path.",
-  alternates: { canonical: "/learn/start-line-vs-curve" },
-};
+  path: "/learn/start-line-vs-curve",
+  type: "article",
+});
 
 const SAME_START_EXAMPLES: Array<{
   shape: BallFlightChartShape;

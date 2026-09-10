@@ -1,13 +1,13 @@
-import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 import type { ReactNode } from "react";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Golf Fitting FAQ for Serious Amateurs",
   description:
     "Technical golf fitting answers on ball flight, shaft dynamics, strike, and when mechanics matter more than equipment.",
-  alternates: { canonical: "/faq" },
-};
+  path: "/faq",
+});
 
 type FAQItem = {
   question: string;

@@ -18,9 +18,9 @@ export default function ClinicPage() {
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8">
           <p className="text-xs font-medium tracking-wide text-slate-500">DoveClinic™</p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Symptom → causes → tests → interpretation</h1>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">Diagnose Your Golf Ball Flight</h1>
           <p className="mt-3 max-w-3xl text-sm text-slate-600 sm:text-base">
-            Start with the ball flight you can see. We rank likely causes, then help you test one change at a time.
+            Symptom → causes → tests → interpretation. Start with the ball flight you can see, then test one change at a time.
           </p>
         </section>
 

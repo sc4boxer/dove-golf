@@ -209,6 +209,26 @@ export function BallFlightLibraryExplorer() {
             </div>
           </aside>
         </section>
+
+        <nav className="mt-10 border-t border-slate-200 pt-8" aria-labelledby="pattern-guides-heading">
+          <h2 id="pattern-guides-heading" className="text-xl font-semibold tracking-tight text-slate-900">
+            Learn each ball-flight pattern
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Open a focused guide for the impact geometry, likely mechanisms, and first test for each pattern.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {PATTERN_ORDER.map((slug) => (
+              <Link
+                key={slug}
+                href={`/learn/ball-flight/${slug}`}
+                className="inline-flex min-h-11 items-center rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:border-slate-300 hover:text-slate-900"
+              >
+                {BALL_FLIGHT_PATTERNS[slug].title}
+              </Link>
+            ))}
+          </div>
+        </nav>
       </div>
     </main>
   );

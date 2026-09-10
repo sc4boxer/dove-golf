@@ -6,7 +6,7 @@ import { ScoreChallenge } from "@/components/home/ScoreChallenge";
 
 
 export const metadata: Metadata = {
-  title: "Dove Golf | Free Golf Tools for Better Range Sessions",
+  title: { absolute: "Dove Golf | Free Golf Tools for Better Range Sessions" },
   description: SITE_DESCRIPTION,
   alternates: { canonical: "/" },
 };
@@ -45,6 +45,7 @@ export default function HomePage() {
         <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <Link href="/" className="inline-flex min-h-11 items-center text-lg font-semibold tracking-tight">Dove Golf<span aria-hidden className="ml-1 text-slate-400">.</span></Link>
           <nav aria-label="Primary navigation" className="flex gap-5 text-sm text-slate-500">
+            <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/clinic">Clinic</Link>
             <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/learn">Learn</Link>
             <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/method">Method</Link>
             <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/about">About</Link>
@@ -66,6 +67,7 @@ export default function HomePage() {
           <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 text-xs text-slate-500">
             <p>© {new Date().getFullYear()} · Dove Golf</p>
             <div className="flex gap-5">
+              <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/clinic">Golf miss clinic</Link>
               <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/faq">FAQ</Link>
               <Link className="inline-flex min-h-11 items-center hover:text-slate-900" href="/learn/ball-flight">Ball flight library</Link>
             </div>
