@@ -22,7 +22,9 @@ Setup status, September 10, 2026 UTC: the practice migration was applied to the 
 
 Before exposing public account clients, an existing unrestricted leads table was found and protected with `202609110002_protect_leads_from_public_clients.sql`. Public roles cannot access leads; the existing server-only service-role routes retain their permissions. The in-memory regression test is `tests/lead-data-access-smoke.mjs`. Do not roll this protection back as part of disabling practice accounts. Retain server access and diagnose any affected integration instead.
 
-Remaining: custom SMTP, preview environment variables, real email delivery, and two-account cross-device verification. Accounts remain disabled. Do not reapply migrations already present in the project. The live `/api/health` browser check was blocked by the browsing client; server permissions and unchanged database counts were verified directly.
+Operational follow-up: custom SMTP uses the existing Resend sender; real signup and returning sign-in codes passed. All three public account settings are enabled only for the `codex/practice-accounts` Vercel preview branch. Two real test accounts verified normal UI isolation, and a separate preview origin retrieved saved history without sharing local storage. Production accounts remain disabled. Do not reapply migrations already present in the project.
+
+The no-content response regression was fixed at `c9c1694`: browsers can expose a non-null empty stream for HTTP 204, but constructing a Response with any body at that status throws. The transport now uses a null body for 204/205/304. A new regression failed before the fix and passes after it. Hosted save, deletion success feedback, zero history after reload, and first-attempt sign-out passed. GitHub CI run 196 and Vercel deployment `34hJSfz4Q31ns8NzUpidtjHcTmTC` passed.
 
 1. Review and apply `supabase/migrations/202609110001_create_practice_accounts.sql` to the intended project through the normal migration process. It adds only practice objects and does not alter putting or feedback tables.
 2. Confirm Email authentication and intended signups are enabled. Configure the Magic Link email template to show the `{{ .Token }}` code instead of relying on a confirmation link. The UI calls `signInWithOtp({email})` and then `verifyOtp({email, token, type: "email"})`; no redirect callback or Google OAuth configuration is needed. Check any separate confirmation template used by the project's signup settings. [Supabase email OTP documentation](https://supabase.com/docs/guides/auth/auth-email-passwordless).
@@ -36,6 +38,34 @@ Use two disposable test accounts with real inboxes on the preview. Verify new si
 For account A, save a session, repeat the save, and confirm only one record. Save over 30 distinct sessions across valid batches and confirm the oldest are pruned. Repeat simultaneous saves in two tabs. Submit an incomplete batch and confirm no partial inserts. Direct table inserts and updates must fail. As account B, selecting A's user ID and attempting to delete it must return no A data; an extra `user_id` field in an RPC item must not change ownership. Anonymous users must have no table or RPC access. Clear A's history and confirm B's data survives. Delete a test Auth user and verify its sessions cascade away. These checks must use ordinary authenticated/anonymous tokens, not a service-role token that bypasses RLS. [Supabase RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [function privileges](https://supabase.com/docs/guides/database/functions).
 
 Automated adapter tests cover response mapping, canonical uploads, duplicate/malformed rejection, account-switch guards, disabled rollout behavior, and failure reporting. Run `node src/lib/range-rescue/practice-account.database-smoke.mjs <temporary-prefix>/node_modules/@electric-sql/pglite` against a separately installed PGlite package to check the unchanged migration, constraints, batch rollback, 30-record limit, two-user RLS isolation, and Auth deletion cascade. This local test cannot prove production email delivery, JWT configuration, simultaneous network requests, or deployed policy behavior. Account sync must remain marked unverified until the preview's two-account checks pass.
+
+## Account-deletion support procedure
+
+The site operator handles requests at the privacy contact published on `/privacy`. Practice-history deletion in the app is separate from deletion of the Auth account.
+
+1. Locate the exact account email in the existing Supabase project's Authentication users screen. Do not search or export unrelated user records.
+2. Verify control of that mailbox before deletion: send a fresh, single-use confirmation challenge to the email registered on the account and require a reply containing that challenge and an explicit request to delete the account. An incoming message's From field alone is insufficient. Do not ask for a sign-in OTP, password, or other account credentials. Do not send challenges to an alternative address supplied by a requester.
+3. Explain that Auth-account deletion removes its saved practice through the foreign-key cascade, ends future access to that account, and cannot be undone. Browser-only history is separate and must be removed on each device. Existing requests or sign-in tokens may remain usable until expiry, but the removed Auth user cannot own new practice rows.
+4. In the secure Supabase admin interface, recheck the verified email and corresponding user ID, then use the Auth user's delete action. Do not delete a user based only on a name, partial email, or an ID supplied by someone else. Never expose admin credentials in the frontend. If an agent performs this action, follow its applicable deletion-confirmation requirements.
+5. Verify the Auth user is absent and no practice rows reference that exact user ID. If deletion fails or the cascade is not confirmed, stop and investigate; do not report completion.
+6. Confirm completion to the verified mailbox. Keep a minimal internal record of the request, verification, deletion time and outcome according to the operator's support-retention process; never put verification challenges, account IDs or private correspondence in a public issue/PR.
+
+This is a documented procedure, not an automated support service. No real test Auth accounts are removed during routine QC. The operator must monitor the published privacy inbox when enabling production accounts.
+
+## Final QC evidence — September 10, 2026 UTC
+
+Application commit: `c9c169476ae0f6cc141898646f0963fb7e6e700a` (PR #102). The final documentation update does not change the application bundle.
+
+- Two existing test accounts signed in through fresh email OTPs using ordinary authenticated clients and the public publishable key; no service-role token was used.
+- Hosted checks passed: immutable duplicate retry, whole-batch rollback, denied direct insert/update, cross-account filtered reads/deletes, mismatched-owner RPC rejection, ignored injected owner fields, anonymous table/RPC denial, and denied lead access for anonymous and authenticated clients.
+- Two simultaneous 20-session save requests retained exactly the newest 30 records and pruned older records. Clearing account A left B's record intact. Both accounts started empty and all synthetic records were cleaned up. Real Auth accounts were preserved.
+- Hosted browser checks passed on the fixed preview: save, deletion success feedback, zero history after reload, sign-out, and keyboard cancellation. Earlier tests verified new signup, invalid-code recovery, returning login, and cloud retrieval from an independent preview origin.
+- Fresh responsive checks on the same local application code passed at 390px and 320px: readable account form, visible keyboard focus, invalid-email rejection, and no horizontal overflow. These are emulated viewports, not physical phone tests.
+- Independent read-only security review found no new code defects. CI run 196 passed, including migration/RLS, cascade and lead-protection smoke tests. Auth-user deletion cascade was tested in local PostgreSQL, not by removing the real hosted test accounts.
+- The final local SEO audit passed for all 30 sitemap routes with zero findings. The public production `/api/health` returned `ok: true`, confirming the existing server-side lead read still works after public lead access was denied.
+- A physical second-device test, long-running load testing, and analytics event arrival in GA4 are not claimed. The verified independent-origin retrieval and concurrent API tests cover the relevant account behavior without claiming those broader checks.
+
+Release sequence: merge the reviewed growth foundation (#100), practice progress (#101), then accounts (#102), preserving their dependency history. Production account controls remain disabled until the operator explicitly authorizes rollout and enables the three public account variables for Production followed by a rebuild. The separate logo asset PR (#103) is not a dependency of account functionality.
 
 ## Rollback
 
