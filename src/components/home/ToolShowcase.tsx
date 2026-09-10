@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type PointerEvent } from "react";
 import { TrackLink } from "@/components/analytics/TrackLink";
 import { ToolPreview } from "./ToolPreview";
@@ -131,7 +130,7 @@ export function ToolShowcase() {
           <h2>{tool.title}</h2>
           <p className={styles.description}>{tool.description}</p>
           <p className={styles.detail}>{tool.detail}</p>
-          {tool.id === "range" ? <Link href={tool.href} className={styles.action}>{tool.action}<span aria-hidden="true">→</span></Link> : <TrackLink href={tool.href} className={styles.action} eventParams={tool.id === "flight" ? { module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" } : { module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}>{tool.action}<span aria-hidden="true">→</span></TrackLink>}
+          <TrackLink href={tool.href} className={styles.action} eventParams={tool.id === "range" ? { module: "range_rescue", placement: "home_hero_primary", version: "revival_v2" } : tool.id === "flight" ? { module: "ball_flight_decoder", placement: "home_hero_primary", version: "revival_v2" } : { module: "dovefit", placement: "home_hero_secondary", version: "revival_v2" }}>{tool.action}<span aria-hidden="true">→</span></TrackLink>
         </div>
         <div className={styles.visual}>
           <ToolPreview id={tool.id} animate={selected === index && animate} onStart={selected === index ? previewStarted : undefined} onComplete={selected === index ? previewComplete : undefined} />

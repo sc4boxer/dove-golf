@@ -3,21 +3,21 @@ import { HomeLinkPill } from "@/components/HomeLinkPill";
 import { TrackLink } from "@/components/analytics/TrackLink";
 
 export const metadata: Metadata = {
-  title: "Learn",
+  title: "Golf practice guides, ball flight and equipment basics",
   description:
-    "Technical golf fitting articles on ball flight, shaft dynamics, and repeatable launch conditions.",
+    "Beginner range and driver practice plans, clear ball flight explanations, and equipment fitting guides. Find one useful next step for your golf.",
   alternates: { canonical: "/learn" },
   openGraph: {
-    title: "Learn",
+    title: "Golf practice guides, ball flight and equipment basics",
     description:
-      "Technical golf fitting articles on ball flight, shaft dynamics, and repeatable launch conditions.",
+      "Beginner practice plans, ball flight explanations, and equipment fitting guides from Dove Golf.",
     url: "https://dovegolf.fit/learn",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Learn",
+    title: "Golf practice guides, ball flight and equipment basics",
     description:
-      "Technical golf fitting articles on ball flight, shaft dynamics, and repeatable launch conditions.",
+      "Beginner practice plans, ball flight explanations, and equipment fitting guides from Dove Golf.",
   },
 };
 
@@ -26,6 +26,19 @@ type ArticleCard = {
   href: string;
   summary: string;
 };
+
+const beginnerPractice: ArticleCard[] = [
+  {
+    title: "Your first range practice plan",
+    href: "/learn/beginner-driving-range-practice",
+    summary: "One iron, ten recorded shots, and one smaller-swing exercise. Compare contact before adding distance.",
+  },
+  {
+    title: "Driver practice for beginners",
+    href: "/learn/driver-practice-for-beginners",
+    summary: "Keep your tee setup consistent, try an easier backswing, and compare five tee shots before and after.",
+  },
+];
 
 const physicsFundamentals: ArticleCard[] = [
   {
@@ -79,12 +92,29 @@ export default function LearnPage() {
         </div>
 
         <header className="mt-5 max-w-3xl">
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">Technical fitting education</h1>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight md:text-5xl">A clearer next step for your golf.</h1>
           <p className="mt-4 text-base leading-relaxed text-slate-600">
-            Engineering-first articles on ball flight, shaft dynamics, and fitting decisions that can be validated on
-            the range. The focus is cause and effect, not product hype.
+            Start with a simple practice plan, learn to read your ball flight, or explore the equipment behind a
+            repeatable shot. Each guide connects what you observe to something you can try.
           </p>
         </header>
+
+        <section className="mt-12">
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Start practicing</h2>
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            {beginnerPractice.map((article) => (
+              <TrackLink
+                key={article.href}
+                href={article.href}
+                eventParams={{ module: "learn", placement: "learn_article_card", version: "v1" }}
+                className="rounded-2xl border border-sky-100 bg-sky-50 p-5 shadow-sm transition hover:border-sky-300 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-sky-600"
+              >
+                <h3 className="text-lg font-semibold text-slate-900">{article.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">{article.summary}</p>
+              </TrackLink>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-12">
           <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Physics Fundamentals</h2>

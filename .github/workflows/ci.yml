@@ -80,6 +80,9 @@ jobs:
       - name: Test homepage navigation and swipe behavior
         run: npm run test:home
 
+      - name: Test SEO audit
+        run: npm run test:seo
+
       - name: Test visual semantics
         run: npm run test:visual
 

@@ -18,6 +18,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/about",
     "/privacy",
     "/learn",
+    "/learn/beginner-driving-range-practice",
+    "/learn/driver-practice-for-beginners",
     "/faq",
     "/learn/ball-flight",
     "/learn/start-line-vs-curve",
@@ -29,7 +31,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   return routes.map((route) => ({
     url: new URL(route, baseUrl).toString(),
-    lastModified: new Date(),
+    // Omit lastModified until each page has a maintained content revision date.
     changeFrequency: route === "/" ? "weekly" : "monthly",
     priority: route === "/" ? 1 : 0.8,
   }));

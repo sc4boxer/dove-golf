@@ -1,0 +1,23 @@
+{
+  "baseUrl": "https://dovegolf.fit",
+  "checkedAt": "2026-09-10T00:57:35.918Z",
+  "scope": "Sitemap routes: HTTP, server-rendered metadata, canonical URLs, robots directives. Does not measure rankings, traffic, indexing, or JavaScript rendering.",
+  "pageCount": 28,
+  "issueCount": 3,
+  "siteIssues": [],
+  "pages": [
+    {
+      "path": "/clinic/ball-curves-right",
+      "status": 200,
+      "title": "DoveClinic™ Golf Miss Debugger | Dove Golf",
+      "description": "Diagnose recurring golf misses with deterministic cause ranking, confidence-weighted explanations, and testable range plans.",
+      "canonical": "https://dovegolf.fit/clinic",
+      "robots": "index, follow, index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1, ",
+      "issues": [
+        "Expected canonical https://dovegolf.fit/clinic/ball-curves-right",
+        "Duplicate title shared with /clinic",
+        "Duplicate description shared with /clinic"
+      ]
+    }
+  ]
+}
