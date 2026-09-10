@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Privacy",
   description: "How Dove Golf handles optional analytics and anonymous product feedback.",
-  alternates: { canonical: "/privacy" },
-};
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

@@ -1,12 +1,12 @@
-import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 import Link from "next/link";
 import { PuttingGame } from "@/components/play/PuttingGame";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Putting Break — Free Mini Golf Game",
   description: "Five holes, clever obstacles and an arcade leaderboard. Play a free mini golf challenge, bank your putts and share your score.",
-  alternates: { canonical: "/play/putting" },
-};
+  path: "/play/putting",
+});
 
 export default function PuttingPage() {
   return <main className="min-h-screen bg-white text-slate-900">

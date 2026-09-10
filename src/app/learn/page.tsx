@@ -1,25 +1,13 @@
-import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
 import { TrackLink } from "@/components/analytics/TrackLink";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Learn",
   description:
     "Technical golf fitting articles on ball flight, shaft dynamics, and repeatable launch conditions.",
-  alternates: { canonical: "/learn" },
-  openGraph: {
-    title: "Learn",
-    description:
-      "Technical golf fitting articles on ball flight, shaft dynamics, and repeatable launch conditions.",
-    url: "https://dovegolf.fit/learn",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Learn",
-    description:
-      "Technical golf fitting articles on ball flight, shaft dynamics, and repeatable launch conditions.",
-  },
-};
+  path: "/learn",
+});
 
 type ArticleCard = {
   title: string;

@@ -69,9 +69,12 @@ const sitemapRoutes = [
   "/clinic/driver-slice",
   "/clinic/ball-curves-right",
   "/clinic/pull-hook",
+  "/range-rescue",
+  "/play/putting",
   "/tools/ball-flight-decoder",
   "/method",
   "/about",
+  "/privacy",
   "/learn",
   "/faq",
   "/learn/ball-flight",
@@ -193,6 +196,35 @@ test("the sitemap covers established and revival routes", async () => {
     sitemap,
     /PATTERN_ORDER\.map\(\(pattern\)\s*=>\s*`\/learn\/ball-flight\/\$\{pattern\}`\)/,
   );
+  assert.doesNotMatch(sitemap, /lastModified:\s*new Date\(\)/);
+});
+
+test("every active clinic route declares its own canonical URL", async () => {
+  const routeLayouts = new Map([
+    ["/clinic", "src/app/clinic/layout.tsx"],
+    ["/clinic/ball-curves-right", "src/app/clinic/ball-curves-right/layout.tsx"],
+    ["/clinic/driver-slice", "src/app/clinic/driver-slice/layout.tsx"],
+    ["/clinic/pull-hook", "src/app/clinic/pull-hook/layout.tsx"],
+  ]);
+
+  for (const [route, relativePath] of routeLayouts) {
+    const contents = await source(relativePath);
+    assert.ok(
+      contents.includes(`canonical: "${route}"`) || contents.includes(`canonical: '${route}'`),
+      `${route} must not inherit another route's canonical URL`,
+    );
+  }
+});
+
+test("ball-flight pattern pages are statically discoverable and linked from the explorer", async () => {
+  const [patternPage, explorer] = await Promise.all([
+    source("src/app/learn/ball-flight/[pattern]/page.tsx"),
+    source("src/components/learn/BallFlightLibraryExplorer.tsx"),
+  ]);
+
+  assert.match(patternPage, /export function generateStaticParams\(\)/);
+  assert.match(patternPage, /PATTERN_ORDER\.map\(\(pattern\)\s*=>\s*\(\{ pattern \}\)\)/);
+  assert.match(explorer, /href=\{`\/learn\/ball-flight\/\$\{slug\}`\}/);
 });
 
 test("established analytics event names remain available", async () => {

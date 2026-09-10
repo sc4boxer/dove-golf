@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Shaft Weight Physics for Better Dispersion",
   description:
     "A practical physics guide to shaft weight, timing repeatability, fatigue effects, and why mass often beats flex adjustments.",
-  alternates: { canonical: "/learn/shaft-weight-physics" },
-};
+  path: "/learn/shaft-weight-physics",
+  type: "article",
+});
 
 export default function ShaftWeightPhysicsPage() {
   return (

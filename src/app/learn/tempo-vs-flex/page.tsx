@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
 import { HomeLinkPill } from "@/components/HomeLinkPill";
+import { pageMetadata } from "@/lib/seo/pageMetadata";
 
-export const metadata: Metadata = {
+export const metadata = pageMetadata({
   title: "Tempo vs Flex in Golf Shaft Fitting",
   description:
     "Learn how transition tempo interacts with bend profile timing, and why flex labels alone are an incomplete fit signal.",
-  alternates: { canonical: "/learn/tempo-vs-flex" },
-};
+  path: "/learn/tempo-vs-flex",
+  type: "article",
+});
 
 export default function TempoVsFlexPage() {
   return (

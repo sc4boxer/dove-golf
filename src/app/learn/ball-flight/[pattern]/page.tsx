@@ -18,11 +18,25 @@ export async function generateMetadata({ params }: PatternPageProps): Promise<Me
     return {};
   }
 
+  const title = `${BALL_FLIGHT_PATTERNS[pattern].title} Golf Ball Flight`;
+  const description = BALL_FLIGHT_PATTERNS[pattern].definition;
+
   return {
-    title: `${BALL_FLIGHT_PATTERNS[pattern].title} Ball Flight`,
-    description: BALL_FLIGHT_PATTERNS[pattern].definition,
+    title,
+    description,
     alternates: { canonical: `/learn/ball-flight/${pattern}` },
+    openGraph: {
+      type: "article",
+      title,
+      description,
+      url: `https://dovegolf.fit/learn/ball-flight/${pattern}`,
+    },
+    twitter: { card: "summary_large_image", title, description },
   };
+}
+
+export function generateStaticParams() {
+  return PATTERN_ORDER.map((pattern) => ({ pattern }));
 }
 
 export default async function PatternPage({ params }: PatternPageProps) {
@@ -73,6 +87,12 @@ export default async function PatternPage({ params }: PatternPageProps) {
           </Link>
           <Link href={`/learn/ball-flight/${next}`} className="rounded-xl border border-slate-200 px-3 py-2 hover:bg-slate-50">
             Next pattern
+          </Link>
+          <Link href="/tools/ball-flight-decoder" className="rounded-xl bg-slate-900 px-3 py-2 font-medium text-white hover:bg-slate-800">
+            Decode your ball flight
+          </Link>
+          <Link href="/clinic" className="rounded-xl border border-slate-200 px-3 py-2 hover:bg-slate-50">
+            Diagnose a recurring miss
           </Link>
         </div>
       </div>
