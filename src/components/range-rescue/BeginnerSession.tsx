@@ -8,6 +8,7 @@ import type { RangeRescueClub } from "@/lib/range-rescue/plans";
 import { getSessionFeedback, summarizeShots, type ShotOutcome } from "@/lib/range-rescue/beginner-session";
 import { createSession, getPracticeSeries, type PracticeSession } from "@/lib/range-rescue/practice-history";
 import { usePracticeHistory } from "./usePracticeHistory";
+import { PracticeAccountConnect } from "./PracticeAccountConnect";
 import styles from "./BeginnerSession.module.css";
 
 const stages = ["Get ready", "Starting shots", "Small-swing practice", "Try again", "Your next step"];
@@ -24,6 +25,7 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
   const [before, setBefore] = useState<ShotOutcome[]>([]);
   const [after, setAfter] = useState<ShotOutcome[]>([]);
   const history = usePracticeHistory();
+  const [startingOwner] = useState(history.scope);
   const [visit] = useState(() => {
     const series = getPracticeSeries(history.sessions, club);
     return { ...series.steps[series.currentIndex], number: series.currentIndex + 1 };
@@ -47,7 +49,7 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
     <button className={styles.back} onClick={onExit}>← Leave session</button>
     <p className={styles.kicker}>{driver ? "Driver practice" : "Beginner iron practice"} · Step {stage + 1} of 5</p>
     <h1 ref={heading} tabIndex={-1} id="session-heading">{driver && stage === 2 ? "Easy driver practice" : stages[stage]}</h1>
-    <p className={styles.note}>About 10–15 minutes. Go at your own pace. {history.enabled ? "Saving is on for completed sessions in this browser. Unfinished attempts clear when you leave or refresh." : "Your results clear when you leave or refresh unless you choose to save the completed session."}</p>
+    <p className={styles.note}>About 10–15 minutes. Go at your own pace. {history.account ? "Completed sessions save to your account while signed in. Unfinished attempts clear when you leave or refresh." : history.enabled ? "Saving is on for completed sessions in this browser. Unfinished attempts clear when you leave or refresh." : "Your results clear when you leave or refresh unless you choose to save the completed session."}</p>
     {stage === 0 && <>
       <div className={styles.visit}><p className={styles.kicker}>Your practice series · Visit {visit.number} of 3</p><h2>{visit.title}</h2><p>{visit.description}</p><p className={styles.note}>Repeat visits whenever you like. A new practice day moves the series forward when saving is on.</p></div>
       <h2>{driver ? "Today’s goal: make contact from the tee" : "Today’s goal: touch the ball, then find a little height"}</h2>
@@ -83,7 +85,7 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
           try {
             const session = createSession(club, before, after);
             setCompletedSession(session);
-            history.save(session);
+            if (startingOwner === history.scope) void history.save(session);
           } catch {
             setCompletionError("Your results are ready, but this session couldn’t be saved. Check your device’s date and browser settings before your next session.");
           }
@@ -109,10 +111,11 @@ export function BeginnerSession({ onExit, club = "iron" }: { onExit: () => void;
       {completionError && <p role="alert" className={styles.note}>{completionError}</p>}
       {completedSession && <div className={styles.saveCard} aria-label="Save practice progress">
         <h2>Pick up here next time.</h2>
-        <p>Save your latest 30 completed sessions, practice series, and weekly challenge progress in this browser. No account or cloud sync. You can clear history and turn saving off from the practice page.</p>
-        {history.sessions.some(session => session.id === completedSession.id) ? <p role="status" className={styles.saved}>Saved on this device. Your next practice is ready when you are.</p> : <button type="button" className={styles.primary} onClick={() => history.save(completedSession, true)}>{history.enabled ? "Try saving this session again" : "Save this and future sessions"}</button>}
+        <p>{history.account ? "Your account keeps your latest 30 completed sessions, practice series, and weekly challenge across devices. You can delete account practice history from the practice page." : "Save your latest 30 completed sessions, practice series, and weekly challenge progress in this browser. No account or cloud sync. You can clear history and turn saving off from the practice page."}</p>
+        {history.sessions.some(session => session.id === completedSession.id) ? <p role="status" className={styles.saved}>{history.account ? "Saved to your account." : "Saved on this device."} Your next practice is ready when you are.</p> : <button type="button" disabled={history.busy} className={styles.primary} onClick={() => history.save(completedSession, true)}>{history.busy ? "Saving…" : history.account ? "Save this session to my account" : history.enabled ? "Try saving this session again" : "Save this and future sessions"}</button>}
         {history.error && <p role="alert" className={styles.note}>{history.error}</p>}
       </div>}
+      <PracticeAccountConnect />
       <p>You can finish here. There’s no need to keep hitting until you get a perfect shot.</p>
       <button className={styles.primary} onClick={onExit}>Finish session</button>
     </>}

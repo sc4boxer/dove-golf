@@ -12,6 +12,8 @@ type Props = {
   enabled: boolean;
   ready: boolean;
   error: string | null;
+  account?: boolean;
+  busy?: boolean;
   onEnable: () => void;
   onForget: () => void;
   onStart: () => void;
@@ -22,7 +24,7 @@ function displayDate(date: string) {
   return new Date(`${date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function PracticeProgress({ club, sessions, enabled, ready, error, onEnable, onForget, onStart }: Props) {
+export function PracticeProgress({ club, sessions, enabled, ready, error, account = false, busy = false, onEnable, onForget, onStart }: Props) {
   const headingId = useId();
   const confirmId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -38,14 +40,14 @@ export function PracticeProgress({ club, sessions, enabled, ready, error, onEnab
   return <section className={styles.panel} aria-labelledby={headingId}>
     <p className={styles.kicker}>A little practice, worth returning to</p>
     <h2 ref={heading} tabIndex={-1} id={headingId}>Your practice, one visit at a time</h2>
-    {!ready ? <p className={styles.muted} role="status">Checking practice saved in this browser…</p> : <>
+    {!ready ? <p className={styles.muted} role="status">{account ? "Loading your account practice…" : "Checking practice saved in this browser…"}</p> : <>
       {error && <p className={styles.error} role="status">{error}</p>}
       {!enabled ? <>
         <p className={styles.muted}>Keep your latest 30 completed beginner sessions in this browser and return to a next-session plan. Optional, with no account or cloud sync. Practice history is separate from analytics.</p>
         <button className={styles.primary} onClick={onEnable}>Remember my practice</button>
         <p className={styles.fine}>Anyone using this browser can see it. You can delete it and turn saving off here at any time. Clearing browser data also removes it.</p>
       </> : <>
-        <p className={styles.fine}>Saving on this browser · Latest 30 completed sessions across irons and driver · No account or cloud sync</p>
+        <p className={styles.fine}>{account ? "Saving to your account · Latest 30 completed sessions across irons and driver · Available when you sign in on another device" : "Saving on this browser · Latest 30 completed sessions across irons and driver · No account or cloud sync"}</p>
         <div className={styles.section}>
           <p className={styles.kicker}>Next {clubName} practice</p>
           <h3>{nextPractice.title}</h3>
@@ -107,12 +109,12 @@ export function PracticeProgress({ club, sessions, enabled, ready, error, onEnab
           </>}
         </details>}
       {(enabled || error) && <div className={styles.manage}>
-          <button ref={manageButton} className={styles.textButton} aria-expanded={confirmForget} aria-controls={confirmId} onClick={() => setConfirmForget(!confirmForget)}>Delete practice history and turn saving off</button>
+          <button ref={manageButton} disabled={busy} className={styles.textButton} aria-expanded={confirmForget} aria-controls={confirmId} onClick={() => setConfirmForget(!confirmForget)}>{account ? "Delete account practice history" : "Delete practice history and turn saving off"}</button>
           {confirmForget && <div id={confirmId} className={styles.confirm}>
-            <p>Delete all saved iron and driver sessions from this browser and turn saving off? This cannot be undone.</p>
+            <p>{account ? "Delete all practice history from your account on every device? This cannot be undone. Future completed sessions will still save while signed in. Device-only history is separate." : "Delete all saved iron and driver sessions from this browser and turn saving off? This cannot be undone."}</p>
             <div className={styles.actions}>
               <button className={styles.secondary} autoFocus onClick={() => { setConfirmForget(false); manageButton.current?.focus(); }}>Keep my history</button>
-              <button className={styles.primary} onClick={() => { setConfirmForget(false); heading.current?.focus(); onForget(); }}>Delete and turn off</button>
+              <button disabled={busy} className={styles.primary} onClick={() => { setConfirmForget(false); heading.current?.focus(); onForget(); }}>{account ? "Delete account history" : "Delete and turn off"}</button>
             </div>
           </div>}
         </div>}

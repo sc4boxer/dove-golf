@@ -49,7 +49,7 @@ export function PracticeGuide({ title, description, path, club, children }: {
         <p className="mt-3 leading-7 text-slate-300">
           Range Rescue includes an animated practice guide, a five-shot recorder, and a comparison of your two sets.
           {club === "driver" ? " Choose Driver, then “Start guided driver practice.”" : " Keep Irons selected, then choose “Start guided beginner practice.”"}
-          {" "}No account is needed. You can choose to save completed practice sessions in this browser; unfinished attempts clear when you leave or refresh.
+          {" "}No account is needed. Save completed sessions in this browser, or use an optional practice account to keep your latest 30 sessions across devices. Signing in only imports browser history when you choose to import it. Unfinished attempts clear when you leave or refresh.
         </p>
         <TrackLink href="/range-rescue" eventParams={{ module: "range_rescue", placement: "learn_practice_guide", club, version: "v1" }}
           className={`mt-6 inline-flex min-h-12 items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-sky-50 ${focus}`}>
