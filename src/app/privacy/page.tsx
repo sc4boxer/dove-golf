@@ -20,7 +20,7 @@ export default function PrivacyPage() {
             We want to learn whether the tools are useful without building a profile about you.
             Participation in analytics and product feedback is optional.
           </p>
-          <p className="mt-4 text-sm text-slate-500">Last updated September 7, 2026</p>
+          <p className="mt-4 text-sm text-slate-500">Last updated September 9, 2026</p>
         </header>
 
         <div className="space-y-10 py-10 text-base leading-7 text-slate-700">
@@ -51,7 +51,8 @@ export default function PrivacyPage() {
 
           <section>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Storage and retention</h2>
-            <p className="mt-4">The essential browser storage remembers only your privacy choice. Anonymous product feedback is kept for product research and reviewed for deletion after 180 days. Google Analytics information follows the retention settings configured in our Google Analytics property.</p>
+            <p className="mt-4">The essential browser storage remembers your privacy choice. Anonymous product feedback is kept for product research and reviewed for deletion after 180 days. Google Analytics information follows the retention settings configured in our Google Analytics property.</p>
+            <p className="mt-4"><strong>Optional practice history:</strong> If you choose “Remember my practice” or save a completed guided session, Range Rescue keeps up to 30 completed sessions in this browser, including the club, completion date, and your two sets of five recorded outcomes. These records support your next-practice suggestion, practice series, and weekly challenge. They are not uploaded or sent to analytics and do not sync across devices. Saving is separate from analytics consent. On the practice page, “Delete practice history and turn saving off” removes these records and the saving preference. Clearing browser site data also removes them. Unfinished attempts and practice videos are not saved in this history.</p>
             <p className="mt-4">Putting scores remain available for the all-time leaderboard until removed. To limit spam, we store a daily keyed hash derived from the hosting provider’s client IP address, rather than the plain IP. Old rate-limit records and expired unused round tokens are cleaned up during subsequent requests. Downloaded scorecards are created in your browser; sharing them is your choice. For a leaderboard removal request, include the initials, score and submission date.</p>
           </section>
 

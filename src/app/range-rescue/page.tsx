@@ -14,10 +14,13 @@ import { ProductFeedback } from "@/components/feedback/ProductFeedback";
 import { BeginnerSession } from "@/components/range-rescue/BeginnerSession";
 import { SwingVideoPreview } from "@/components/range-rescue/SwingVideoPreview";
 import { DriverPracticeGuide } from "@/components/range-rescue/DriverPracticeGuide";
+import { PracticeProgress } from "@/components/range-rescue/PracticeProgress";
+import { usePracticeHistory } from "@/components/range-rescue/usePracticeHistory";
 import { track } from "@/lib/analytics/ga";
 import styles from "./range-rescue.module.css";
 
 export default function RangeRescuePage() {
+  const history = usePracticeHistory();
   const [club, setClub] = useState<RangeRescueClub>("iron");
   const [selectedId, setSelectedId] = useState<RangeRescuePlanId | null>(null);
   const [beginnerSession, setBeginnerSession] = useState(false);
@@ -108,6 +111,8 @@ export default function RangeRescuePage() {
                 </>}
               </div>
             </div>
+
+            <PracticeProgress club={club} sessions={history.sessions} enabled={history.enabled} ready={history.ready} error={history.error} onEnable={history.enable} onForget={history.forget} onStart={() => setBeginnerSession(true)} />
 
             <div className={styles.breath} aria-label="First, take one slow breath">
               <span className={styles.breathDot} aria-hidden="true" />

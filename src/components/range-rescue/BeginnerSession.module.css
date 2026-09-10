@@ -22,3 +22,7 @@
 .results th, .results td { text-align: left; border-bottom: 1px solid var(--rr-border, #e2e8f0); padding: 14px 6px; }
 .results td { white-space: nowrap; }
 .next h2 { margin-top: 0; }
+.visit, .saveCard { margin-top: 24px; padding: 20px; border: 1px solid #dbeafe; border-radius: 20px; background: #f0f7ff; }
+.visit .kicker { margin-top: 0; }
+.visit h2, .saveCard h2 { margin-top: 0; }
+.saved { color: #166534; font-weight: 650; }
