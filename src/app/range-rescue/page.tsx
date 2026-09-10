@@ -16,10 +16,16 @@ import { SwingVideoPreview } from "@/components/range-rescue/SwingVideoPreview";
 import { DriverPracticeGuide } from "@/components/range-rescue/DriverPracticeGuide";
 import { PracticeProgress } from "@/components/range-rescue/PracticeProgress";
 import { usePracticeHistory } from "@/components/range-rescue/usePracticeHistory";
+import { PracticeAccountProvider } from "@/components/range-rescue/PracticeAccountProvider";
+import { PracticeAccountConnect } from "@/components/range-rescue/PracticeAccountConnect";
 import { track } from "@/lib/analytics/ga";
 import styles from "./range-rescue.module.css";
 
 export default function RangeRescuePage() {
+  return <PracticeAccountProvider><RangeRescueContent /></PracticeAccountProvider>;
+}
+
+function RangeRescueContent() {
   const history = usePracticeHistory();
   const [club, setClub] = useState<RangeRescueClub>("iron");
   const [selectedId, setSelectedId] = useState<RangeRescuePlanId | null>(null);
@@ -112,7 +118,8 @@ export default function RangeRescuePage() {
               </div>
             </div>
 
-            <PracticeProgress club={club} sessions={history.sessions} enabled={history.enabled} ready={history.ready} error={history.error} onEnable={history.enable} onForget={history.forget} onStart={() => setBeginnerSession(true)} />
+            <PracticeAccountConnect />
+            <PracticeProgress club={club} sessions={history.sessions} enabled={history.enabled} ready={history.ready} error={history.error} account={history.account} busy={history.busy} onEnable={history.enable} onForget={history.forget} onStart={() => setBeginnerSession(true)} />
 
             <div className={styles.breath} aria-label="First, take one slow breath">
               <span className={styles.breathDot} aria-hidden="true" />

@@ -97,6 +97,12 @@ jobs:
           npm install --prefix "$RUNNER_TEMP/putting-db" --no-package-lock --ignore-scripts @electric-sql/pglite@0.5.8
           node tests/putting-database-smoke.mjs "$RUNNER_TEMP/putting-db/node_modules/@electric-sql/pglite"
 
+      - name: Verify private practice account database policies
+        run: node src/lib/range-rescue/practice-account.database-smoke.mjs "$RUNNER_TEMP/putting-db/node_modules/@electric-sql/pglite"
+
+      - name: Verify leads remain server-only
+        run: node tests/lead-data-access-smoke.mjs "$RUNNER_TEMP/putting-db/node_modules/@electric-sql/pglite"
+
       - name: Test Ball Flight Decoder
         run: npm run test:decoder
 

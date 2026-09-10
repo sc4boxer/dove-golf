@@ -1,0 +1,51 @@
+// Usage: node src/lib/range-rescue/practice-account.database-smoke.mjs <pglite-package-directory>
+// Isolated in-memory PostgreSQL; no Supabase or email connection.
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
+const require = createRequire(import.meta.url);
+const { PGlite } = require(resolve(process.argv[2]));
+const db = await PGlite.create();
+const a = "00000000-0000-4000-8000-000000000001";
+const b = "00000000-0000-4000-8000-000000000002";
+const session = (id = "sample", day = 1) => ({ id, completedAt: new Date(Date.UTC(2025, 0, day, 12)).toISOString(), localDate: new Date(Date.UTC(2025, 0, day, 12)).toISOString().slice(0, 10), club: "iron", before: Array(5).fill("air"), after: Array(5).fill("unsure") });
+const login = async (id) => db.query("select set_config('request.jwt.claim.sub',$1,false)", [id]);
+const save = async (items, id = a) => db.query("select * from public.save_practice_sessions($1::jsonb,$2::uuid)", [JSON.stringify(items), id]);
+try {
+  await db.exec("create role anon; create role authenticated; create schema auth; create table auth.users(id uuid primary key); create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$; grant usage on schema public,auth to anon,authenticated; grant execute on function auth.uid() to anon,authenticated;");
+  await db.query("insert into auth.users values($1),($2)", [a, b]);
+  await db.exec(await readFile(new URL("../../../supabase/migrations/202609110001_create_practice_accounts.sql", import.meta.url), "utf8"));
+  await db.exec("set role authenticated");
+  await login(a);
+  assert.equal((await save([session()])).rows.length, 1);
+  assert.equal((await save([session()])).rows.length, 1);
+  await assert.rejects(save([session()], b), /account changed/);
+  await assert.rejects(db.query("select clear_practice_sessions($1)", [b]), /account changed/);
+  await assert.rejects(db.query("insert into practice_sessions select * from practice_sessions"), /permission denied/);
+  await assert.rejects(db.query("update practice_sessions set club='driver'"), /permission denied/);
+  await assert.rejects(save([session("new"), { ...session("bad"), after: [] }]), /complete shot sets/);
+  assert.equal((await db.query("select * from practice_sessions")).rows.length, 1, "invalid batch rolls back entirely");
+  for (const invalid of [null, {}, Array(31).fill(session()), [session(),session()], [{ ...session(), after: [null,"air","air","air","air"] }], [{ ...session(), completedAt:"2025-02-30T12:00:00.000Z" }], [{ ...session(), completedAt:"2099-01-01T12:00:00.000Z", localDate:"2099-01-01" }]]) await assert.rejects(save(invalid));
+  await save(Array.from({ length: 30 }, (_, i) => session(`day-${i}`, i + 2)));
+  assert.equal((await save([session("latest",32)])).rows.length, 30);
+  assert.equal((await db.query("select * from practice_sessions where id='sample'")).rows.length, 0);
+  await login(b);
+  assert.equal((await db.query("select * from practice_sessions")).rows.length, 0);
+  assert.equal((await db.query("delete from practice_sessions where user_id=$1 returning *",[a])).rows.length, 0);
+  await save([{ ...session("owned-b"), user_id:a }], b);
+  assert.equal((await db.query("select user_id from practice_sessions")).rows[0].user_id, b);
+  await login(a);
+  await db.query("select clear_practice_sessions($1)",[a]);
+  assert.equal((await db.query("select * from practice_sessions")).rows.length,0);
+  await login(b);
+  assert.equal((await db.query("select * from practice_sessions")).rows.length,1);
+  await db.exec("reset role; set role anon");
+  await assert.rejects(db.query("select * from practice_sessions"),/permission denied/);
+  await assert.rejects(save([session()]),/permission denied/);
+  await assert.rejects(db.query("select clear_practice_sessions($1)",[a]),/permission denied/);
+  await db.exec("reset role");
+  await db.query("delete from auth.users where id=$1",[b]);
+  assert.equal((await db.query("select * from practice_sessions")).rows.length,0);
+  console.log("PASS practice account migration, atomic validation, immutable retries, 30-row cap, expected-user guard, RLS isolation, anonymous denial, and account-deletion cascade");
+} finally { await db.close(); }
