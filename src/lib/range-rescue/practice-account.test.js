@@ -45,6 +45,20 @@ test("successful responses preserve JSON, status and headers and clear their dea
   assert.equal((await createAccountFetch(async () => new Response(null, { status: 204 }))("https://example.test")).status, 204);
 });
 
+test("browser no-content responses with an empty stream stay successful", async () => {
+  // Chrome can expose a stream for an HTTP 204, unlike new Response(null).
+  for (const status of [204, 205, 304]) {
+    const browserResponse = new Response("", { headers: { "x-test": "kept" } });
+    Object.defineProperty(browserResponse, "status", { value: status });
+    assert.notEqual(browserResponse.body, null);
+    const response = await createAccountFetch(async () => browserResponse)("https://example.test");
+    assert.equal(response.status, status);
+    assert.equal(response.body, null);
+    assert.equal(await response.text(), "");
+    assert.equal(response.headers.get("x-test"), "kept");
+  }
+});
+
 test("account mapping normalizes database time and discards user IDs", () => {
   assert.deepEqual(parseAccountSessions([row]), [sample]);
   assert.deepEqual(parseAccountSessions([]), []);

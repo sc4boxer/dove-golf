@@ -23,7 +23,10 @@ export function createAccountFetch(nativeFetch: typeof fetch = (input, init) => 
       }
       const request = (async () => {
         const response = await nativeFetch(input, { ...init, signal: controller.signal });
-        const body = response.body === null ? null : await response.arrayBuffer();
+        // Browsers may expose an empty stream for no-content responses. These
+        // statuses forbid a body, even a zero-byte ArrayBuffer, in new Response.
+        const noContent = response.status === 204 || response.status === 205 || response.status === 304;
+        const body = noContent || response.body === null ? null : await response.arrayBuffer();
         return new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
       })();
       return await Promise.race([request, cancellation]);
